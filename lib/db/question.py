@@ -38,7 +38,7 @@ if __name__ == "__main__":
     db_question.ask(1111, "陳榮錡", "650喬治商職", "嗨！ Rungchi Chen,綠2左保平路口往[中永和]方向 預估 4.3 分鐘到達")
 
     questions = []
-    for row in db.query():
+    for row in db_question.query():
         questions.append("\t".join(r if isinstance(r, (str, unicode)) else str(r) for r in row))
 
     db_question.close()
