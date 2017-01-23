@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import psycopg2
-import urlparse
 import datetime
 
 from lib.common.db import DB
