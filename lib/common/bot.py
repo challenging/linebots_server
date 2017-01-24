@@ -54,15 +54,18 @@ class Bot(object):
             except UnicodeDecodeError as e:
                 rows.append("('{}', '{}', '{}')".format(question.encode(UTF8), datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), json.dumps(answer)))
 
-        sql = "DELETE FROM {}".format(self.repository)
-        cursor.execute(sql)
+        if rows:
+            sql = "DELETE FROM {}".format(self.repository)
+            cursor.execute(sql)
 
-        sql = "INSERT INTO {} VALUES {}".format(self.repository, ",".join(rows))
-        cursor.execute(sql)
+            sql = "INSERT INTO {} VALUES {}".format(self.repository, ",".join(rows))
+            cursor.execute(sql)
+
+            print "The {} bot finish updating answers".format(type(self).__name__)
+        else:
+            print "Found empty rows"
 
         cursor.close()
-
-        print "The {} bot finish updating answers".format(type(self).__name__)
 
     def set_dataset(self):
         raise NotImplementedError

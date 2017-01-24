@@ -10,7 +10,7 @@ class LocationDB(DB):
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, lat DECIMAL(8, 5), lng DECIMAL(8, 5));".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, lat DECIMAL(10, 7), lng DECIMAL(10, 7));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx ON {table_name} (user_id);".format(table_name=self.table_name))
         cursor.close()
 
