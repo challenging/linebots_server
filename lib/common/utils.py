@@ -67,6 +67,16 @@ def error():
 def get_location(lat, lng):
     return geocoder.google([lat, lng], method='reverse')
 
+def read_cfg(filepath):
+    import ConfigParser
+
+    config = ConfigParser.RawConfigParser()
+    config.read(filepath)
+
+    return config
+
+
+
 if __name__ == "__main__":
     g = get_location(24.58610, 120.82952)
 

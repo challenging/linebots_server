@@ -14,6 +14,7 @@ from linebot.exceptions import (
 
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
+    CarouselTemplate, CarouselColumn, PostbackEvent,URITemplateAction,
     StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage
 )
 
@@ -137,6 +138,19 @@ def message_text(event):
             is_system_cmd = True
 
             db_lotto.delete()
+        elif msg == "show":
+            carousel_template = CarouselTemplate(columns=[
+                CarouselColumn(text='hoge1', title='fuga1', actions=[
+                    URITemplateAction(label='Go to line.me', uri='https://line.me'),
+                    PostbackTemplateAction(label='ping', data='ping')]),
+                CarouselColumn(text='hoge2', title='fuga2', actions=[
+                    PostbackTemplateAction(label='ping with text', data='ping', text='ping'),
+                MessageTemplateAction(label='Translate Rice', text='米')]),
+            ])
+
+            template_message = TemplateSendMessage(alt_text='Buttons alt text', template=carousel_template)
+
+            line_bot_api.reply_message(event.reply_token, template_message)
 
         print "receive command to set lotto_opened to be {}".format(lotto_opened)
 
