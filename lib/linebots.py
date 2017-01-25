@@ -144,7 +144,7 @@ def message_text(event):
                 CarouselColumn(text='hoge1', title='fuga1', actions=[
                     URITemplateAction(label='Go to line.me', uri='https://line.me'),
                     PostbackTemplateAction(label='ping', data='ping')]),
-                MessageTemplateAction(label='Translate Rice', text='TTTT')])
+                ])
 
             template_message = TemplateSendMessage(alt_text='Buttons alt text', template=carousel_template)
 
