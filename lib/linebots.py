@@ -14,7 +14,7 @@ from linebot.exceptions import (
 
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
-    CarouselTemplate, CarouselColumn, PostbackEvent,URITemplateAction,
+    CarouselTemplate, CarouselColumn, PostbackEvent, PostbackTemplateAction, URITemplateAction,
     StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage
 )
 
