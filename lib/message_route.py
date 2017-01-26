@@ -4,6 +4,10 @@
 import re
 import sys
 
+from linebot.models import (
+    CarouselTemplate, CarouselColumn, URITemplateAction,
+)
+
 from lib.db.mode import db_mode
 from lib.bot import fxrate, google_search, weather, lucky, bus, place
 from lib.common.utils import MONEY, UTF8, get_location
@@ -132,7 +136,7 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
 
                 if answer:
                     if name == "place":
-                        message = TemplateSendMessage(
+                        reply_txt = TemplateSendMessage(
                             alt_text=not_support(),
                             template=CarouselTemplate(
                                 columns=[

@@ -14,8 +14,6 @@ from linebot.exceptions import (
 
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
-    CarouselTemplate, CarouselColumn, PostbackEvent, PostbackTemplateAction, URITemplateAction,
-    MessageTemplateAction, TemplateSendMessage,
     StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage
 )
 
@@ -146,6 +144,9 @@ def message_text(event):
             reply_txt = mode_special(profile, msg, db_mode)
         elif mode == "normal":
             reply_txt = mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto, lotto_opened)
+
+            if not isinstance(reply_txt, str):
+                message = reply_txt
         else:
             print "Not found this mode({})".format(mode)
 
