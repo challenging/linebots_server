@@ -5,11 +5,17 @@ import re
 import sys
 
 from lib.db.mode import db_mode
-from lib.bot import fxrate, google_search, weather, lucky, bus
-from lib.common.utils import MONEY, UTF8, help, error, get_location
+from lib.bot import fxrate, google_search, weather, lucky, bus, place
+from lib.common.utils import MONEY, UTF8, get_location
+from lib.common.message import help, error, not_support, article
 
-bots_name = ["weather", "lucky", "rate", "bus", "google"]
-bots = [lambda msg: weather.bot.bots(msg), lambda msg: lucky.bot.bots(msg), lambda msg: fxrate.bot.bots(msg), lambda msg: bus.bot.bots(msg), lambda msg: google_search.bot.bots(msg)]
+bots_name = ["weather", "lucky", "rate", "bus", "place", "google"]
+bots = [lambda msg: weather.bot.bots(msg),
+        lambda msg: lucky.bot.bots(msg),
+        lambda msg: fxrate.bot.bots(msg),
+        lambda msg: bus.bot.bots(msg),
+        lambda msg: place.bot.bots(msg),
+        lambda msg: google_search.bot.bots(msg)]
 
 def get_mode(msg):
     mode = "normal"
@@ -71,10 +77,11 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
         find_answer = False
 
         # get location
-        state = None
+        latlng, state = None, None
         for row in db_location.query(profile.user_id):
             print "{}'s location is at {}".format(profile.display_name.encode(UTF8), row),
             _, _, lat, lng = row
+            latlng = (lat, lng)
 
             g = get_location(lat, lng)
             state = g.state if g.state else g.county
@@ -110,15 +117,44 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
         else:
             print "Not found the quickly matching keyword"
 
+        print latlng, msg
         if not find_answer:
             for name, bot in zip(bots_name, bots):
                 print "{} mode: {}".format(name, msg)
 
-                answer = bot(msg)
+                if name == "place" and latlng:
+                    answer = bot((latlng, msg))
+                else:
+                    answer = bot(msg)
+
                 if answer:
-                    reply_txt = answer
+                    if name == "place":
+                        message = TemplateSendMessage(
+                            alt_text=not_support(),
+                            template=CarouselTemplate(
+                                columns=[
+                                    CarouselColumn(
+                                    thumbnail_image_url=row["image"],
+                                    title=row["name"],
+                                    text=row["address"],
+                                    actions=[
+                                        URITemplateAction(
+                                            label=article().foramt(idx+1),
+                                            uri=row["uri"]
+                                            )
+                                        ]
+                                    ) for idx, row in enumerate(answer)
+                                ]
+                            )
+                        )
+                    elif name == "google":
+                        reply_txt = "我不清楚你的問題[{}]，所以提供 google search 結果\n{}".format(msg, answer)
+                    else:
+                        reply_txt = answer
 
                     break
+                else:
+                    print "Not found answer for {} based on {} mode".format(msg, name)
         else:
             pass
 
@@ -130,8 +166,21 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
     return reply_txt
 
 if __name__ == "__main__":
+    #fxrate.bot.init()
+    #weather.bot.init()
+    #lucky.bot.init()
+    #bus.bot.init()
+    place.bot.init()
+
+    latlng = (25.0408094, 121.5698777)
+    question = sys.argv[1]
+
     for bot_name, f in zip(bots_name, bots):
-        answer = f(sys.argv[1])
+        if bot_name == "place":
+            answer = f((latlng, question))
+        else:
+            answer = f(question)
+
         if answer:
             print bot_name
             print answer

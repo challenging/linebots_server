@@ -24,10 +24,10 @@ from db.location import db_location
 from db.mode import db_mode
 from db.lotto import db_lotto
 
-from lib.common.utils import get_location, error
+from lib.common.utils import get_location
 from lib.common.utils import UTF8, channel_secret, channel_access_token
-
-from lib.ddt import get_mode, mode_special, mode_normal
+from lib.common.message import error, not_support, article
+from lib.message_route import get_mode, mode_special, mode_normal
 
 lotto_opened = True
 
@@ -140,27 +140,6 @@ def message_text(event):
             is_system_cmd = True
 
             db_lotto.delete()
-        elif msg == "show":
-            is_system_cmd = True
-
-            message = TemplateSendMessage(
-                alt_text='電腦版不支援，請使用手機版，方可正常顯示訊息',
-                template=CarouselTemplate(
-                    columns=[
-                        CarouselColumn(
-                        thumbnail_image_url='https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=CoQBdwAAAGU6zsMcqie5qJOIZehFkzlUFVPl7c8PclGGaO63SyfUnl7oBzlLWGNLYjyNJ8TtnGruXBfpOdcp5h9rYP1J1s_rEQet1LGk34rauvj0gVhmY8UJ7v5sIaNp8qM6usMT1EdypznFmjp4i5lQiPdq7cidcalYQSTPyXs7DRLZWzAcEhDTSKMAtYRAnNMCrlqZyba6GhRA8_bH-p8vEQRs1XCxGL5BJ6UixQ&key=AIzaSyCDazDbJvbM1YDgXCP3C1CPqXOrHZDGKfw',
-                        title='路燈咖啡-師大店',
-                        text='大安區浦城街4號',
-                        actions=[
-                            URITemplateAction(
-                                label='觀看食記',
-                                uri='http://pmlovestory.pixnet.net/blog/post/204053251-【捷運台電大樓】路燈咖啡-light-cafe-(師大店)-'
-                                )
-                            ]
-                        ),
-                    ]
-                )
-            )
 
     if not is_system_cmd:
         if mode == "special":

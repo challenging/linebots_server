@@ -8,6 +8,7 @@ from datetime import datetime
 
 from lib.common.utils import UTF8, read_cfg
 from lib.common.bot import Bot
+from lib.bot import google_search
 
 class PlaceBot(Bot):
     def set_dataset(self):
@@ -22,8 +23,10 @@ class PlaceBot(Bot):
     def gen_results(self):
         pass
 
-    def bots(self, location, msg, section="mapping", lang="zh_TW"):
+    def bots(self, given, section="mapping", lang="zh_TW"):
         type = None
+        print given
+        location, msg = given
 
         try:
             msg.encode('ascii')
@@ -37,14 +40,20 @@ class PlaceBot(Bot):
         places = []
         if type is not None:
             r = self.client.places_nearby(keyword=type, location=location, language=lang, open_now=True, rank_by='distance', type=type)
-            for results in r["results"]:
-                rc = {}
-                rc["name"] = results["name"]
-                rc["location"] = (results["geometry"]["location"]["lat"], results["geometry"]["location"]["lng"])
-                rc["address"] = results["vicinity"]
-                rc["photo_url"] = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={}&key={}".format(results["photos"][0]["photo_reference"], self.key)
+            for idx, results in enumerate(r["results"]):
+                message = {}
 
-                places.append(rc)
+                message["image"] = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={}&key={}".format(results["photos"][0]["photo_reference"], self.key)
+                message["name"] = results["name"]
+                message["address"] = results["vicinity"]
+                message["location"] = (results["geometry"]["location"]["lat"], results["geometry"]["location"]["lng"])
+
+                message["uri"] = google_search.bot.bots(message["name"].encode(UTF8))
+
+                if idx > 2:
+                    break
+
+                places.append(message)
 
         return places
 

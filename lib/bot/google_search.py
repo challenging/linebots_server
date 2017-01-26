@@ -93,9 +93,7 @@ class SearchBot(Bot):
 
             break
 
-        answer = "我不清楚你的問題[{}]，所以提供 google search 結果\n{}".format(msg, link)
-
-        return answer
+        return link
 
 bot = SearchBot()
 

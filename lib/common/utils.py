@@ -60,9 +60,10 @@ def help():
     return msg
 
 def error():
-    msg = """系統發生錯誤，請稍後再試，感謝您的耐心！"""
+    return """系統發生錯誤，請稍後再試，感謝您的耐心！"""
 
-    return msg
+def not_support():
+    return """電腦版不支援，請使用手機版，方可正常顯示訊息"""
 
 def get_location(lat, lng):
     return geocoder.google([lat, lng], method='reverse')
@@ -74,8 +75,6 @@ def read_cfg(filepath):
     config.read(filepath)
 
     return config
-
-
 
 if __name__ == "__main__":
     g = get_location(24.58610, 120.82952)
