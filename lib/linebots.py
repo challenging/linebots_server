@@ -162,8 +162,6 @@ def message_text(event):
                 )
             )
 
-            print is_system_cmd, message
-
     if not is_system_cmd:
         if mode == "special":
             reply_txt = mode_special(profile, msg, db_mode)
@@ -172,7 +170,7 @@ def message_text(event):
         else:
             print "Not found this mode({})".format(mode)
 
-    if message is not None:
+    if message is None:
         message = TextSendMessage(text=reply_txt)
 
     line_bot_api.reply_message(event.reply_token, message)
