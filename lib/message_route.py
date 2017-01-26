@@ -9,6 +9,9 @@ from lib.bot import fxrate, google_search, weather, lucky, bus, place
 from lib.common.utils import MONEY, UTF8, get_location
 from lib.common.message import help, error, not_support, article
 
+# init bots
+place.bot.init()
+
 bots_name = ["weather", "lucky", "rate", "bus", "place", "google"]
 bots = [lambda msg: weather.bot.bots(msg),
         lambda msg: lucky.bot.bots(msg),
