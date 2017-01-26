@@ -130,7 +130,7 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                 print "{} mode: {}".format(name, msg)
 
                 if name == "place" and latlng:
-                    print name, lating, msg
+                    print name, latlng, msg
                     answer = bot((latlng, msg))
                 else:
                     answer = bot(msg)
