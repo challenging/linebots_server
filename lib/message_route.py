@@ -5,7 +5,7 @@ import re
 import sys
 
 from linebot.models import (
-    CarouselTemplate, CarouselColumn, URITemplateAction,
+    TemplateSendMessage, CarouselTemplate, CarouselColumn, URITemplateAction,
 )
 
 from lib.db.mode import db_mode
