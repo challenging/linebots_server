@@ -25,7 +25,6 @@ class PlaceBot(Bot):
 
     def bots(self, given, section="mapping", lang="zh_TW"):
         type = None
-        print given
         location, msg = given
 
         try:
@@ -48,12 +47,12 @@ class PlaceBot(Bot):
                 message["address"] = results["vicinity"]
                 message["location"] = (results["geometry"]["location"]["lat"], results["geometry"]["location"]["lng"])
 
-                message["uri"] = google_search.bot.bots(message["name"].encode(UTF8))
-
-                if idx > 2:
-                    break
-
+                uri = google_search.bot.bots(message["name"].encode(UTF8))
+                message["uri"] = uri if uri else "http://tw.yahoo.com"
                 places.append(message)
+
+                if idx > 1:
+                    break
 
         return places
 

@@ -4,6 +4,8 @@
 import os
 import geocoder
 import requests
+import psycopg2
+import urlparse
 
 import logging
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -13,10 +15,30 @@ from tqdm import tqdm
 
 UTF8 = "UTF8"
 MONEY = 25
+CONN = None
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
 channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
+
+def get_db_connection():
+    global CONN
+
+    if CONN is None:
+        urlparse.uses_netloc.append("postgres")
+        url = urlparse.urlparse(os.environ["DATABASE_URL"])
+
+        CONN = psycopg2.connect(
+                database=url.path[1:],
+                user=url.username,
+                password=url.password,
+                host=url.hostname,
+                port=url.port
+        )
+
+        CONN.autocommit = True
+
+    return CONN
 
 def data_dir(subfolder):
     return os.path.join(os.path.dirname(__file__), "..", "..", "etc", subfolder)

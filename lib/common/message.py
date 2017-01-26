@@ -18,4 +18,4 @@ def not_support():
     return """電腦版不支援，請使用手機版，方可正常顯示訊息"""
 
 def article():
-    return "觀看 Google Search 第{}篇文章"
+    return "瀏覽 Google Search 文章"

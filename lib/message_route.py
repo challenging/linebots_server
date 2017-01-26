@@ -124,7 +124,6 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
         else:
             print "Not found the quickly matching keyword"
 
-        print latlng, msg
         if not find_answer:
             for name, bot in zip(bots_name, bots):
                 print "{} mode: {}".format(name, msg)
@@ -141,19 +140,19 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                             template=CarouselTemplate(
                                 columns=[
                                     CarouselColumn(
-                                    thumbnail_image_url=row["image"],
-                                    title=row["name"],
-                                    text=row["address"],
-                                    actions=[
-                                        URITemplateAction(
-                                            label=article().format(idx+1),
-                                            uri=row["uri"]
-                                            )
-                                        ]
-                                    ) for idx, row in enumerate(answer)
-                                ]
+                                       thumbnail_image_url=row["image"],
+                                        title=row["name"],
+                                        text=row["address"],
+                                        actions=[
+                                            URITemplateAction(
+                                                label=article(),
+                                                uri=row["uri"]
+                                                )
+                                            ]
+                                        ) for idx, row in enumerate(answer)
+                                    ]
+                                )
                             )
-                        )
                     elif name == "google":
                         reply_txt = "我不清楚你的問題[{}]，所以提供 google search 結果\n{}".format(msg, answer)
                     else:
@@ -165,18 +164,15 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
         else:
             pass
 
-        db_question.ask(profile.user_id, profile.display_name, msg, reply_txt)
-        reply_txt = "嗨！ {},\n{}".format(profile.display_name.encode(UTF8), reply_txt)
+        if isinstance(reply_txt, (str, unicode)):
+            db_question.ask(profile.user_id, profile.display_name, msg, reply_txt)
+            reply_txt = "嗨！ {},\n{}".format(profile.display_name.encode(UTF8), reply_txt)
     else:
         reply_txt = lotto(profile, lotto_opened, msg, db_lotto)
 
     return reply_txt
 
 if __name__ == "__main__":
-    #fxrate.bot.init()
-    #weather.bot.init()
-    #lucky.bot.init()
-    #bus.bot.init()
     place.bot.init()
 
     latlng = (25.0408094, 121.5698777)

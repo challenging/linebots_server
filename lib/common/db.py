@@ -1,28 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import psycopg2
-import urlparse
+from lib.common.utils import get_db_connection
 
 class DB(object):
     table_name = NotImplementedError
 
     def __init__(self):
-        urlparse.uses_netloc.append("postgres")
-        url = urlparse.urlparse(os.environ["DATABASE_URL"])
-
-        self.conn = psycopg2.connect(
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            host=url.hostname,
-            port=url.port
-        )
-
-        self.conn.autocommit = True
-        print "set the auto-commit mode for {}".format(self.table_name)
-
+        self.conn = get_db_connection()
         self.create_table()
 
     def create_table(self):
@@ -57,6 +42,3 @@ class DB(object):
         cursor = self.conn.cursor()
         cursor.execute(sql)
         cursor.close()
-
-    def close(self):
-        self.conn.close()

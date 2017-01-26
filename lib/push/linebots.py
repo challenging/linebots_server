@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import linebot
+from lib.db.question import db_question
+from lib.db.location import db_location
+from lib.db.mode import db_mode
+from lib.db.lotto import db_lotto
+
+from lib.message_route import mode_normal
+from lib.common.utils import UTF8, channel_secret, channel_access_token
+
 from linebot import LineBotApi
 
 from linebot.models import (
@@ -14,43 +21,17 @@ from linebot.models import (
 from lib.push import db
 
 # get channel_secret and channel_access_token from your environment variable
-channel_secret = "b7cbe59211c0d67e6b37f7f2ccf43fdc"
-channel_access_token = "Toi86OSQGdP6Ss2YVBGTl7eJ91h0z9dYPLVrzjkCQ0TWhd5O7UyTRIGhLYOAhDJBZxxqzavvdL7kAfPdxenlogkah8sucT96Iz7tT6MmMRQ5x5xjek5nzOn8cECZNS1kvCz/8LlrmIKZlxQdP2UgkwdB04t89/1O/w1cDnyilFU="
-
 line_bot_api = LineBotApi(channel_access_token)
 
 def push(user_id, reply_txt):
-    #line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
-    print user_id, reply_txt
+    line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
 
 def push_carousel(user_id="Ua5f08ec211716ba22bef87a8ac2ca6ee"):
-    carousel_template = TemplateSendMessage(
-        alt_text='Carousel template',
-        template=CarouselTemplate(
-            columns=[
-                CarouselColumn(
-                    thumbnail_image_url='https://s3-us-west-2.amazonaws.com/lineapitest/hamburger_240.jpeg',
-                    title='this is menu1',
-                    text='description1',
-                    actions=[
-                        MessageTemplateAction(
-                            label='message1',
-                            text='message text1'
-                        ),
-                        URITemplateAction(
-                            label='uri1',
-                            uri='http://tw.yahoo.com'
-                        )
-                    ]
-                ),
-            ]
-        )
-    )
+    profile = line_bot_api.get_profile(user_id)
+    message = mode_normal(profile, "cafe", "normal", db_mode, db_location, db_question, db_lotto)
+    print message
 
-    try:
-        line_bot_api.push_message(user_id, carousel_template)
-    except Exception as e:
-        print e.message
+    line_bot_api.push_message(user_id, message)
 
 def run():
     for row in db.db.query():
