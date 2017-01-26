@@ -42,7 +42,11 @@ class PlaceBot(Bot):
             for idx, results in enumerate(r["results"]):
                 message = {}
 
-                message["image"] = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={}&key={}".format(results["photos"][0]["photo_reference"], self.key)
+                if "phtots" in results:
+                    message["image"] = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={}&key={}".format(results["photos"][0]["photo_reference"], self.key)
+                else:
+                    message["image"] = results["icon"]
+
                 message["name"] = results["name"]
                 message["address"] = results["vicinity"]
                 message["location"] = (results["geometry"]["location"]["lat"], results["geometry"]["location"]["lng"])
@@ -63,6 +67,6 @@ if __name__ == "__main__":
 
     location = (25.04184, 121.55265)
 
-    for results in bot.bots(location, sys.argv[1]):
+    for results in bot.bots((location, sys.argv[1])):
         print results
         print
