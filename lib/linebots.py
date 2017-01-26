@@ -141,6 +141,8 @@ def message_text(event):
 
             db_lotto.delete()
         elif msg == "show":
+            is_system_cmd = True
+
             message = TemplateSendMessage(
                 alt_text='Carousel template',
                 template=CarouselTemplate(
