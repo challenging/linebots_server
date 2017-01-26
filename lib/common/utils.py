@@ -15,8 +15,8 @@ UTF8 = "UTF8"
 MONEY = 25
 
 # get channel_secret and channel_access_token from your environment variable
-channel_secret = "b7cbe59211c0d67e6b37f7f2ccf43fdc"
-channel_access_token = "Toi86OSQGdP6Ss2YVBGTl7eJ91h0z9dYPLVrzjkCQ0TWhd5O7UyTRIGhLYOAhDJBZxxqzavvdL7kAfPdxenlogkah8sucT96Iz7tT6MmMRQ5x5xjek5nzOn8cECZNS1kvCz/8LlrmIKZlxQdP2UgkwdB04t89/1O/w1cDnyilFU="
+channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
+channel_access_token = os.enviro["LINEBOT_CHANNEL_TOKEN"]
 
 def data_dir(subfolder):
     return os.path.join(os.path.dirname(__file__), "..", "..", "etc", subfolder)

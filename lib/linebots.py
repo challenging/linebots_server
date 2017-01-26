@@ -120,6 +120,7 @@ def message_text(event):
     reply_txt = "嗨, {}!\n{}".format(profile.display_name.encode(UTF8), error())
     msg = event.message.text.encode(UTF8).lower()
     mode = get_mode(msg)
+    message = None
 
     # set lotto_opened
     is_system_cmd = False
@@ -140,22 +141,24 @@ def message_text(event):
 
             db_lotto.delete()
         elif msg == "show":
-            carousel_template = CarouselTemplate(columns=[
-                CarouselColumn(text='hoge1', title='fuga1', actions=[
-                    URITemplateAction(
-                        label='Go to line.me', uri='https://line.me'),
-                ]),
-                CarouselColumn(text='hoge2', title='fuga2', actions=[
-                    MessageTemplateAction(label='Translate Rice', text='米')
-                ]),
-            ])
-
-            template_message = TemplateSendMessage(alt_text='Buttons alt text', template=carousel_template)
-
-            line_bot_api.reply_message(event.reply_token, template_message)
-            return
-
-        print "receive command to set lotto_opened to be {}".format(lotto_opened)
+            message = TemplateSendMessage(
+                alt_text='Carousel template',
+                template=CarouselTemplate(
+                    columns=[
+                        CarouselColumn(
+                        thumbnail_image_url='https://s3-us-west-2.amazonaws.com/lineapitest/hamburger_240.jpeg',
+                        title='this is menu1',
+                        text='description1',
+                        actions=[
+                            URITemplateAction(
+                                label='YAHOO!',
+                                uri='http://tw.yahoo.com'
+                                )
+                            ]
+                        ),
+                    ]
+                )
+            )
 
     if not is_system_cmd:
         if mode == "special":
@@ -164,10 +167,8 @@ def message_text(event):
             reply_txt = mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto, lotto_opened)
         else:
             print "Not found this mode({})".format(mode)
-        #except Exception as e:
-        #    print e
 
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply_txt)
-    )
+    if message is not None:
+        message = TextSendMessage(text=reply_txt)
+
+    line_bot_api.reply_message(event.reply_token, message)
