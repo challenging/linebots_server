@@ -130,14 +130,12 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                 print "{} mode: {}".format(name, msg)
 
                 if name == "place" and latlng:
-                    print name, latlng, msg
                     answer = bot((latlng, msg))
                 else:
                     answer = bot(msg)
 
                 if answer:
                     if name == "place":
-                        print answer
                         reply_txt = TemplateSendMessage(
                             alt_text=not_support(),
                             template=CarouselTemplate(
@@ -148,7 +146,7 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                                     text=row["address"],
                                     actions=[
                                         URITemplateAction(
-                                            label=article().foramt(idx+1),
+                                            label=article().format(idx+1),
                                             uri=row["uri"]
                                             )
                                         ]
