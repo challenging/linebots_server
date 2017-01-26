@@ -42,7 +42,7 @@ class PlaceBot(Bot):
             for idx, results in enumerate(r["results"]):
                 message = {}
 
-                if "phtots" in results:
+                if "photos" in results:
                     message["image"] = "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={}&key={}".format(results["photos"][0]["photo_reference"], self.key)
                 else:
                     message["image"] = results["icon"]
