@@ -130,12 +130,14 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                 print "{} mode: {}".format(name, msg)
 
                 if name == "place" and latlng:
+                    print name, lating, msg
                     answer = bot((latlng, msg))
                 else:
                     answer = bot(msg)
 
                 if answer:
                     if name == "place":
+                        print answer
                         reply_txt = TemplateSendMessage(
                             alt_text=not_support(),
                             template=CarouselTemplate(
