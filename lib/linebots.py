@@ -162,6 +162,8 @@ def message_text(event):
                 )
             )
 
+            print is_system_cmd, message
+
     if not is_system_cmd:
         if mode == "special":
             reply_txt = mode_special(profile, msg, db_mode)
