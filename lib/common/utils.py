@@ -16,7 +16,7 @@ MONEY = 25
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
-channel_access_token = os.enviro["LINEBOT_CHANNEL_TOKEN"]
+channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
 
 def data_dir(subfolder):
     return os.path.join(os.path.dirname(__file__), "..", "..", "etc", subfolder)
