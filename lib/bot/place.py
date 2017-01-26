@@ -32,13 +32,13 @@ class PlaceBot(Bot):
 
             type = msg
         except UnicodeDecodeError:
-            print msg, self.config_parser.has_option("mapping", msg)
             if self.config_parser.has_option("mapping", msg):
                 type = self.config_parser.get("mapping", msg)
 
         places = []
         if type is not None:
             r = self.client.places_nearby(keyword=type, location=location, language=lang, open_now=True, rank_by='distance', type=type)
+            print r
             for idx, results in enumerate(r["results"]):
                 message = {}
 
