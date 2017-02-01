@@ -2,46 +2,41 @@
 
 import os
 import sys
+import time
 import glob
 import click
 import shutil
 import numpy as np
 
-from utils import image_l
+from utils import image_l, data_dir, check_folder
 
-basepath_data_input = os.path.join(os.path.dirname(__file__), "etc", "train", "cropped")
-basepath_data_output = os.path.join(os.path.dirname(__file__), "etc", "train", "number")
-
-def copy_image_to_number_folder():
-    global basepath_data_input, basepath_data_output
-
-    part = {}
-    for filepath in glob.iglob(os.path.join(basepath_data_input, "*", "*.jpg")):
+def copy_image_to_number_folder(data_input, data_output):
+    timestamp = int(time.time())
+    for idx, filepath in enumerate(glob.iglob(os.path.join(data_input, "*", "*.jpg"))):
         filename = os.path.basename(filepath)
-        idx, n, _ = filename.split(".")
+        _, n, _ = filename.split(".")
 
-        part.setdefault(n, 0)
-        part[n] += 1
+        key = "{}_{}".format(timestamp, idx)
 
-        destination_folder = os.path.join(basepath_data_output, str(n))
-        if not os.path.exists(destination_folder):
-            os.makedirs(destination_folder)
+        destination_folder = os.path.join(data_output, str(n))
+        check_folder(destination_folder, is_folder=True)
 
-        _, cs_graph = image_l(filepath)
-        with open(os.path.join(destination_folder, "{}.npy".format(part[n])), "wb") as in_file:
+        _, csgraph = image_l(filepath)
+        with open(os.path.join(destination_folder, "{}.npy".format(key)), "wb") as in_file:
             np.save(in_file, csgraph)
 
-        shutil.copy(filepath, os.path.join(destination_folder, "{}.jpg".format(part[n])))
+        shutil.copy(filepath, os.path.join(destination_folder, "{}.jpg".format(key)))
 
 @click.command()
-def main():
-    global basepath_data_input, basepath_data_output
+@click.option("-i", "--input")
+def main(input):
+    if input is None:
+        print "Not found input parameter"
+    else:
+        data_input = os.path.join(data_dir(), "test", input)
+        data_output = os.path.join(data_dir(), "test", "number")
 
-    for type in ["train", "test"]:
-        basepath_data_input = os.path.join(os.path.dirname(__file__), "etc", type, "cropped")
-        basepath_data_output = os.path.join(os.path.dirname(__file__), "etc", type, "number")
-
-        copy_image_to_number_folder()
+        copy_image_to_number_folder(data_input, data_output)
 
 if __name__ == "__main__":
     main()

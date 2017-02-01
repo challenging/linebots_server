@@ -19,7 +19,7 @@ from keras.utils import np_utils
 from keras import backend as K
 K.set_image_dim_ordering('th')
 
-from utils import save, data_dir, model_dir
+from utils import save, check_folder, data_dir, model_dir
 
 # fix random seed for reproducibility
 seed = 7
@@ -102,25 +102,20 @@ def fit(model, X_train, X_validation, y_train, y_validation, nepoch=32, batch_si
 
 @click.command()
 @click.option("-m", "--mode", type=click.Choice(["mlp", "simple_cnn", "complex_cnn"]))
-@click.option("-t", "--test", default=0.33)
+@click.option("-t", "--test-size", default=0.33)
 @click.option("-e", "--epoch", default=32)
 @click.option("-b", "--batch-size", default=16)
-def main(mode, test, epoch, batch_size):
+def main(mode, test_size, epoch, batch_size):
     basepath_data_input = os.path.join(data_dir(), "train", "number")
     dataset_x, dataset_y = load_data(os.path.join(basepath_data_input, "{}", "*.npy"))
-
-    basepath_data_input = os.path.join(current_folder, "data", "test", "number")
-    test_x, test_y = load_data(os.path.join(basepath_data_input, "{}", "*.npy"))
 
     model = None
     if mode == "mlp":
         dataset_x = mlp_preprocess(dataset_x)
-        test_x = mlp_preprocess(test_x)
 
         model = mlp_model(dataset_x.shape[1], dataset_y.shape[1])
     elif mode.find("cnn") > -1:
         dataset_x, h, w = cnn_preprocess(dataset_x)
-        test_x, _, _ = cnn_preprocess(test_x)
 
         if mode == "simple_cnn":
             model = simple_cnn_model((1, h, w), dataset_y.shape[1])
@@ -129,21 +124,11 @@ def main(mode, test, epoch, batch_size):
         else:
             raise NotImplementedError
 
-    X_train, X_validation, y_train, y_validation = train_test_split(dataset_x, dataset_y, test_size=test)
+    X_train, X_validation, y_train, y_validation = train_test_split(dataset_x, dataset_y, test_size=test_size)
 
     fit(model, X_train, X_validation, y_train, y_validation, epoch, batch_size)
     scores = model.evaluate(X_validation, y_validation, verbose=0)
     print "Baseline Error of Validation Set: {:.8f}%".format(100-scores[1]*100)
-
-    pos = np.argmax(test_y, axis=1)
-    for part in range(0, 11):
-        idx = np.where(pos == part)
-
-        scores = model.evaluate(test_x[idx], test_y[idx], verbose=0)
-        print "Baseline Error of Number-{}: {:.8f}%".format(part if part < 11 else "x", 100-scores[1]*100)
-
-    scores = model.evaluate(test_x, test_y, verbose=0)
-    print "Baseline Error of Test Set(All): {:.8f}%".format(100-scores[1]*100)
 
     folder = os.path.join(model_dir(), str(int(time.time())))
     check_folder(folder)

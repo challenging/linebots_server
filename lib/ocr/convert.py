@@ -242,38 +242,46 @@ def convert_wb_1(filepath_input, folder="convert_wb_1"):
             if pixdata[x, y][2] > 0:
                 pixdata[x, y] = (255, 255, 255, 255)
 
+    csgraph = []
+    for y in xrange(img.size[1]):
+        for x in xrange(img.size[0]):
+            csgraph.append(pixdata[x, y][0:3])
+    csgraph = np.array(csgraph)
+
     filepath_output = os.path.join(os.path.dirname(filepath_input), "..", folder, os.path.basename(filepath_input))
     check_folder(filepath_output)
     img.save(filepath_output)
 
-    return filepath_output
+    return filepath_output, csgraph
 
 @click.command()
-@click.option("-t", "--type", type=click.Choice(["train", "test"]))
 @click.option("-v", "--vvv", is_flag=True)
-def main(type, vvv):
+def main(vvv):
     global debug
     debug = vvv
 
-    folder = os.path.join(data_dir(), type)
-    create_folders(type)
+    folder = os.path.join(data_dir(), "train")
+    create_folders("train")
 
     total_crop, accuracy_crop, wrong_crop = 0, 0, []
 
-    if vvv and type == "train":
+    if vvv:
         files = ["004801.jpg", "06379.jpg", "70433.jpg", "872360.jpg", "208202.jpg", "357559.jpg", "12018.jpg", "112019.jpg", "984017.jpg"]
         files = [os.path.join(folder, filename) for filename in files]
     else:
-        files = glob.iglob("{}/source/*.jpg".format(folder))
+        files = glob.iglob(os.path.join(folder, "source", "*.jpg"))
 
     for filepath in files:
         number = get_number(filepath)
 
         if os.path.isfile(filepath):
-            filepath_wb_2, graph = convert_wb_2(convert_wb_1(filepath))
+            filepath_wb_1, _ = convert_wb_1(filepath)
+            filepath_wb_2, graph = convert_wb_2(filepath_wb_1)
             area = detect_connected_component(graph)
 
-            if crop_component(filepath_wb_2, area) == len(number):
+            count_cropped_1 = crop_component(filepath_wb_1, area, folder="cropped_{}".format(os.path.basename(os.path.dirname(filepath_wb_1))))
+            count_cropped_2 = crop_component(filepath_wb_2, area, folder="cropped_{}".format(os.path.basename(os.path.dirname(filepath_wb_2))))
+            if count_cropped_1 == len(number):
                 accuracy_crop += 1
             else:
                 wrong_crop.append(number)

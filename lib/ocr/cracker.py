@@ -10,42 +10,60 @@ from convert import convert_wb_1, convert_wb_2, crop_component, detect_connected
 from model import cnn_preprocess
 from utils import latest_model, image_l, data_dir, cracker_dir
 
-basepath_cracker_cropped = os.path.join(cracker_dir(), "cropped")
-
 model = None
 if model is None:
     model = latest_model(model)
 
 @click.command()
 @click.option("-i", "--input")
-def process(input):
+@click.option("-c", "--cropped", type=click.Choice(["1", "2"]))
+def process(input, cropped):
     global model
 
     if input is None:
         print "Not found --input parameter"
 
         sys.exit(999)
-    else:
-        if not os.path.exists(input):
-            print "Not found input file({})".format(input)
 
-            sys.exit(998)
+    count_all, count_number, count_right = 0, 0, 0
+    for input in glob.iglob(input):
+        filename = os.path.basename(input)
+        number = filename.split(".")[0]
 
-    filename = os.path.basename(input)
+        filepath_wb_1, _ = convert_wb_1(input)
+        filepath_wb_2, graph = convert_wb_2(filepath_wb_1)
+        area = detect_connected_component(graph)
 
-    filepath_wb_2, graph = convert_wb_2(convert_wb_1(input))
-    count_number = crop_component(filepath_wb_2, detect_connected_component(graph))
+        f = None
+        if cropped == "1":
+            f = filepath_wb_1
+        elif cropped == "2":
+            f = filepath_wb_2
+        else:
+            print "Not support cropped={}".format(cropped)
 
-    answer = ""
-    for filepath in glob.iglob(os.path.join(basepath_cracker_cropped, filename, "*.jpg")):
-        idx, _, _ = os.path.basename(filepath).split(".")
+            sys.exit(999)
 
-        _, csgraph = image_l(filepath)
-        dataset, _, _ = cnn_preprocess(np.array([csgraph]))
+        folder = os.path.basename(os.path.dirname(f))
+        crop_component(f, area, folder="cropped_{}".format(folder))
 
-        answer += str(np.argmax(model.predict(dataset), axis=1)[0])
+        answer = ""
+        for filepath in glob.iglob(os.path.join(cracker_dir(), "cropped_{}".format(folder), filename, "*.jpg")):
+            _, csgraph = image_l(filepath)
+            dataset, _, _ = cnn_preprocess(np.array([csgraph]))
 
-    print "The prediction answer is {}".format(answer)
+            c = str(np.argmax(model.predict(dataset), axis=1)[0])
+            if c != "10":
+                answer += c
+
+        print "{} - ({})The prediction/real answer is {}/{}".format(folder, "+" if answer == number else "-", answer, number)
+
+        count_number += 1 if len(answer) == len(number) else 0
+        count_right += 1 if answer == number else 0
+        count_all += 1
+
+    print count_all, count_number, count_right
+    print "The accuracy of predictions is {:.4f}% / {:.4f}%".format(count_right*100.0/count_all, count_right*100.0/count_number)
 
 if __name__ == "__main__":
     process()

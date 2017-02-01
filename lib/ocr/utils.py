@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import numpy as np
 
 from keras.models import model_from_json
@@ -36,9 +37,10 @@ def image_l(filepath):
     return im, csgraph
 
 def save(filepath_json, filepath_weight, model):
+    check_folder(filepath_json, is_folder=False)
+
     # serialize model to JSON
     model_json = model.to_json()
-
     with open(filepath_json, "w") as json_file:
         json_file.write(model_json)
 
@@ -57,15 +59,19 @@ def load(filepath_json, filepath_weight, model):
     # load weights into new model
     model.load_weights(filepath_weight)
 
-    print("Loaded model({}, {}) from disk".format(filepath_json, filepath_weight))
-
     return model
 
 def latest_model(model):
-    basepath_model_json = os.path.join(model_dir(), "model.json")
-    basepath_model_h5 = os.path.join(model_dir(), "model.h5")
+    model_json = os.path.join(model_dir(), "model.json")
+    model_h5 = os.path.join(model_dir(), "model.h5")
 
-    return load(basepath_model_json, basepath_model_h5, model)
+    if os.path.exists(model_json) and os.path.exists(model_h5):
+        return load(model_json, model_h5, model)
+    else:
+        print "Not found {}({}), {}({})".format(\
+            model_json, os.path.exists(model_json), model_h5, os.path.exists(model_h5))
+
+        sys.exit(998)
 
 def check_folder(filepath, is_folder=False):
     folder = filepath
@@ -74,5 +80,3 @@ def check_folder(filepath, is_folder=False):
 
     if not os.path.exists(folder):
         os.makedirs(folder)
-
-        print "create folder - {}".format(folder)
