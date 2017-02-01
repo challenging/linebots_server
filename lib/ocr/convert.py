@@ -10,16 +10,12 @@ from scipy import ndimage
 from scipy.ndimage.measurements import label
 from PIL import Image, ImageFilter, ImageEnhance
 
-# create folder firstly
-basepath_data = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-for sub_folder in ["ordered", "convert_wb_1", "convert_wb_2"]:
-    folder = os.path.join(basepath_data, sub_folder)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+from utils import check_folder, image_l, data_dir
 
 BOLD = 4
 MARGIN = 2
 OVERLAP = 0.16
+WIDTH, HEIGHT = 26, 32
 
 get_number = lambda filepath: os.path.basename(filepath).split(".")[0]
 cal_rect = lambda rect: (float(rect[1]) - float(rect[0])) * (float(rect[3]) - float(rect[2]))
@@ -34,16 +30,23 @@ def log():
 
     messages = []
 
-def crop_component(filepath_input, area, folder="ordered"):
+def create_folders(type):
+    for sub_folder in ["cropped", "convert_wb_1", "convert_wb_2"]:
+        folder = os.path.join(data_dir(), type, sub_folder)
+        check_folder(folder, is_folder=True)
+
+def crop_component(filepath_input, area, folder="cropped"):
+    global WIDTH, HEIGHT
+
     count = 0
     number = get_number(filepath_input)
 
     filename = os.path.basename(filepath_input)
     folder = os.path.join(os.path.dirname(filepath_input), "..", folder, filename)
-    if not os.path.exists(folder):
-        os.makedirs(folder)
+    check_folder(folder, is_folder=True)
 
     im = Image.open(filepath_input)
+    width, height = im.size[0], im.size[1]
     for idx, (top, bottom, left, right) in enumerate(area):
         n = "x"
         try:
@@ -52,9 +55,63 @@ def crop_component(filepath_input, area, folder="ordered"):
             pass
 
         filepath_output = os.path.join(folder, "{}.{}.jpg".format(idx+1, n))
+        is_create_new_image = False
 
+        w, h = right - left, bottom - top
+        if w < WIDTH:
+            shift_left = (WIDTH-w)/2
+            shift_right = WIDTH - w - shift_left
+
+            if left-shift_left > 0:
+                left -= shift_left
+            else:
+                is_create_new_image = True
+
+            if right+shift_right < width:
+                right += shift_right
+            else:
+                is_create_new_image = True
+        else:
+            shift_left = (w-WIDTH)/2
+            shift_right = w - WIDTH - shift_left
+
+            left += shift_left
+            right -= shift_right
+
+        if h < HEIGHT:
+            shift_top = (HEIGHT-h)/2
+            shift_bottom = HEIGHT - h - shift_top
+
+            if top-shift_top > 0:
+                top -= shift_top
+            else:
+                is_create_new_image = True
+
+            if bottom+shift_bottom < height:
+                bottom += shift_bottom
+            else:
+                is_create_new_image = True
+        else:
+            shift_top = (h-HEIGHT)/2
+            shift_bottom = h-HEIGHT-shift_top
+
+            top += shift_top
+            bottom -= shift_bottom
+
+        check_folder(filepath_output)
         crop_im = im.crop((left, top, right, bottom))
-        crop_im.save(filepath_output)
+        if is_create_new_image:
+            size = (WIDTH, HEIGHT)
+
+            layer = Image.new('L', size, (255))
+            layer.paste(crop_im, tuple(map(lambda x:(x[0]-x[1])/2, zip(size, crop_im.size))))
+
+            layer.save(filepath_output)
+        else:
+            if crop_im.size[0] != WIDTH or crop_im.size[1] != HEIGHT:
+                print filename, right, left, bottom, top, crop_im.size
+
+            crop_im.save(filepath_output)
 
         count += 1
 
@@ -78,7 +135,7 @@ def detect_connected_component(graph):
         top, bottom = x.min(), x.max()
         left, right = y.min(), y.max()
 
-        if h-bottom < MARGIN or top < MARGIN or left < MARGIN or w-right < MARGIN:# the rect is closed bottom or top, just ignore it
+        if h-bottom < MARGIN or top < MARGIN or w-right < MARGIN:# the rect is closed bottom or top, just ignore it
             new_graph[new_graph == v] = 0
             messages.append("ignore {} because of {}".format((top, bottom, left, right), (h-bottom, w-right)))
         else: # just handle the foreground
@@ -129,15 +186,8 @@ def detect_connected_component(graph):
     for idx in range(len(area)):
         area[idx] = area[idx][0:4]
 
-        '''
-        if idx > 0:
-            area[idx][2] -= BOLD
-        '''
-
     for idx, rects, ratio in reversed(removed_idx):
         del area[idx]
-
-        #messages.append("remove {} rect({}) because the ratio of overlapping is greater than {}".format(idx, rects, ratio))
 
     log()
 
@@ -146,13 +196,10 @@ def detect_connected_component(graph):
 def convert_wb_2(filepath_input, folder="convert_wb_2"):
     global messages
 
-    im = Image.open(filepath_input)
-    im = im.convert("L")
-    im = im.filter(ImageFilter.MedianFilter())
-    enhancer = ImageEnhance.Contrast(im)
-    im = enhancer.enhance(2)
+    im, _ = image_l(filepath_input)
 
     filepath_output = os.path.join(os.path.dirname(filepath_input), "..", folder, os.path.basename(filepath_input))
+    check_folder(filepath_output)
     im.save(filepath_output)
 
     messages.append(os.path.basename(filepath_input))
@@ -196,24 +243,28 @@ def convert_wb_1(filepath_input, folder="convert_wb_1"):
                 pixdata[x, y] = (255, 255, 255, 255)
 
     filepath_output = os.path.join(os.path.dirname(filepath_input), "..", folder, os.path.basename(filepath_input))
+    check_folder(filepath_output)
     img.save(filepath_output)
 
     return filepath_output
 
 @click.command()
-@click.option("-f", "--folder", default=os.path.join(os.path.dirname(__file__), "data", "train"))
+@click.option("-t", "--type", type=click.Choice(["train", "test"]))
 @click.option("-v", "--vvv", is_flag=True)
-def main(folder, vvv):
+def main(type, vvv):
     global debug
     debug = vvv
 
+    folder = os.path.join(data_dir(), type)
+    create_folders(type)
+
     total_crop, accuracy_crop, wrong_crop = 0, 0, []
 
-    if vvv:
+    if vvv and type == "train":
         files = ["004801.jpg", "06379.jpg", "70433.jpg", "872360.jpg", "208202.jpg", "357559.jpg", "12018.jpg", "112019.jpg", "984017.jpg"]
         files = [os.path.join(folder, filename) for filename in files]
     else:
-        files = glob.iglob("{}/*.jpg".format(folder))
+        files = glob.iglob("{}/source/*.jpg".format(folder))
 
     for filepath in files:
         number = get_number(filepath)
