@@ -30,13 +30,10 @@ def copy_image_to_number_folder(data_input, data_output):
 @click.command()
 @click.option("-i", "--input")
 def main(input):
-    if input is None:
-        print "Not found input parameter"
-    else:
-        data_input = os.path.join(data_dir(), "test", input)
-        data_output = os.path.join(data_dir(), "test", "number")
+    data_input = os.path.join(data_dir(), "train", input)
+    data_output = os.path.join(data_dir(), "train", "number")
 
-        copy_image_to_number_folder(data_input, data_output)
+    copy_image_to_number_folder(data_input, data_output)
 
 if __name__ == "__main__":
     main()

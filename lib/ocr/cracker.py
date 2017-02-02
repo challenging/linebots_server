@@ -56,10 +56,18 @@ def process(input, cropped):
             if c != "10":
                 answer += c
 
-        print "{} - ({})The prediction/real answer is {}/{}".format(folder, "+" if answer == number else "-", answer, number)
+        mark_len = "x"
+        if len(answer) == len(number):
+            mark_len = "o"
+            count_number += 1
 
-        count_number += 1 if len(answer) == len(number) else 0
-        count_right += 1 if answer == number else 0
+        mark_correct = "-"
+        if answer == number:
+            mark_correct = "+"
+            count_right += 1
+
+        print "{} {}{} The prediction/real answer is {}/{}".format(folder, mark_len, mark_correct, answer, number)
+
         count_all += 1
 
     print count_all, count_number, count_right
