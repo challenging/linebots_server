@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
+
 import geocoder
 import requests
 import psycopg2
@@ -24,7 +26,7 @@ channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
 
 def get_chrome_driver():
     # Set chrome driver path
-    chromedriver = os.path.join(os.path.dirname(__file__), "..", "driver", "chromedriver")
+    chromedriver = os.path.join(os.path.dirname(__file__), "..", "driver", "chromedriver_{}".format("mac64" if sys.platform == "darwin" else "linux64"))
     if not os.path.exists(chromedriver):
         print "Not found the driver of Chrome from {}".format(chromedriver)
     else:
