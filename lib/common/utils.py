@@ -12,6 +12,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 from tqdm import tqdm
+from selenium import webdriver
 
 UTF8 = "UTF8"
 MONEY = 25
@@ -20,6 +21,17 @@ CONN = None
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
 channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
+
+def get_chrome_driver():
+    # Set chrome driver path
+    chromedriver = os.path.join(os.path.dirname(__file__), "..", "driver", "chromedriver")
+    if not os.path.exists(chromedriver):
+        print "Not found the driver of Chrome from {}".format(chromedriver)
+    else:
+        os.environ["webdriver.chrome.driver"] = chromedriver
+        print "export webdriver.chrome.driver={}".format(chromedriver)
+
+    return webdriver.Chrome(chromedriver)
 
 def get_db_connection():
     global CONN
@@ -40,11 +52,34 @@ def get_db_connection():
 
     return CONN
 
+def check_folder(filepath, is_folder=False):
+    folder = filepath
+    if not is_folder:
+        folder = os.path.dirname(filepath)
+
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
 def data_dir(subfolder):
     return os.path.join(os.path.dirname(__file__), "..", "..", "etc", subfolder)
 
 def db_dir():
     return data_dir("db")
+
+def tra_dir(f):
+    folder = os.path.join(data_dir("captcha"), "tra", f)
+    check_folder(folder, is_folder=True)
+
+    return folder
+
+def tra_img_dir():
+    return tra_dir("source")
+
+def tra_screen_dir():
+    return tra_dir("screenshot")
+
+def tra_success_dir():
+    return tra_dir("success")
 
 def crawl(url, subfolder, filename=None, compression=True):
     filename = filename if filename is not None else url.split("/")[-1]
