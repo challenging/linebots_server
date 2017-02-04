@@ -8,7 +8,6 @@ import datetime
 from lib.common.utils import MODE_TICKET
 from lib.common.check_taiwan_id import check_taiwan_id_number
 from lib.common.mode import Mode
-from lib.ticket import booking_tra
 from lib.ticket.utils import get_station_number, get_train_type
 
 class TicketMode(Mode):
@@ -63,7 +62,7 @@ class TicketMode(Mode):
             else:
                 reply_txt = "服務忙碌，稍後懶人訂票會繼續幫您服務({})".format(ticket_number)
             '''
-            reply_txt = "\n".join(["{}: {}".format(k, v) for k, v in self.memory[user_id]])
+            reply_txt = "\n".join(["{}: {}".format(k, v) for k, v in self.memory[user_id].items()])
 
             del self.memory[user_id]
 
