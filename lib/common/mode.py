@@ -14,5 +14,5 @@ class Mode(object):
     def mode(self, mode):
         self._mode = mode
 
-    def process(self, question, user_id, user_name):
+    def conversion(self, question, user_id, user_name):
         raise NotImplementedError

@@ -11,7 +11,7 @@ class LottoMode(Mode):
     def is_process(self, mode):
         return self.mode.lower() == mode.lower()
 
-    def process(self, question, user_id=None, user_name=None):
+    def conversion(self, question, user_id=None, user_name=None):
         if question.isdigit():
             fee = int(question)
             if fee > 0 and fee < self.MONEY:

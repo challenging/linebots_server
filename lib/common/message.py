@@ -38,16 +38,19 @@ def txt_error_lucky():
     return "尚無設定星座，請設定後，即可得到星座運勢。"
 
 def txt_mode(mode):
-    mode_name = None
+    mode_name, comments = None, None
 
     if mode == MODE_NORMAL:
         mode_name = "查詢"
+        comments = "(輸入help，有入門導覽指引)"
     elif mode == MODE_LOTTO:
         mode_name = "競標"
+        comments = ""
     elif mode == MODE_TICKET:
         mode_name = "訂票"
+        comments = "(請先輸入身份證字號)"
 
-    return "目前模式為[{}]".format(mode_name)
+    return "目前模式為{}{}".format(mode_name, comments)
 
 def txt_ticket_title():
     return "懶人訂票服務"

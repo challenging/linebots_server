@@ -33,14 +33,16 @@ def book_ticket(param, cropped=1):
     retry = 2
     web_opener = get_phantom_driver()
 
+    ticket_number, ticket_filepath = None, None
     while retry >= 0:
         tickets = []
 
         web_opener.get("http://railway1.hinet.net/csearch.htm")
 
         for key, value in param.items():
-            element = web_opener.find_element_by_id(key)
-            element.send_keys(param[key])
+            if isinstance(value, str):
+                element = web_opener.find_element_by_id(key)
+                element.send_keys(param[key])
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
 
@@ -84,11 +86,11 @@ def book_ticket(param, cropped=1):
                 param["ticket"] = ticket_number.text
                 print "get ticket number - {}".format(param["ticket"])
 
-                filepath_ticket = os.path.join(tra_ticket_dir(), "id={}_ticket={}.png".format(\
+                ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.png".format(\
                     param["person_id"], param["ticket"]))
-                print "the filepath_ticket is {}".format(filepath_ticket)
+                print "the filepath_ticket is {}".format(ticket_filepath)
 
-                web_opener.save_screenshot(filepath_ticket)
+                web_opener.save_screenshot(ticket_filepath)
 
                 retry = -1
 
@@ -101,6 +103,8 @@ def book_ticket(param, cropped=1):
     print "retry again({})".format(retry)
 
     web_opener.quit()
+
+    return ticket_number, ticket_filepath
 
 if __name__ == "__main__":
     book_ticket(testing_params)
