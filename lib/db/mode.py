@@ -4,6 +4,7 @@
 import datetime
 
 from lib.common.db import DB
+from lib.common.utils import MODE_NORMAL
 
 class ModeDB(DB):
     table_name = "mode"
@@ -28,9 +29,9 @@ class ModeDB(DB):
         cursor = self.conn.cursor()
         cursor.execute(sql)
 
-        mode = None
+        mode = MODE_NORMAL
         for row in cursor.fetchall():
-            mode = row[0]
+            mode = row[0].lower()
 
         cursor.close()
 

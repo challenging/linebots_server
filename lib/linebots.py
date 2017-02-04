@@ -28,7 +28,7 @@ from mode.lotto import mode_lotto
 from mode.ticket import mode_ticket
 
 from lib.common.utils import get_location, is_admin
-from lib.common.utils import UTF8, MODE_NORMAL, channel_secret, channel_access_token
+from lib.common.utils import UTF8, channel_secret, channel_access_token
 from lib.common.message import txt_error, txt_hello, txt_mode
 from lib.message_route import mode_change_button, run_normal
 
@@ -138,7 +138,7 @@ def message_text(event):
     reply_txt = txt_hello(profile.display_name.encode(UTF8), txt_error())
     msg = event.message.text.encode(UTF8).lower()
 
-    mode, message = MODE_NORMAL, None
+    mode, message = None, None
     if msg == "切換模式":
         message = mode_change_mode()
     else:
