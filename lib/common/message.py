@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from lib.common.utils import MODE_NORMAL, MODE_LOTTO, MODE_TICKET
+
 def txt_hello(user_name, answer):
     return "嗨！ {},\n{}".format(user_name, answer)
 
@@ -36,7 +38,16 @@ def txt_error_lucky():
     return "尚無設定星座，請設定後，即可得到星座運勢。"
 
 def txt_mode(mode):
-    return "目前模式為[{}]".format(mode)
+    mode_name = None
+
+    if mode == MODE_NORMAL:
+        mode_name = "查詢"
+    elif mode == MODE_LOTTO:
+        mode_name == "競標"
+    elif mode == MODE_TICET:
+        mode_name == "訂票"
+
+    return "目前模式為[{}]".format(mode_name)
 
 def txt_ticket_title():
     return "懶人訂票服務"

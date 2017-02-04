@@ -140,7 +140,7 @@ def message_text(event):
 
     mode, message = None, None
     if msg == "切換模式":
-        message = mode_change_mode()
+        message = mode_change_button()
     else:
         mode = db_mode.query(profile.user_id)
 
