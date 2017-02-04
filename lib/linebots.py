@@ -137,7 +137,7 @@ def message_text(event):
     reply_txt = txt_hello(profile.display_name.encode(UTF8), txt_error())
     msg = event.message.text.encode(UTF8).lower()
 
-    mode, message = MODE_NROMAL, None
+    mode, message = MODE_NORMAL, None
     if msg == "切換模式":
         message = mode_change_mode()
     else:
