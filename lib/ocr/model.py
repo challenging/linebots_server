@@ -19,7 +19,8 @@ from keras.utils import np_utils
 from keras import backend as K
 K.set_image_dim_ordering('th')
 
-from utils import save, check_folder, data_dir, model_dir
+from lib.common.utils import check_folder
+from utils import save, data_dir, model_dir
 
 # fix random seed for reproducibility
 seed = 7

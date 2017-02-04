@@ -6,9 +6,11 @@ import glob
 import click
 import numpy as np
 
+from lib.common.utils import check_folder
+
 from convert import convert_wb_1, convert_wb_2, crop_component, detect_connected_component
 from model import cnn_preprocess
-from utils import latest_model, image_l, data_dir, cracker_dir
+from utils import latest_model, image_l, data_dir
 
 model = None
 if model is None:

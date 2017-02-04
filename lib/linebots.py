@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
+
 from flask import Blueprint
 from flask import Flask, request, abort
 
@@ -13,7 +15,7 @@ from linebot.exceptions import (
 )
 
 from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage,
+    MessageEvent, TextMessage, TextSendMessage, PostbackEvent,
     StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage
 )
 
@@ -22,9 +24,9 @@ from db.location import db_location
 from db.mode import db_mode
 from db.lotto import db_lotto
 
-from lib.common.utils import get_location
+from lib.common.utils import get_location, is_admin
 from lib.common.utils import UTF8, channel_secret, channel_access_token
-from lib.common.message import error, not_support, article
+from lib.common.message import txt_error
 from lib.message_route import get_mode, mode_special, mode_normal
 
 lotto_opened = True
@@ -109,20 +111,30 @@ def handle_sticker_message(event):
     '''
     pass
 
+@handler.add(PostbackEvent)
+def handle_postback(event):
+    m = re.match("ticket=([\w]+)", event.postback.data)
+
+    if m is not None:
+        service = m.group(1)
+
+        line_bot_api.reply_message(
+            event.reply_token, TextSendMessage(text=service))
+
 @handler.add(MessageEvent, message=TextMessage)
 def message_text(event):
     global lotto_opened
 
     # get the basic information about user
     profile = line_bot_api.get_profile(event.source.user_id)
-    reply_txt = "嗨, {}!\n{}".format(profile.display_name.encode(UTF8), error())
+    reply_txt = "嗨, {}!\n{}".format(profile.display_name.encode(UTF8), txt_error())
     msg = event.message.text.encode(UTF8).lower()
     mode = get_mode(msg)
     message = None
 
     # set lotto_opened
     is_system_cmd = False
-    if profile.user_id == "Ua5f08ec211716ba22bef87a8ac2ca6ee":
+    if is_admin(profile.user_id):
         if msg == "game over":
             lotto_opened = False
             is_system_cmd = True

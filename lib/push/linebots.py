@@ -7,7 +7,7 @@ from lib.db.mode import db_mode
 from lib.db.lotto import db_lotto
 
 from lib.message_route import mode_normal
-from lib.common.utils import UTF8, channel_secret, channel_access_token
+from lib.common.utils import UTF8, channel_secret, channel_access_token, get_rc_id
 
 from linebot import LineBotApi
 
@@ -26,11 +26,16 @@ line_bot_api = LineBotApi(channel_access_token)
 def push(user_id, reply_txt):
     line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
 
-def push_carousel(user_id="Ua5f08ec211716ba22bef87a8ac2ca6ee"):
+def push_carousel(user_id=get_rc_id()):
     profile = line_bot_api.get_profile(user_id)
-    message = mode_normal(profile, "cafe", "normal", db_mode, db_location, db_question, db_lotto)
-    print message
 
+    message = mode_normal(profile, "cafe", "normal", db_mode, db_location, db_question, db_lotto)
+    line_bot_api.push_message(user_id, message)
+
+def push_ticket(user_id=get_rc_id()):
+    profile = line_bot_api.get_profile(user_id)
+
+    message = mode_normal(profile, "懶人訂票", "normal", db_mode, db_location, db_question, db_lotto)
     line_bot_api.push_message(user_id, message)
 
 def run():
@@ -53,4 +58,5 @@ def run():
             raise NotImplementedError
 
 if __name__ == "__main__":
-    push_carousel()
+    #push_carousel()
+    push_ticket()

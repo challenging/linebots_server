@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-def help():
+def txt_hello(user_name, answer):
+    return "嗨！ {},\n{}".format(user_name, answer)
+
+def txt_help():
     msg = """感謝您使用 Bot of LazyRC Inc. 目前此機器人支援下列問題
 1. 公車查詢 (輸入：<公車號碼><站牌名稱>, 例: 650喬治商職)
 2. 天氣（輸入：<台灣縣市>, 例：台北）
@@ -11,11 +14,40 @@ def help():
 
     return msg
 
-def error():
-    return """系統發生錯誤，請稍後再試，感謝您的耐心！"""
+def txt_google(msg, answer):
+    return "我不清楚你的問題[{}]，所以提供 google search 結果\n{}".format(msg, answer)
 
-def not_support():
-    return """電腦版不支援，請使用手機版，方可正常顯示訊息"""
+def txt_error():
+    return "系統發生錯誤，請稍後再試，感謝您的耐心！"
 
-def article():
+def txt_not_support():
+    return "電腦版不支援，請使用手機版，方可正常顯示訊息"
+
+def txt_article():
     return "瀏覽 Google Search 文章"
+
+def txt_error_location():
+    return "尚無設定地理位置，請設定後，即可得到正確天氣資訊。"
+
+def txt_error_lucky():
+    return "尚無設定星座，請設定後，即可得到星座運勢。"
+
+def txt_mode(msg):
+    return "您已將模式設定為[{}]模式".format(msg)
+
+def txt_ticket_title():
+    return "懶人訂票服務"
+
+def txt_ticket_body():
+    return "請選擇下列票種"
+
+def txt_ticket(mode):
+    t = None
+    if mode == "tra":
+        t = "台鐵"
+    elif mode == "thsr":
+        t = "高鐵"
+    elif mode == "fly":
+        t = "飛機"
+
+    return "訂購 {} 票".format(t)

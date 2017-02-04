@@ -10,7 +10,8 @@ from scipy import ndimage
 from scipy.ndimage.measurements import label
 from PIL import Image, ImageFilter, ImageEnhance
 
-from utils import check_folder, image_l, data_dir
+from lib.common.utils import check_folder
+from utils import image_l, data_dir
 
 BOLD = 4
 MARGIN = 2

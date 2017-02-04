@@ -68,21 +68,6 @@ def data_dir(subfolder):
 def db_dir():
     return data_dir("db")
 
-def tra_dir(f):
-    folder = os.path.join(data_dir("captcha"), "tra", f)
-    check_folder(folder, is_folder=True)
-
-    return folder
-
-def tra_img_dir():
-    return tra_dir("source")
-
-def tra_screen_dir():
-    return tra_dir("screenshot")
-
-def tra_success_dir():
-    return tra_dir("success")
-
 def crawl(url, subfolder, filename=None, compression=True):
     filename = filename if filename is not None else url.split("/")[-1]
 
@@ -108,21 +93,14 @@ def crawl(url, subfolder, filename=None, compression=True):
         # rename file
         os.rename(filename, filename.rsplit(".", 1)[0])
 
-def help():
-    msg = """感謝您使用 Bot of LazyRC Inc. 目前此機器人支援下列問題
-1. 公車查詢 (輸入：<公車號碼><站牌名稱>, 例: 650喬治商職)
-2. 天氣（輸入：<台灣縣市>, 例：台北）
-3. 星座運勢（輸入：<星座>, 例：射手）
-4. 匯率（輸入：<幣別>, 例：美金）
-5. 若查詢不到，則會以 google search 第一筆搜尋結果為答案"""
+def is_admin(user_id):
+    if user_id == "Ua5f08ec211716ba22bef87a8ac2ca6ee":
+        return True
+    else:
+        return False
 
-    return msg
-
-def error():
-    return """系統發生錯誤，請稍後再試，感謝您的耐心！"""
-
-def not_support():
-    return """電腦版不支援，請使用手機版，方可正常顯示訊息"""
+def get_rc_id():
+    return "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
 def get_location(lat, lng):
     return geocoder.google([lat, lng], method='reverse')

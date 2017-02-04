@@ -72,11 +72,3 @@ def latest_model(model):
             model_json, os.path.exists(model_json), model_h5, os.path.exists(model_h5))
 
         sys.exit(998)
-
-def check_folder(filepath, is_folder=False):
-    folder = filepath
-    if not is_folder:
-        folder = os.path.dirname(filepath)
-
-    if not os.path.exists(folder):
-        os.makedirs(folder)

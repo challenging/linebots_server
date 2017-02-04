@@ -19,7 +19,7 @@ from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_t
 encoder = hashlib.md5()
 
 testing_params = {"person_id": "L122760167",
-                  "getin_date": "2017/02/16-00",
+                  "getin_date": "2017/02/17-00",
                   "from_station": "106",
                   "to_station": "130",
                   "order_qty_str": "1",

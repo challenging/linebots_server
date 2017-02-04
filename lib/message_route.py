@@ -6,12 +6,15 @@ import sys
 
 from linebot.models import (
     TemplateSendMessage, CarouselTemplate, CarouselColumn, URITemplateAction,
+    ButtonsTemplate, PostbackTemplateAction
 )
 
 from lib.db.mode import db_mode
 from lib.bot import fxrate, google_search, weather, lucky, bus, place
 from lib.common.utils import MONEY, UTF8, get_location
-from lib.common.message import help, error, not_support, article
+from lib.common.message import txt_help, txt_not_support, txt_article, txt_google, txt_mode, txt_hello
+from lib.common.message import txt_ticket, txt_ticket_title, txt_ticket_body
+from lib.common.message import txt_error_location, txt_error_lucky
 
 # init bots
 place.bot.init()
@@ -24,27 +27,42 @@ bots = [lambda msg: weather.bot.bots(msg),
         lambda msg: place.bot.bots(msg),
         lambda msg: google_search.bot.bots(msg)]
 
-def get_mode(msg):
-    mode = "normal"
+MODE_NORMAL = "normal"
+MODE_SPECIAL = "special"
+MODE_LOTTO = "lotto"
 
-    if msg in ["game", "競標", "競價", "退出", "quit", "正常", "離開"]:
-        mode = "special"
+DEFINED_GAME_START_WORD = set(["game", "競標", "競價"])
+DEFINED_GAME_END_WORD = set(["退出", "quit", "正常", "離開"])
+DEFINED_GAME_WORD = DEFINED_GAME_START_WORD.union(DEFINED_GAME_END_WORD)
+
+KEYWORD_TICKET = set(["懶人訂票"])
+KEYWORD_LUCKY = set(["lucky", "星座"])
+KEYWORD_WEATHER = set(["weather", "天氣"])
+
+def get_mode(msg):
+    global MODE_NORMAL
+    global DEFINED_GAME_WORD
+
+    mode = MODE_NORMAL
+    if msg in DEFINED_GAME_WORD:
+        mode = MODEL_SPECIAL
 
     return mode
 
 def mode_special(profile, msg, db_mode):
-    if msg in ["game", "競標", "競價"]:
-        mode = "lotto"
+    global MODE_LOTTO, MODE_TICKET
+    global DEFINED_GAME_START_WORD
+
+    if msg in DEFINED_GAME_START_WORD:
+        mode = MODE_LOTTO
         msg = "競標"
     else:
-        mode = "normal"
+        mode = MODE_NORMAL
         msg = "正常"
 
     db_mode.ask(profile.user_id, mode)
 
-    reply_txt = "您已將模式設定為[{}]模式".format(msg)
-
-    return reply_txt
+    return txt_mode(msg)
 
 def lotto(profile, lotto_opened, msg, db_lotto):
     if lotto_opened:
@@ -74,13 +92,16 @@ def lotto(profile, lotto_opened, msg, db_lotto):
     return reply_txt
 
 def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto, lotto_opened=True):
+    global MODE_NORMAL, MODE_LOTTO
+    global KEYWORD_TICKET, KEYWORD_LUCKY, KEYWORD_WEATHER
+
     for row in db_mode.query(profile.user_id):
         user_id, creation_datetime, mode = row
 
         break
 
-    if mode == "normal":
-        reply_txt = help()
+    reply_txt = txt_help()
+    if mode == MODE_NORMAL:
         find_answer = False
 
         # get location
@@ -99,26 +120,37 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
 
         # get lucky
         twelve = None
+        if msg in KEYWORD_TICKET:
+            buttons = ButtonsTemplate(
+                title=txt_ticket_title(), text=txt_ticket_body(), actions=[
+                    PostbackTemplateAction(label=txt_ticket("tra"), data='ticket=tra'),
+                    PostbackTemplateAction(label=txt_ticket("thsr"), data='ticket=thsr'),
+                    PostbackTemplateAction(label=txt_ticket("fly"), data='ticket=fly')
+                ])
 
-        if re.search(r"^(help|幫助)$", msg):
+            reply_txt = TemplateSendMessage(
+                alt_text=txt_not_support(), template=buttons)
+
             find_answer = True
-        elif msg in ["weather", "天氣"]:
+        elif re.search(r"^(help|幫助)$", msg):
+            find_answer = True
+        elif msg in KEYWORD_WEATHER:
             if state:
                 print "weather mode: ", state
 
                 reply_txt = bots[bots_name.index("weather")](state)
             else:
-                reply_txt = "尚無設定地理位置，請設定後，即可得到正確天氣資訊。"
+                reply_txt = txt_error_location
 
             find_answer = True
-        elif msg in ["lucky", "星座"] and twelve:
+        elif msg in KEYWORD_LUCKY and twelve:
             print "lucky mode: ", twelve
 
             answer = bots[bots_name.index("lucky")](twelve)
             if anwer is not None:
                 reply_txt = answer
             else:
-                reply_txt = "尚無設定星座，請設定後，即可得到星座運勢。"
+                reply_txt = txt_error_lucky()
 
             find_answer = True
         else:
@@ -136,7 +168,7 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                 if answer:
                     if name == "place":
                         reply_txt = TemplateSendMessage(
-                            alt_text=not_support(),
+                            alt_text=txt_not_support(),
                             template=CarouselTemplate(
                                 columns=[
                                     CarouselColumn(
@@ -145,7 +177,7 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                                         text=row["address"],
                                         actions=[
                                             URITemplateAction(
-                                                label=article(),
+                                                label=txt_article(),
                                                 uri=row["uri"]
                                                 )
                                             ]
@@ -154,7 +186,7 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
                                 )
                             )
                     elif name == "google":
-                        reply_txt = "我不清楚你的問題[{}]，所以提供 google search 結果\n{}".format(msg, answer)
+                        reply_txt = txt_google(msg, answer)
                     else:
                         reply_txt = answer
 
@@ -166,8 +198,8 @@ def mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto,
 
         if isinstance(reply_txt, (str, unicode)):
             db_question.ask(profile.user_id, profile.display_name, msg, reply_txt)
-            reply_txt = "嗨！ {},\n{}".format(profile.display_name.encode(UTF8), reply_txt)
-    else:
+            reply_txt = txt_hello(profile.display_name.encode(UTF8), reply_txt)
+    elif mode == MODE_LOTTO:
         reply_txt = lotto(profile, lotto_opened, msg, db_lotto)
 
     return reply_txt

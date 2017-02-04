@@ -8,7 +8,8 @@ import click
 import shutil
 import numpy as np
 
-from utils import image_l, data_dir, check_folder
+from lib.common.utils import check_folder
+from utils import image_l, data_dir
 
 def copy_image_to_number_folder(data_input, data_output):
     timestamp = int(time.time())
