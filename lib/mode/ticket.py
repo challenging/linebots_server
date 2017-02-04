@@ -60,7 +60,7 @@ class TicketMode(Mode):
             if ticket_number is not None:
                 reply_txt = "懶人訂票幫您訂到的台鐵車票號碼是{}".format(ticket_number)
             else:
-                reply_txt = "服務忙碌，稍後懶人訂票會繼續幫您服務"
+                reply_txt = "服務忙碌，稍後懶人訂票會繼續幫您服務({})".format(ticket_number)
 
             del self.memory[user_id]
 

@@ -10,7 +10,7 @@ from flask import Flask
 @click.option("-p", "--port", default=8000)
 @click.option("-h", "--host", default="0.0.0.0")
 def run(port, host):
-    app = Flask(__name__)
+    app = Flask(__name__. static_folder="/app/lib/common/../../etc/captcha/tra/")
     app.register_blueprint(linebots.blueprint)
 
     port = int(os.environ.get("PORT", port))
