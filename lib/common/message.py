@@ -43,11 +43,9 @@ def txt_mode(mode):
     if mode == MODE_NORMAL:
         mode_name = "查詢"
     elif mode == MODE_LOTTO:
-        mode_name == "競標"
+        mode_name = "競標"
     elif mode == MODE_TICKET:
-        mode_name == "訂票"
-
-    print mode, mode_name
+        mode_name = "訂票"
 
     return "目前模式為[{}]".format(mode_name)
 
