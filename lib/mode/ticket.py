@@ -4,7 +4,7 @@
 from lib.common.utils import MODE_TICKET
 from lib.common.mode import Mode
 
-class TicketoMode(Mode):
+class TicketMode(Mode):
     def is_process(self, mode):
         return self.mode.lower() == mode.lower()
 
