@@ -29,7 +29,7 @@ class ModeDB(DB):
         cursor.execute(sql)
 
         mode = None
-        for row in cursro.fetchall():
+        for row in cursor.fetchall():
             mode = row[0]
 
         cursor.close()
