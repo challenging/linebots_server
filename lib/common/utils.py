@@ -17,8 +17,10 @@ from tqdm import tqdm
 from selenium import webdriver
 
 UTF8 = "UTF8"
-MONEY = 25
 CONN = None
+
+MODE_NORMAL = "normal"
+MODE_LOTTO = "lotto"
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
@@ -26,7 +28,7 @@ channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
 
 def get_chrome_driver():
     # Set chrome driver path
-    chromedriver = os.path.join(os.path.dirname(__file__), "..", "driver", "chromedriver_{}".format("mac64" if sys.platform == "darwin" else "linux64"))
+    chromedriver = os.path.join(data_dir("driver"), "chromedriver_{}".format("mac64" if sys.platform == "darwin" else "linux64"))
     if not os.path.exists(chromedriver):
         print "Not found the driver of Chrome from {}".format(chromedriver)
     else:
@@ -34,6 +36,15 @@ def get_chrome_driver():
         print "export webdriver.chrome.driver={}".format(chromedriver)
 
     return webdriver.Chrome(chromedriver)
+
+def get_phantom_driver():
+    driver = os.path.join(data_dir("driver"), "phantomjs-2.1.1-{}".format("mac64" if sys.platform == "darwin" else "linux64"), "bin", "phantomjs")
+
+    if not os.path.exists(driver):
+        print "Not found the driver of PhantomJS from {}".format(driver)
+
+    print driver
+    return webdriver.PhantomJS(driver)
 
 def get_db_connection():
     global CONN

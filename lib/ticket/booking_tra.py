@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from PIL import Image
 
 from lib.ocr.cracker import crack
-from lib.common.utils import get_chrome_driver
+from lib.common.utils import get_chrome_driver, get_phantom_driver
 from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_ticket_dir
 
 encoder = hashlib.md5()
@@ -31,7 +31,7 @@ def book_ticket(param, cropped=1):
     global encoder
 
     retry = 2
-    web_opener = get_chrome_driver()
+    web_opener = get_phantom_driver()
 
     while retry >= 0:
         tickets = []
@@ -50,9 +50,10 @@ def book_ticket(param, cropped=1):
 
         filepath_screenshot = os.path.join(tra_screen_dir(), "{}.png".format(int(time.time()*1000)))
         web_opener.save_screenshot(filepath_screenshot)
+        print "save the screenshot in {}".format(filepath_screenshot)
 
         im = Image.open(filepath_screenshot)
-        im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
+        #im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
         im = im.crop((location["x"], location["y"], location["x"]+size["width"], location["y"] + size["height"]))
 
         output = io.BytesIO()
@@ -61,6 +62,7 @@ def book_ticket(param, cropped=1):
 
         im_filepath = os.path.join(tra_img_dir(), "{}.jpg".format(encoder.hexdigest()))
         im.save(im_filepath)
+        print "save the cropped image in {}".format(im_filepath)
 
         answer = crack(im_filepath, cropped, basefolder=os.path.join(tra_img_dir(), ".."))
         web_opener.find_element_by_id("randInput").send_keys(answer)
@@ -96,6 +98,7 @@ def book_ticket(param, cropped=1):
         retry -= 1
 
     time.sleep(2)
+    print "retry again({})".format(retry)
 
     web_opener.quit()
 

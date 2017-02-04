@@ -24,12 +24,12 @@ from db.location import db_location
 from db.mode import db_mode
 from db.lotto import db_lotto
 
+from mode.lotto import mode_lotto
+
 from lib.common.utils import get_location, is_admin
 from lib.common.utils import UTF8, channel_secret, channel_access_token
-from lib.common.message import txt_error
-from lib.message_route import get_mode, mode_special, mode_normal
-
-lotto_opened = True
+from lib.common.message import txt_error, txt_hello, txt_mode
+from lib.message_route import mode_change_button, run_normal
 
 blueprint = Blueprint('LINEBOTS', __name__)
 
@@ -113,56 +113,68 @@ def handle_sticker_message(event):
 
 @handler.add(PostbackEvent)
 def handle_postback(event):
-    m = re.match("ticket=([\w]+)", event.postback.data)
+    profile = line_bot_api.get_profile(event.source.user_id)
 
-    if m is not None:
+    if re.search("ticket=([\w]+)", event.postback.data):
+        m = re.match("ticket=([\w]+)", event.postback.data)
         service = m.group(1)
 
         line_bot_api.reply_message(
             event.reply_token, TextSendMessage(text=service))
+    elif re.search("mode=([\w]+)", event.postback.data):
+        m = re.match("mode=([\w]+)", event.postback.data)
+        mode = m.group(1)
+
+        line_bot_api.reply_message(
+            event.reply_token, TextSendMessage(text=txt_mode(mode)))
+
+        db_mode.ask(profile.user_id, mode)
 
 @handler.add(MessageEvent, message=TextMessage)
 def message_text(event):
-    global lotto_opened
-
     # get the basic information about user
     profile = line_bot_api.get_profile(event.source.user_id)
-    reply_txt = "嗨, {}!\n{}".format(profile.display_name.encode(UTF8), txt_error())
+    reply_txt = "{}\n{}".format(txt_hello(profile.display_name.encode(UTF8)), txt_error())
     msg = event.message.text.encode(UTF8).lower()
-    mode = get_mode(msg)
-    message = None
 
-    # set lotto_opened
-    is_system_cmd = False
-    if is_admin(profile.user_id):
-        if msg == "game over":
-            lotto_opened = False
-            is_system_cmd = True
+    mode, message = MODE_NROMAL, None
+    if msg == "切換模式":
+        message = mode_change_mode()
+    else:
+        mode = db_mode.query(user_id)
 
-            reply_txt = "關閉競標"
-        elif msg == "game start":
-            lotto_opened = True
-            is_system_cmd = True
+        # set lotto_opened
+        is_system_cmd = False
+        if is_admin(profile.user_id) and mode_lotto.is_process(mode):
+            if mode_lotto.is_open(msg):
+                mode_lotto.lotto_opened = False
+                is_system_cmd = True
 
-            reply_txt = "開啟競標"
-        elif msg == "delete game" and not lotto_opened:
-            reply_txt = "刪除歷史競標資料"
-            is_system_cmd = True
+                reply_txt = "關閉競標"
+            elif mode_lotto.is_over(msg):
+                mode_lotto.lotto_opened = True
+                is_system_cmd = True
 
-            db_lotto.delete()
+                reply_txt = "開啟競標"
+            elif mode_lotto.is_delete(msg) and not mode_lotto.lotto_opened:
+                reply_txt = "刪除歷史競標資料"
+                is_system_cmd = True
 
-    if not is_system_cmd:
-        if mode == "special":
-            reply_txt = mode_special(profile, msg, db_mode)
-        elif mode == "normal":
-            reply_txt = mode_normal(profile, msg, mode, db_mode, db_location, db_question, db_lotto, lotto_opened)
+                db_lotto.delete()
 
-            if not isinstance(reply_txt, str):
-                message = reply_txt
+        if not is_system_cmd:
+            if mode_ticket.is_process(mode):
+                reply_txt = mode_ticket.process(question, profile.user_id, profile.display_name.encode(UTF8))
+            elif mode_lotto.is_process(mode):
+                reply_txt = mode_lotto.process(question, profile.user_id, profile.display_name.encode(UTF8))
+            else:
+                reply_txt = run_normal(profile, msg, mode, db_mode, db_location, db_question)
         else:
-            print "Not found this mode({})".format(mode)
+            pass
 
-    if message is None:
-        message = TextSendMessage(text=reply_txt)
+        if isinstance(reply_txt, str):
+            message = TextSendMessage(text=reply_txt)
+        else:
+            message = reply_txt
 
     line_bot_api.reply_message(event.reply_token, message)

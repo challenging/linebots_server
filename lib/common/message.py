@@ -20,6 +20,9 @@ def txt_google(msg, answer):
 def txt_error():
     return "系統發生錯誤，請稍後再試，感謝您的耐心！"
 
+def txt_not_found_answer(question, mode):
+    return "Not found answer for {} based on {} mode".format(question, mode)
+
 def txt_not_support():
     return "電腦版不支援，請使用手機版，方可正常顯示訊息"
 
@@ -32,8 +35,8 @@ def txt_error_location():
 def txt_error_lucky():
     return "尚無設定星座，請設定後，即可得到星座運勢。"
 
-def txt_mode(msg):
-    return "您已將模式設定為[{}]模式".format(msg)
+def txt_mode(mode):
+    return "目前模式為[{}]".format(mode)
 
 def txt_ticket_title():
     return "懶人訂票服務"

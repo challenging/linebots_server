@@ -62,8 +62,6 @@ class Bot(object):
             cursor.execute(sql)
 
             print "The {} bot finish updating answers".format(type(self).__name__)
-        else:
-            print "Found empty rows"
 
         cursor.close()
 
