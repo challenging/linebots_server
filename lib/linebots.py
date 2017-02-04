@@ -134,7 +134,7 @@ def handle_postback(event):
 def message_text(event):
     # get the basic information about user
     profile = line_bot_api.get_profile(event.source.user_id)
-    reply_txt = "{}\n{}".format(txt_hello(profile.display_name.encode(UTF8)), txt_error())
+    reply_txt = txt_hello(profile.display_name.encode(UTF8), txt_error())
     msg = event.message.text.encode(UTF8).lower()
 
     mode, message = MODE_NROMAL, None
