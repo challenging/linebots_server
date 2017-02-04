@@ -56,11 +56,14 @@ class TicketMode(Mode):
         elif self.memory[user_id].get("train_type", None) is None:
             reply_txt = "請輸入車種"
         else:
+            '''
             ticket_number, ticket_filepath = booking_tra.book_ticket(self.memory[user_id], cropped=1)
             if ticket_number is not None:
                 reply_txt = "懶人訂票幫您訂到的台鐵車票號碼是{}".format(ticket_number)
             else:
                 reply_txt = "服務忙碌，稍後懶人訂票會繼續幫您服務({})".format(ticket_number)
+            '''
+            reply_txt = "\n".join(["{}: {}".format(k, v) for k, v in self.memory[user_id]])
 
             del self.memory[user_id]
 
