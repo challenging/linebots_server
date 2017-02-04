@@ -27,7 +27,7 @@ from db.lotto import db_lotto
 from mode.lotto import mode_lotto
 
 from lib.common.utils import get_location, is_admin
-from lib.common.utils import UTF8, channel_secret, channel_access_token
+from lib.common.utils import UTF8, MODE_NORMAL, channel_secret, channel_access_token
 from lib.common.message import txt_error, txt_hello, txt_mode
 from lib.message_route import mode_change_button, run_normal
 
@@ -163,9 +163,9 @@ def message_text(event):
                 db_lotto.delete()
 
         if not is_system_cmd:
-            if mode_ticket.is_process(mode):
-                reply_txt = mode_ticket.process(question, profile.user_id, profile.display_name.encode(UTF8))
-            elif mode_lotto.is_process(mode):
+            #if mode_ticket.is_process(mode):
+            #    reply_txt = mode_ticket.process(question, profile.user_id, profile.display_name.encode(UTF8))
+            if mode_lotto.is_process(mode):
                 reply_txt = mode_lotto.process(question, profile.user_id, profile.display_name.encode(UTF8))
             else:
                 reply_txt = run_normal(profile, msg, mode, db_mode, db_location, db_question)
