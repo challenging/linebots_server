@@ -11,8 +11,8 @@ from linebot.models import (
 
 from lib.db.mode import db_mode
 from lib.mode.lotto import mode_lotto
-from lib.bot import fxrate, google_search, weather, lucky, bus, place
-from lib.common.utils import UTF8, MODE_NORMAL, MODE_LOTTO, get_location
+from lib.bot import fxrate, google_search, weather, lucky, bus, place, get_location
+from lib.common.utils import UTF8, MODE_NORMAL, MODE_LOTTO, MODE_TICKET
 from lib.common.message import txt_help, txt_not_support, txt_article, txt_google, txt_hello
 from lib.common.message import txt_ticket, txt_ticket_title, txt_ticket_body
 from lib.common.message import txt_error_location, txt_error_lucky
