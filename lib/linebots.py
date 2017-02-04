@@ -25,6 +25,7 @@ from db.mode import db_mode
 from db.lotto import db_lotto
 
 from mode.lotto import mode_lotto
+from mode.ticket import mode_ticket
 
 from lib.common.utils import get_location, is_admin
 from lib.common.utils import UTF8, MODE_NORMAL, channel_secret, channel_access_token
@@ -141,7 +142,7 @@ def message_text(event):
     if msg == "切換模式":
         message = mode_change_mode()
     else:
-        mode = db_mode.query(user_id)
+        mode = db_mode.query(profile.user_id)
 
         # set lotto_opened
         is_system_cmd = False
@@ -163,8 +164,8 @@ def message_text(event):
                 db_lotto.delete()
 
         if not is_system_cmd:
-            #if mode_ticket.is_process(mode):
-            #    reply_txt = mode_ticket.process(question, profile.user_id, profile.display_name.encode(UTF8))
+            if mode_ticket.is_process(mode):
+                reply_txt = mode_ticket.process(question, profile.user_id, profile.display_name.encode(UTF8))
             if mode_lotto.is_process(mode):
                 reply_txt = mode_lotto.process(question, profile.user_id, profile.display_name.encode(UTF8))
             else:
