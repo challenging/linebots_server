@@ -63,7 +63,7 @@ def push_ticket(user_id=get_rc_id()):
 
             url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["person_id"], ticket_number)
 
-            txt = ""
+            txt = "電腦代號: {}\n".format(ticket_number)
             for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
                             ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
                 if k.find("station") > -1:
