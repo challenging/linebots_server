@@ -75,8 +75,8 @@ def push_ticket(user_id=get_rc_id()):
             txt = txt.strip()
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                    MessageTemplateAction(label="確認訂票", text='ticket=check'),
-                    MessageTemplateAction(label="取消訂票", text='ticket=cancel')
+                    MessageTemplateAction(label="繼續訂票", text='ticket=again'),
+                    MessageTemplateAction(label="切換模式", text='切換模式')
                 ]))
 
             line_bot_api.push_message(user_id, message)
