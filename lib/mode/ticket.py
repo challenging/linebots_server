@@ -14,7 +14,7 @@ from lib.common.db import DB
 from lib.common.utils import MODE_TICKET
 from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
-from lib.ticket.utils import get_station_number, get_train_type
+from lib.ticket.utils import get_station_number, get_station_name, get_train_type
 
 class TRATicketDB(DB):
     table_name = "ticket"
@@ -97,7 +97,10 @@ class TicketMode(Mode):
             message = ""
             for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
                             ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
-                message += "{}: {}\n".format(name, self.memory[user_id][k])
+                if k.find("station") > -1:
+                    message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_station_name(self.memory[user_id][k]))
+                else:
+                    message += "{}: {}\n".format(name, self.memory[user_id][k])
             message = message.strip()
 
             if question not in ["ticket=confirm", "ticket=again"]:

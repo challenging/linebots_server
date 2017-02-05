@@ -180,5 +180,15 @@ tra_stations = {
     "新左營": "288"
 }
 
+def get_station_name(station_number):
+    station_name = None
+    for k, v in tra_stations.items():
+        if v == station_number:
+            station_name = k
+
+            break
+
+    return station_name
+
 get_station_number = lambda station_name: tra_stations.get(station_name, None)
 get_train_type = lambda train_name: tra_train_type.get(train_name, None)
