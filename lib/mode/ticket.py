@@ -124,7 +124,7 @@ class TicketMode(Mode):
                 if k.find("station") > -1:
                     message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_station_name(self.memory[user_id][k]))
                 elif k == "train_type":
-                    message += "{}: {}({})\n".format(name, param[k], get_train_name(self.memory[user_id][k]))
+                    message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_train_name(self.memory[user_id][k]))
                 else:
                     message += "{}: {}\n".format(name, self.memory[user_id][k])
             message = message.strip()
