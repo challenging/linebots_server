@@ -34,7 +34,8 @@ class TRATicketDB(DB):
         cursor.close()
 
     def non_booking(self):
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1".format(self.table_name)
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime < '{}'".format(\
+            self.table_name, (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"))
 
         cursor = self.conn.cursor()
         cursor.execute(sql)

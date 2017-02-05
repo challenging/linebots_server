@@ -4,6 +4,8 @@
 from flask import Blueprint
 from flask import Flask, request, abort, send_from_directory
 
+from lib.linebots import collect
+
 from lib.db.question import db_question
 from lib.db.location import db_location
 from lib.db.mode import db_mode
@@ -13,7 +15,7 @@ from lib.mode.ticket import mode_ticket
 from lib.ticket import booking_tra
 from lib.ticket.utils import tra_ticket_dir
 
-from lib.common.utils import UTF8, MODE_NORMAL
+from lib.common.utils import MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
 
 from linebot import LineBotApi
@@ -36,7 +38,7 @@ line_bot_api = LineBotApi(channel_access_token)
 def root():
     return "LINEBOTS - Pushing Service"
 
-@blueprint.route("/ticket/<path:path>")
+@blueprint.route("/tra_ticket/<path:path>")
 def image(path):
     return send_from_directory(tra_ticket_dir(), path)
 
@@ -49,7 +51,14 @@ def push_carousel(user_id=get_rc_id()):
     message = mode_normal(profile, "cafe", MODE_NORMAL, db_mode, db_location, db_question)
     line_bot_api.push_message(user_id, message)
 
+@blueprint.route("/ticket")
+def mode():
+    return collect(mode_ticket.db)
+
+@blueprint.route("/tra_booking")
 def push_ticket(user_id=get_rc_id()):
+    ticket_count = 0
+
     requests = mode_ticket.db.non_booking()
     for user_id, creation_datetime, param in requests:
         message = None
@@ -60,6 +69,10 @@ def push_ticket(user_id=get_rc_id()):
             mode_ticket.db.book(user_id, creation_datetime, ticket_number)
 
             line_bot_api.push_message(user_id, TextSendMessage(text="您的台鐵車票號碼是{}".format(message)))
+
+            ticket_count += 1
+
+    return "Get {} tickets".format(ticket_count)
 
 def run():
     for row in db.db.query():
