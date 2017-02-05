@@ -193,5 +193,15 @@ def get_station_name(station_number):
 
     return station_name
 
+def get_train_name(train_type):
+    train_name = None
+    for k, v in tra_train_type.items():
+        if v == train_type:
+            train_name = k
+
+            break
+
+    return train_name
+
 get_station_number = lambda station_name: tra_stations.get(station_name, None)
 get_train_type = lambda train_name: tra_train_type.get(train_name, None)

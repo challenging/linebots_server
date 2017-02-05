@@ -7,7 +7,7 @@ from flask import Flask, request, abort, send_from_directory
 from lib.mode.ticket import mode_ticket
 
 from lib.ticket import booking_tra
-from lib.ticket.utils import tra_ticket_dir, tra_fail_dir
+from lib.ticket.utils import tra_ticket_dir, tra_fail_dir, get_station_name, get_train_name
 
 from lib.common.utils import MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
@@ -16,9 +16,8 @@ from lib.common.message import txt_not_support
 from linebot import LineBotApi
 
 from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage,
-    PostbackEvent, PostbackTemplateAction,
-    MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
+    TextSendMessage, PostbackEvent, PostbackTemplateAction,
+    MessageTemplateAction, ConfirmTemplate, TemplateSendMessage
 )
 
 blueprint = Blueprint('LINEBOTS_PUSH', __name__)
@@ -60,16 +59,23 @@ def push_ticket(user_id=get_rc_id()):
 
         ticket_number, ticket_filepath = booking_tra.book_ticket(param)
         if ticket_number is not None:
-            message = ticket_number
             mode_ticket.db.book(user_id, creation_datetime, ticket_number)
 
-            line_bot_api.push_message(user_id, TextSendMessage(text="台鐵車票號碼是{}".format(message)))
+            url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["person_id"], ticket_number)
 
-            url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["person_id"], message)
-            message = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
-                title="以上是您的訂票紀錄", text="If you want to cancel, please click the following button", thumbnailImageUrl="", actions=[
-                    PostbackTemplateAction(label="取消", data='身分證證字號: {}, 訂票號碼: {}'.format(param["person_id"], message))
-                ]))
+            txt = ""
+            for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
+                            ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
+                if k.find("station") > -1:
+                    txt += "{}: {}({})\n".format(name, param[k], get_station_name(param[k]))
+                elif k == "train_type":
+                    txt += "{}: {}({})\n".format(name, param[k], get_train_name(param[k]))
+                else:
+                    txt += "{}: {}\n".format(name, param[k])
+            txt = txt.strip()
+
+            message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
+                MessageTemplateAction(label="取消訂票", text='ticket=cancel')]))
 
             line_bot_api.push_message(user_id, message)
 
