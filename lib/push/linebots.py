@@ -23,7 +23,7 @@ from linebot import LineBotApi
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
     CarouselTemplate, CarouselColumn, PostbackEvent, PostbackTemplateAction, URITemplateAction,
-    MessageTemplateAction, TemplateSendMessage,
+    MessageTemplateAction, TemplateSendMessage, ImageMessage,
     StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage
 )
 
@@ -46,6 +46,10 @@ def img(path):
 def screenshot(path):
     return send_from_directory(tra_screen_dir(), path)
 
+@blueprint.route("/ticket/<path:path>")
+def fail(path):
+    return send_from_directory(tra_success_dir(), path)
+
 @blueprint.route("/fail/<path:path>")
 def fail(path):
     return send_from_directory(tra_fail_dir(), path)
@@ -59,8 +63,8 @@ def push_carousel(user_id=get_rc_id()):
     message = mode_normal(profile, "cafe", MODE_NORMAL, db_mode, db_location, db_question)
     line_bot_api.push_message(user_id, message)
 
-@blueprint.route("/ticket")
-def mode():
+@blueprint.route("/list_tickets")
+def list_tickets():
     return collect(mode_ticket.db)
 
 @blueprint.route("/tra_booking")
@@ -76,7 +80,14 @@ def push_ticket(user_id=get_rc_id()):
             message = ticket_number
             mode_ticket.db.book(user_id, creation_datetime, ticket_number)
 
-            line_bot_api.push_message(user_id, TextSendMessage(text="您的台鐵車票號碼是{}".format(message)))
+            line_bot_api.push_message(user_id, TextSendMessage(text="台鐵車票號碼是{}".format(message)))
+
+            message = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
+                title="以上是您的訂票紀錄", text="If you want to cancel, please click the following button", actions=[
+                    PostbackTemplateAction(label="取消", data='action=cancel')
+                ]))
+
+            line_bot_api.push_message(user_id, message)
 
             ticket_count += 1
 
