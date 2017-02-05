@@ -40,7 +40,7 @@ def root():
 
 @blueprint.route("/tra_ticket/<path:path>")
 def image(path):
-    return send_from_directory(tra_ticket_dir(), path)
+    return send_from_directory("/app/lib/common/../../etc/captcha/tra/source", path)
 
 def push(user_id, reply_txt):
     line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
