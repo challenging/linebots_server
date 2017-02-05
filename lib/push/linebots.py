@@ -47,7 +47,7 @@ def screenshot(path):
     return send_from_directory(tra_screen_dir(), path)
 
 @blueprint.route("/ticket/<path:path>")
-def fail(path):
+def ticket(path):
     return send_from_directory(tra_success_dir(), path)
 
 @blueprint.route("/fail/<path:path>")

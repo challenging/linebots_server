@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import requests
 
 from flask import Blueprint
 from flask import Flask, request, abort
@@ -146,22 +147,29 @@ def message_text(event):
 
         # set lotto_opened
         is_system_cmd = False
-        if is_admin(profile.user_id) and mode_lotto.is_process(mode):
-            if mode_lotto.is_open(msg):
-                mode_lotto.lotto_opened = False
-                is_system_cmd = True
+        if is_admin(profile.user_id):
+            if mode_lotto.is_process(mode):
+                if mode_lotto.is_open(msg):
+                    mode_lotto.lotto_opened = False
+                    is_system_cmd = True
 
-                reply_txt = "關閉競標"
-            elif mode_lotto.is_over(msg):
-                mode_lotto.lotto_opened = True
-                is_system_cmd = True
+                    reply_txt = "關閉競標"
+                elif mode_lotto.is_over(msg):
+                    mode_lotto.lotto_opened = True
+                    is_system_cmd = True
 
-                reply_txt = "開啟競標"
-            elif mode_lotto.is_delete(msg) and not mode_lotto.lotto_opened:
-                reply_txt = "刪除歷史競標資料"
-                is_system_cmd = True
+                    reply_txt = "開啟競標"
+                elif mode_lotto.is_delete(msg) and not mode_lotto.lotto_opened:
+                    reply_txt = "刪除歷史競標資料"
+                    is_system_cmd = True
 
-                db_lotto.delete()
+                    db_lotto.delete()
+            elif mode_ticket.is_process(mode):
+                if msg == "booking tra":
+                    requests.get("https://lazyrc-reply.herokuapp.com/tra_booking")
+                    reply_txt = "開始處理訂票需求"
+
+                    is_system_cmd = True
 
         if not is_system_cmd:
             if mode_ticket.is_process(mode):
