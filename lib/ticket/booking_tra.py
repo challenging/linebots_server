@@ -29,11 +29,12 @@ testing_params = {"person_id": "L122760167",
 
 testing_params = {"train_type": "*4", "person_id": "L122760167", "order_qty_str": "2", "getin_end_dtime": "20:00", "to_station": "130", "from_station": "106", "getin_date": "2017/02/17-00", "getin_start_dtime": "12:00"}
 
+web_opener = get_phantom_driver()
+
 def book_ticket(param, cropped=1):
-    global encoder
+    global encoder, web_opener
 
     retry = 2
-    web_opener = get_phantom_driver()
 
     ticket_number, ticket_filepath = None, None
     while retry >= 0:
@@ -109,8 +110,6 @@ def book_ticket(param, cropped=1):
 
     time.sleep(2)
     print "retry again({})".format(retry)
-
-    web_opener.quit()
 
     return ticket_number, ticket_filepath
 
