@@ -17,9 +17,8 @@ from linebot import LineBotApi
 
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
-    CarouselTemplate, CarouselColumn, PostbackEvent, PostbackTemplateAction, URITemplateAction,
-    MessageTemplateAction, TemplateSendMessage, ImageMessage,
-    StickerMessage, StickerSendMessage, LocationMessage, LocationSendMessage
+    PostbackEvent, PostbackTemplateAction,
+    MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
 )
 
 blueprint = Blueprint('LINEBOTS_PUSH', __name__)
@@ -55,8 +54,6 @@ def list_tickets():
 
 @blueprint.route("/tra_booking")
 def push_ticket(user_id=get_rc_id()):
-    ticket_count = 0
-
     requests = mode_ticket.db.non_booking()
     for user_id, creation_datetime, param in requests:
         message = None
@@ -75,9 +72,7 @@ def push_ticket(user_id=get_rc_id()):
 
             line_bot_api.push_message(user_id, message)
 
-            ticket_count += 1
-
-    return "Get {} tickets".format(ticket_count)
+    return "done..."
 
 if __name__ == "__main__":
     #push_carousel()
