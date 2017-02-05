@@ -14,7 +14,7 @@ from PIL import Image
 
 from lib.ocr.cracker import crack
 from lib.common.utils import get_chrome_driver, get_phantom_driver
-from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_ticket_dir
+from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_fail_dir, tra_ticket_dir
 
 encoder = hashlib.md5()
 
@@ -99,6 +99,10 @@ def book_ticket(param, cropped=1):
                 retry = -1
 
                 break
+
+        filepath_failed = os.path.join(tra_fail_dir(), "{}.jpg".format(1000*time.time()))
+        web_opener.save_screenshot(filepath_failed)
+        print "save failed screenshot in {}".format(filepath_failed)
 
         time.sleep(random.randint(1, 5))
         retry -= 1

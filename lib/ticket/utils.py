@@ -20,6 +20,9 @@ def tra_screen_dir():
 def tra_success_dir():
     return tra_dir("success")
 
+def tra_fail_dir():
+    return tra_dir("fail")
+
 def tra_ticket_dir():
     return tra_dir("ticket")
 

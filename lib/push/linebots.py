@@ -13,7 +13,7 @@ from lib.db.mode import db_mode
 from lib.mode.ticket import mode_ticket
 
 from lib.ticket import booking_tra
-from lib.ticket.utils import tra_ticket_dir
+from lib.ticket.utils import tra_ticket_dir, ticket_success_dir, ticket_img_dir, ticket_fail_dir
 
 from lib.common.utils import MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
@@ -38,13 +38,17 @@ line_bot_api = LineBotApi(channel_access_token)
 def root():
     return "LINEBOTS - Pushing Service"
 
-@blueprint.route("/tra_ticket/<path:path>")
-def ticket(path):
-    return send_from_directory("/app/lib/common/../../etc/captcha/tra/source", path)
+@blueprint.route("/img/<path:path>")
+def img(path):
+    return send_from_directory(tra_img_dir(), path)
 
-@blueprint.route("/tra_screenshot/<path:path>")
+@blueprint.route("/screenshot/<path:path>")
 def screenshot(path):
-    return send_from_directory("/app/lib/common/../../etc/captcha/tra/screenshot", path)
+    return send_from_directory(tra_screen_dir(), path)
+
+@blueprint.route("/fail/<path:path>")
+def fail(path):
+    return send_from_directory(tra_fail_dir(), path)
 
 def push(user_id, reply_txt):
     line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
