@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from flask import Blueprint
+from flask import Flask, request, abort, send_from_directory
+
 from lib.db.question import db_question
 from lib.db.location import db_location
 from lib.db.mode import db_mode
 
 from lib.mode.ticket import mode_ticket
-from lib.ticket import booking_tra
 
-from lib.message_route import run_normal
+from lib.ticket import booking_tra
+from lib.ticket.utils import tra_ticket_dir
+
 from lib.common.utils import UTF8, MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
 
@@ -23,8 +27,18 @@ from linebot.models import (
 
 from lib.push import db
 
+blueprint = Blueprint('LINEBOTS_PUSH', __name__)
+
 # get channel_secret and channel_access_token from your environment variable
 line_bot_api = LineBotApi(channel_access_token)
+
+@blueprint.route("/")
+def root():
+    return "LINEBOTS - Pushing Service"
+
+@blueprint.route("/ticket/<path:path>")
+def image(path):
+    return send_from_directory(tra_ticket_dir(), path)
 
 def push(user_id, reply_txt):
     line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
