@@ -32,7 +32,7 @@ def crack(input, cropped, basefolder=cracker_dir()):
 
     answer = ""
     scanned_files = os.path.join(basefolder, "cropped_{}".format(folder), filename, "*.jpg")
-    for filepath in glob.iglob(scanned_files):
+    for filepath in sorted(glob.glob(scanned_files), key=os.path.basename):
         _, csgraph = image_l(filepath)
         dataset, _, _ = cnn_preprocess(np.array([csgraph]))
 
