@@ -39,11 +39,11 @@ def root():
     return "LINEBOTS - Pushing Service"
 
 @blueprint.route("/tra_ticket/<path:path>")
-def image(path):
+def ticket(path):
     return send_from_directory("/app/lib/common/../../etc/captcha/tra/source", path)
 
 @blueprint.route("/tra_screenshot/<path:path>")
-def image(path):
+def screenshot(path):
     return send_from_directory("/app/lib/common/../../etc/captcha/tra/screenshot", path)
 
 def push(user_id, reply_txt):
