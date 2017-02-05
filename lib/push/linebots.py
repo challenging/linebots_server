@@ -7,7 +7,7 @@ from flask import Flask, request, abort, send_from_directory
 from lib.mode.ticket import mode_ticket
 
 from lib.ticket import booking_tra
-from lib.ticket.utils import tra_ticket_dir, tra_success_dir, tra_img_dir, tra_fail_dir, tra_screen_dir
+from lib.ticket.utils import tra_ticket_dir, tra_fail_dir
 
 from lib.common.utils import MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
@@ -37,14 +37,6 @@ def collect(db):
 @blueprint.route("/")
 def root():
     return "LINEBOTS - Pushing Service"
-
-@blueprint.route("/img/<path:path>")
-def img(path):
-    return send_from_directory(tra_img_dir(), path)
-
-@blueprint.route("/screenshot/<path:path>")
-def screenshot(path):
-    return send_from_directory(tra_screen_dir(), path)
 
 @blueprint.route("/ticket/<path:path>")
 def ticket(path):
