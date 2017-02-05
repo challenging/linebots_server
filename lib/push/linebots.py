@@ -42,6 +42,10 @@ def root():
 def image(path):
     return send_from_directory("/app/lib/common/../../etc/captcha/tra/source", path)
 
+@blueprint.route("/tra_screenshot/<path:path>")
+def image(path):
+    return send_from_directory("/app/lib/common/../../etc/captcha/tra/screenshot", path)
+
 def push(user_id, reply_txt):
     line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
 
