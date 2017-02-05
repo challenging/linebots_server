@@ -33,6 +33,29 @@ class TRATicketDB(DB):
         cursor.execute(sql)
         cursor.close()
 
+    def non_booking(self):
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1".format(self.table_name)
+
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+
+        requests = []
+        for row in cursor.fetchall():
+            requests.append([row[0], row[1], json.loads(row[2])])
+
+        cursor.close()
+
+        return requests
+
+    def book(self, user_id, creation_datetime, ticket_number):
+        sql = "UPDATE {} SET ticket_number = {} WHERE user_id = '{}' and creation_datetime = '{}'".format(self.table_name, ticket_number, user_id, creation_datetime)
+
+        cursor = self.conn.cursor()
+        done = cursor.execute(sql)
+        cursor.close()
+
+        return done
+
 class TicketMode(Mode):
     memory = {}
 
@@ -48,7 +71,7 @@ class TicketMode(Mode):
             self.new_memory(user_id)
 
         if check_taiwan_id_number(question):
-            self.memory[user_id]["person_id"] = question
+            self.memory[user_id]["person_id"] = question.upper()
         elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question):
             try:
                 booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
