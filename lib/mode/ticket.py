@@ -140,7 +140,7 @@ class TicketMode(Mode):
                     del self.memory[user_id]["creation_datetime"]
                     self.db.ask(user_id, "tra", json.dumps(self.memory[user_id]))
 
-                    reply_txt = "懶人RC已將您的訂票需求排入排成，一旦訂到票，將會立即通知，感謝使用此服務"
+                    reply_txt = "懶人RC已將您的訂票需求排入排程，一旦訂到票，將會立即通知，感謝使用此服務"
                 else:
                     reply_txt = "請輸入身分證號字號"
 
