@@ -27,6 +27,8 @@ testing_params = {"person_id": "L122760167",
                   "getin_start_dtime": "09:00",
                   "getin_end_dtime": "17:00"}
 
+testing_params = {"train_type": "*4", "person_id": "L122760167", "order_qty_str": "2", "getin_end_dtime": "20:00", "to_station": "130", "from_station": "106", "getin_date": "2017/02/17-00", "getin_start_dtime": "12:00"}
+
 def book_ticket(param, cropped=1):
     global encoder
 
@@ -40,7 +42,7 @@ def book_ticket(param, cropped=1):
         web_opener.get("http://railway1.hinet.net/csearch.htm")
 
         for key, value in param.items():
-            if isinstance(value, str):
+            if isinstance(value, (str, unicode)):
                 element = web_opener.find_element_by_id(key)
                 element.send_keys(param[key])
 
@@ -68,9 +70,11 @@ def book_ticket(param, cropped=1):
 
         answer = crack(im_filepath, cropped, basefolder=os.path.join(tra_img_dir(), ".."))
         web_opener.find_element_by_id("randInput").send_keys(answer)
+        print "for {}, the predicted input is {}".format(im_filepath, answer)
         time.sleep(2)
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
+        web_opener.save_screenshot("/tmp/{}.jpg".format(retry))
         time.sleep(2)
 
         for ticket in web_opener.find_elements_by_tag_name("a"):
@@ -82,8 +86,8 @@ def book_ticket(param, cropped=1):
                 destination = os.path.join(tra_success_dir(), os.path.basename(im_filepath))
                 os.rename(im_filepath, destination)
 
-                ticket_number = web_opener.find_element_by_xpath("//span[@class='hv1 red02 text_14p bold01']")
-                param["ticket"] = ticket_number.text
+                ticket_number = web_opener.find_element_by_xpath("//span[@class='hv1 red02 text_14p bold01']").text
+                param["ticket"] = ticket_number
                 print "get ticket number - {}".format(param["ticket"])
 
                 ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.png".format(\
