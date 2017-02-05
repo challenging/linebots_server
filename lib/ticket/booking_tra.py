@@ -75,7 +75,7 @@ def book_ticket(param, cropped=1):
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
         web_opener.save_screenshot("/tmp/{}.jpg".format(retry))
-        time.sleep(2)
+        time.sleep(5)
 
         for ticket in web_opener.find_elements_by_tag_name("a"):
             url = ticket.get_attribute("href")

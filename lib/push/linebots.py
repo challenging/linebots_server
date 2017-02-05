@@ -13,7 +13,7 @@ from lib.db.mode import db_mode
 from lib.mode.ticket import mode_ticket
 
 from lib.ticket import booking_tra
-from lib.ticket.utils import tra_ticket_dir, tra_success_dir, tra_img_dir, tra_fail_dir
+from lib.ticket.utils import tra_ticket_dir, tra_success_dir, tra_img_dir, tra_fail_dir, tra_screen_dir
 
 from lib.common.utils import MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
