@@ -6,6 +6,11 @@ class Mode(object):
     def __init__(self, mode):
         self._mode = mode
 
+        self.init()
+
+    def init(self):
+        pass
+
     @property
     def mode(self):
         return self._mode

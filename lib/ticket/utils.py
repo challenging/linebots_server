@@ -23,8 +23,8 @@ def tra_success_dir():
 def tra_ticket_dir():
     return tra_dir("ticket")
 
-train_type = {"自強號": "*1", "莒光號": "*2", "復興號": "*3", "全部車種": "*4"}
-stations = {
+tra_train_type = {"自強號": "*1", "莒光號": "*2", "復興號": "*3", "全部車種": "*4"}
+tra_stations = {
     "台東": "004",
     "鹿野": "008",
     "瑞源": "009",
@@ -180,5 +180,5 @@ stations = {
     "新左營": "288"
 }
 
-get_station_number = lambda station_name: stations.get(station_name, None)
-get_train_type = lambda train_name: train_type.get(train_name, None)
+get_station_number = lambda station_name: tra_stations.get(station_name, None)
+get_train_type = lambda train_name: tra_train_type.get(train_name, None)

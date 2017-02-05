@@ -2,16 +2,42 @@
 # -*- coding: utf-8 -*-
 
 import re
+import json
 import pprint
 import datetime
 
-from lib.common.utils import MODE_TICKET
-from lib.common.check_taiwan_id import check_taiwan_id_number
+from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage
+
 from lib.common.mode import Mode
+from lib.common.db import DB
+
+from lib.common.utils import MODE_TICKET
+from lib.common.message import txt_not_support
+from lib.common.check_taiwan_id import check_taiwan_id_number
 from lib.ticket.utils import get_station_number, get_train_type
+
+class TRATicketDB(DB):
+    table_name = "ticket"
+
+    def create_table(self):
+        cursor = self.conn.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number INTEGER);".format(self.table_name))
+        cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx ON {table_name} (ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
+        cursor.close()
+
+    def ask(self, user_id, ticket_type, ticket):
+        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', -1);".format(\
+            self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
+
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        cursor.close()
 
 class TicketMode(Mode):
     memory = {}
+
+    def init(self):
+        self.db = TRATicketDB()
 
     def is_process(self, mode):
         return self.mode.lower() == mode.lower()
@@ -26,9 +52,16 @@ class TicketMode(Mode):
         elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question):
             self.memory[user_id]["getin_date"] = "{}-00".format(question)
         elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
-            self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
+            question = int(question)
+
+            if question > -1 and question < 24:
+                self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
         elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_end_dtime", None) is None:
-            self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(int(question))
+            question = int(question)
+            diff_dtime = question - int(self.memory[user_id]["getin_start_dtime"].split(":")[0])
+
+            if question > -1 and question < 24 and diff_dtime > 0 and diff_dtime < 9:
+                self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(int(question))
         elif get_station_number(question) and self.memory[user_id].get("from_station", None) is None:
             self.memory[user_id]["from_station"] = get_station_number(question)
         elif get_station_number(question) and self.memory[user_id].get("to_station", None) is None:
@@ -54,17 +87,31 @@ class TicketMode(Mode):
             reply_txt = "請輸入車票張數"
         elif self.memory[user_id].get("train_type", None) is None:
             reply_txt = "請輸入車種"
-        else:
-            '''
-            ticket_number, ticket_filepath = booking_tra.book_ticket(self.memory[user_id], cropped=1)
-            if ticket_number is not None:
-                reply_txt = "懶人訂票幫您訂到的台鐵車票號碼是{}".format(ticket_number)
-            else:
-                reply_txt = "服務忙碌，稍後懶人訂票會繼續幫您服務({})".format(ticket_number)
-            '''
-            reply_txt = "\n".join(["{}: {}".format(k, v) for k, v in self.memory[user_id].items()])
+        elif self.is_filled(user_id):
+            message = ""
+            for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
+                            ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
+                message += "{}: {}\n".format(name, self.memory[user_id][k])
+            message = message.strip()
 
-            del self.memory[user_id]
+            if question not in ["ticket=confirm", "ticket=again"]:
+                template = ConfirmTemplate(text=message, actions=[
+                    MessageTemplateAction(label="確認訂票", text='ticket=confirm'),
+                    MessageTemplateAction(label="重新輸入", text='ticket=again'),
+                ])
+
+                reply_txt = TemplateSendMessage(
+                    alt_text=txt_not_support(), template=template)
+            else:
+                if question == "ticket=confirm":
+                    del self.memory[user_id]["creation_datetime"]
+                    self.db.ask(user_id, "tra", json.dumps(self.memory[user_id]))
+
+                    reply_txt = "懶人RC已將您的訂票需求排入排成，一旦訂到票，將會立即通知，感謝使用此服務"
+                else:
+                    reply_txt = "請輸入身分證號字號"
+
+                del self.memory[user_id]
 
         return reply_txt
 
@@ -80,12 +127,22 @@ class TicketMode(Mode):
                                 "getin_start_dtime": None,
                                 "getin_end_dtime": None}
 
+    def is_filled(self, user_id):
+        is_pass = True
+        for v in self.memory[user_id].values():
+            if v is None:
+                is_pass = False
+
+                break
+
+        return is_pass
+
 mode_ticket = TicketMode(MODE_TICKET)
 
 if __name__ == "__main__":
     user_id = "L122760167"
 
-    questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
+    questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種", "ticket=confirm"]
     for question in questions:
         print mode_ticket.conversion(question, user_id)
         pprint.pprint(mode_ticket.memory[user_id])
