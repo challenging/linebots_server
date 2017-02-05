@@ -17,6 +17,7 @@ from lib.ticket.utils import tra_ticket_dir, tra_success_dir, tra_img_dir, tra_f
 
 from lib.common.utils import MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
+from lib.common.message import txt_not_support
 
 from linebot import LineBotApi
 
@@ -48,7 +49,7 @@ def screenshot(path):
 
 @blueprint.route("/ticket/<path:path>")
 def ticket(path):
-    return send_from_directory(tra_success_dir(), path)
+    return send_from_directory(tra_ticket_dir(), path)
 
 @blueprint.route("/fail/<path:path>")
 def fail(path):
