@@ -52,7 +52,7 @@ def book_ticket(param, cropped=1):
         location = img.location
         size = img.size
 
-        filepath_screenshot = os.path.join(tra_screen_dir(), "{}.png".format(int(time.time()*1000)))
+        filepath_screenshot = os.path.join(tra_screen_dir(), "{}.jpg".format(int(time.time()*1000)))
         web_opener.save_screenshot(filepath_screenshot)
         print "save the screenshot in {}".format(filepath_screenshot)
 
@@ -90,7 +90,7 @@ def book_ticket(param, cropped=1):
                 param["ticket"] = ticket_number
                 print "get ticket number - {}".format(param["ticket"])
 
-                ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.png".format(\
+                ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(\
                     param["person_id"], param["ticket"]))
                 print "the filepath_ticket is {}".format(ticket_filepath)
 
