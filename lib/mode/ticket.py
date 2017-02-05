@@ -50,10 +50,13 @@ class TicketMode(Mode):
         if check_taiwan_id_number(question):
             self.memory[user_id]["person_id"] = question
         elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question):
-            booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+            try:
+                booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
 
-            if booked_date > datetime.datetime.now():
-                self.memory[user_id]["getin_date"] = "{}-00".format(question)
+                if booked_date > datetime.datetime.now():
+                    self.memory[user_id]["getin_date"] = "{}-00".format(question)
+            except ValueError as e:
+                print "Error: {}".format(e)
         elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
             question = int(question)
 
@@ -145,7 +148,7 @@ mode_ticket = TicketMode(MODE_TICKET)
 if __name__ == "__main__":
     user_id = "L122760167"
 
-    questions = ["我試試", user_id, "2017/01/17", "17", "23", "桃園", "清水", "1", "全部車種", "ticket=confirm"]
+    questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種", "ticket=confirm"]
     for question in questions:
         print mode_ticket.conversion(question, user_id)
         pprint.pprint(mode_ticket.memory[user_id])
