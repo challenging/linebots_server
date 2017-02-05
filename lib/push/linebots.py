@@ -65,7 +65,7 @@ def push_ticket(user_id=get_rc_id()):
 
             line_bot_api.push_message(user_id, TextSendMessage(text="台鐵車票號碼是{}".format(message)))
 
-            url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["user_id"], message)
+            url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["person_id"], message)
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                 title="以上是您的訂票紀錄", text="If you want to cancel, please click the following button", thumbnailImageUrl="", actions=[
                     PostbackTemplateAction(label="取消", data='身分證證字號: {}, 訂票號碼: {}'.format(param["person_id"], message))
