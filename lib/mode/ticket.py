@@ -141,7 +141,7 @@ class TicketMode(Mode):
             elif self.memory[user_id].get("to_station", None) is None:
                 reply_txt = "請輸入下車車站"
             elif self.memory[user_id].get("order_qty_str", None) is None:
-                reply_txt = "請輸入張數"
+                reply_txt = "請輸入張數(1-6)"
             elif self.memory[user_id].get("train_type", None) is None:
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入車種",
