@@ -146,7 +146,7 @@ class TicketMode(Mode):
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入張數",
                                 text="How many tickets do you book?",
-                                actions=[PostbackTemplateAction(label=c, data='ticket=book+{}'.format(c)) for c in range(1, 7)]
+                                actions=[PostbackTemplateAction(label=c, data='ticket=book+{}'.format(c)) for c in range(1, 5)]
                             ))
             elif self.memory[user_id].get("train_type", None) is None:
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
@@ -214,8 +214,10 @@ mode_ticket = TicketMode(MODE_TICKET)
 if __name__ == "__main__":
     user_id = "L122760167"
 
-    questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種", "ticket=confirm"]
+    questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
     for question in questions:
-        print mode_ticket.conversion(question, user_id)
-        pprint.pprint(mode_ticket.memory[user_id])
-        print
+        message = mode_ticket.conversion(question, user_id)
+        if isinstance(message, str):
+            print message
+        else:
+            print message.as_json_string()
