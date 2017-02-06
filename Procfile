@@ -1,1 +1,1 @@
-web: python app/push.py
+clock: python app/clock.py

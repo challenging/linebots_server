@@ -10,7 +10,7 @@ from lib.ticket import booking_tra
 from lib.ticket.utils import tra_ticket_dir, tra_fail_dir, get_station_name, get_train_name
 
 from lib.common.utils import UTF8, MODE_NORMAL
-from lib.common.utils import channel_secret, channel_access_token, get_rc_id
+from lib.common.utils import channel_secret, channel_access_token
 from lib.common.message import txt_not_support
 
 from linebot import LineBotApi
@@ -52,7 +52,7 @@ def list_tickets():
     return collect(mode_ticket.db)
 
 @blueprint.route("/tra_booking")
-def push_ticket(user_id=get_rc_id()):
+def push_ticket():
     requests = mode_ticket.db.non_booking()
     for user_id, creation_datetime, param in requests:
         message = None
@@ -60,8 +60,6 @@ def push_ticket(user_id=get_rc_id()):
         ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param)
         if ticket_number is not None:
             mode_ticket.db.book(user_id, creation_datetime, ticket_number)
-
-            url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["person_id"], ticket_number)
 
             txt = "電腦代號: {}\n".format(ticket_number)
             train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
@@ -81,5 +79,4 @@ def push_ticket(user_id=get_rc_id()):
     return "done..."
 
 if __name__ == "__main__":
-    #push_carousel()
     push_ticket()
