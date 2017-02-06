@@ -51,8 +51,7 @@ def push(user_id, reply_txt):
 def list_tickets():
     return collect(mode_ticket.db)
 
-@blueprint.route("/tra_booking")
-def push_ticket():
+def booking():
     requests = mode_ticket.db.non_booking()
     for user_id, creation_datetime, param in requests:
         message = None
@@ -77,6 +76,10 @@ def push_ticket():
             line_bot_api.push_message(user_id, message)
 
     return "done..."
+
+@blueprint.route("/tra_booking")
+def push_ticket():
+    return booking()
 
 if __name__ == "__main__":
     push_ticket()

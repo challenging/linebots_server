@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from lib.push.linebots import push_ticket
+from lib.push.linebots import booking
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
@@ -8,7 +8,7 @@ sched = BlockingScheduler()
 
 @sched.scheduled_job('cron', minute="*")
 def booking_tra_tickets():
-    push_ticket()
+    booking()
 
 sched.start()
 
