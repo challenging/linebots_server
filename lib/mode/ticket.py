@@ -9,6 +9,7 @@ import threading
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage
+from linebot.models import PostbackTemplateAction, ButtonsTemplate
 
 from lib.common.mode import Mode
 from lib.common.db import DB
@@ -16,7 +17,9 @@ from lib.common.db import DB
 from lib.common.utils import MODE_TICKET
 from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
+
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
+from lib.ticket.utils import tra_train_type
 
 class TRATicketDB(DB):
     table_name = "ticket"
@@ -120,8 +123,10 @@ class TicketMode(Mode):
                 self.memory[user_id]["from_station"] = get_station_number(question)
             elif get_station_number(question) and self.memory[user_id].get("to_station", None) is None:
                 self.memory[user_id]["to_station"] = get_station_number(question)
-            elif question.isdigit() and int(question) > 0 and int(question) < 7 and self.memory[user_id].get("order_qty_str", None) is None:
-                self.memory[user_id]["order_qty_str"] = question
+            elif self.memory[user_id].get("order_qty_str", None) is None:
+                m = re.match("ticket=book\+([\d]{1})", question)
+                if m and int(m.group(1)) > 0 and int(m.group(1)) < 7:
+                    self.memory[user_id]["order_qty_str"] = question
             elif get_train_type(question) and self.memory[user_id].get("train_type", None) is None:
                 self.memory[user_id]["train_type"] = get_train_type(question)
 
@@ -138,9 +143,17 @@ class TicketMode(Mode):
             elif self.memory[user_id].get("to_station", None) is None:
                 reply_txt = "請輸入下車車站"
             elif self.memory[user_id].get("order_qty_str", None) is None:
-                reply_txt = "請輸入車票張數"
+                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
+                                title="請輸入張數",
+                                text="How many tickets do you book?",
+                                actions=[PostbackTemplateAction(label="{}張".format(c), data='ticket=book+{}'.format(c)) for c in range(1, 7)])
+                            )
             elif self.memory[user_id].get("train_type", None) is None:
-                reply_txt = "請輸入車種"
+                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
+                                title="請輸入車種",
+                                text="What kind of train do you choose?",
+                                actions=[PostbackTemplateAction(label=k, data=k) for k in tra_train_type.keys()])
+                            )
             elif self.is_filled(user_id):
                 message = ""
                 for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
