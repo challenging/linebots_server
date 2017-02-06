@@ -29,7 +29,7 @@ testing_params = {"person_id": "L122760167",
 
 testing_params = {"train_type": "*4", "person_id": "L122760167", "order_qty_str": "2", "getin_end_dtime": "20:00", "to_station": "130", "from_station": "106", "getin_date": "2017/02/17-00", "getin_start_dtime": "12:00"}
 
-web_opener = get_chrome_driver()
+web_opener = get_phantom_driver()
 
 def book_ticket(param, cropped=1):
     global encoder, web_opener
@@ -59,7 +59,7 @@ def book_ticket(param, cropped=1):
         print "save the screenshot in {}".format(filepath_screenshot)
 
         im = Image.open(filepath_screenshot)
-        im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
+        #im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
         im = im.crop((location["x"], location["y"], location["x"]+size["width"], location["y"] + size["height"]))
 
         output = io.BytesIO()
