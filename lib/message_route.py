@@ -39,7 +39,7 @@ def mode_change_button():
     message = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
         title="歡迎使用懶人RC機器人", text="請選擇以下模式", actions=[
             PostbackTemplateAction(label="查詢模式", data='mode={}'.format(MODE_NORMAL)),
-            PostbackTemplateAction(label="訂票模式", data='mode={}'.format(MODE_TICKET)),
+            PostbackTemplateAction(label="台鐵訂票模式", data='mode={}'.format(MODE_TICKET)),
             PostbackTemplateAction(label="競標模式", data='mode={}'.format(MODE_LOTTO))
         ]))
 
