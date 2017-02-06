@@ -9,7 +9,7 @@ from lib.mode.ticket import mode_ticket
 from lib.ticket import booking_tra
 from lib.ticket.utils import tra_ticket_dir, tra_fail_dir, get_station_name, get_train_name
 
-from lib.common.utils import MODE_NORMAL
+from lib.common.utils import UTF8, MODE_NORMAL
 from lib.common.utils import channel_secret, channel_access_token, get_rc_id
 from lib.common.message import txt_not_support
 
@@ -66,9 +66,9 @@ def push_ticket(user_id=get_rc_id()):
             txt = "電腦代號: {}\n".format(ticket_number)
             train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
             txt += "車次: {}\n".format(train_number)
-            txt += "車種: {}\n".format(train_type)
+            txt += "車種: {}\n".format(train_type.encode(UTF8))
             txt += "搭乘時間: {} {}\n".format(start_date, start_time)
-            txt += "起迄站: {} - {}\n".format(start_station, end_station)
+            txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
             txt += "下車時間 :{} {}".format(end_date, end_time)
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
