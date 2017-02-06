@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import threading
 import requests
 
 from flask import Blueprint
@@ -166,8 +167,8 @@ def message_text(event):
                     db_lotto.delete()
             elif mode_ticket.is_process(mode):
                 if msg == "booking tra":
-                    requests.get("https://lazyrc-reply.herokuapp.com/tra_booking")
                     reply_txt = "開始處理訂票需求"
+                    threading.Thread(target=requests.get("https://lazyrc-reply.herokuapp.com/tra_booking"))
 
                     is_system_cmd = True
 
