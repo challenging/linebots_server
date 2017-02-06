@@ -123,10 +123,8 @@ class TicketMode(Mode):
                 self.memory[user_id]["from_station"] = get_station_number(question)
             elif get_station_number(question) and self.memory[user_id].get("to_station", None) is None:
                 self.memory[user_id]["to_station"] = get_station_number(question)
-            elif self.memory[user_id].get("order_qty_str", None) is None:
-                m = re.match("ticket=book\+([\d]{1})", question)
-                if m and int(m.group(1)) > 0 and int(m.group(1)) < 7:
-                    self.memory[user_id]["order_qty_str"] = question
+            elif question.isdigit() and int(question) > 0 and int(question) < 7 and self.memory[user_id].get("order_qty_str", None) is None:
+                self.memory[user_id]["order_qty_str"] = question
             elif get_train_type(question) and self.memory[user_id].get("train_type", None) is None:
                 self.memory[user_id]["train_type"] = get_train_type(question)
 
@@ -143,11 +141,7 @@ class TicketMode(Mode):
             elif self.memory[user_id].get("to_station", None) is None:
                 reply_txt = "請輸入下車車站"
             elif self.memory[user_id].get("order_qty_str", None) is None:
-                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
-                                title="請輸入張數",
-                                text="How many tickets do you book?",
-                                actions=[PostbackTemplateAction(label="{}張".format(c), data='ticket=book+{}'.format(c)) for c in range(1, 5)]
-                            ))
+                reply_txt = "請輸入張數",
             elif self.memory[user_id].get("train_type", None) is None:
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入車種",
