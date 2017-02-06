@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import threading
+import requests
+
 from flask import Blueprint
 from flask import Flask, request, abort, send_from_directory
 
@@ -66,10 +69,10 @@ def booking():
             txt += "車種: {}\n".format(train_type.encode(UTF8))
             txt += "搭乘時間: {} {}\n".format(start_date, start_time)
             txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
-            txt += "下車時間 :{} {}".format(end_date, end_time)
+            txt += "抵達時間 :{} {}".format(end_date, end_time)
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                    MessageTemplateAction(label="取消訂票", text='ticket=cancel'),
+                    MessageTemplateAction(label="取消訂票", text='ticket=cancel+{}'.format(ticket_number)),
                     MessageTemplateAction(label="切換模式", text='切換模式')
                 ]))
 
