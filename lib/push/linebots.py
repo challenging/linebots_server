@@ -57,25 +57,22 @@ def push_ticket(user_id=get_rc_id()):
     for user_id, creation_datetime, param in requests:
         message = None
 
-        ticket_number, ticket_filepath = booking_tra.book_ticket(param)
+        ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param)
         if ticket_number is not None:
             mode_ticket.db.book(user_id, creation_datetime, ticket_number)
 
             url_thumbnail = "https://lazyrc-reply.herokuapp.com/ticket/id={}_ticket={}.jpg".format(param["person_id"], ticket_number)
 
             txt = "電腦代號: {}\n".format(ticket_number)
-            for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
-                            ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
-                if k.find("station") > -1:
-                    txt += "{}: {}({})\n".format(name, param[k], get_station_name(param[k]))
-                elif k == "train_type":
-                    txt += "{}: {}({})\n".format(name, param[k], get_train_name(param[k]))
-                else:
-                    txt += "{}: {}\n".format(name, param[k])
-            txt = txt.strip()
+            train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
+            txt += "車次: {}\n".format(train_number)
+            txt += "車種: {}\n".format(train_type)
+            txt += "搭乘時間: {} {}\n".format(start_date, start_time)
+            txt += "起迄站: {} - {}\n".format(start_station, end_station)
+            txt += "下車時間 :{} {}".format(end_date, end_time)
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                    MessageTemplateAction(label="繼續訂票", text='ticket=again'),
+                    MessageTemplateAction(label="取消訂票", text='ticket=cancel'),
                     MessageTemplateAction(label="切換模式", text='切換模式')
                 ]))
 

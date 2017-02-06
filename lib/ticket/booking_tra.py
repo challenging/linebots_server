@@ -29,12 +29,13 @@ testing_params = {"person_id": "L122760167",
 
 testing_params = {"train_type": "*4", "person_id": "L122760167", "order_qty_str": "2", "getin_end_dtime": "20:00", "to_station": "130", "from_station": "106", "getin_date": "2017/02/17-00", "getin_start_dtime": "12:00"}
 
-web_opener = get_phantom_driver()
+web_opener = get_chrome_driver()
 
 def book_ticket(param, cropped=1):
     global encoder, web_opener
 
     retry = 2
+    train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time= None, None, None, None, None, None, None, None
 
     ticket_number, ticket_filepath = None, None
     while retry >= 0:
@@ -58,7 +59,7 @@ def book_ticket(param, cropped=1):
         print "save the screenshot in {}".format(filepath_screenshot)
 
         im = Image.open(filepath_screenshot)
-        #im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
+        im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
         im = im.crop((location["x"], location["y"], location["x"]+size["width"], location["y"] + size["height"]))
 
         output = io.BytesIO()
@@ -81,6 +82,11 @@ def book_ticket(param, cropped=1):
         for ticket in web_opener.find_elements_by_tag_name("a"):
             url = ticket.get_attribute("href")
             if url.find("check_ctno1.jsp") > -1:
+                for e in web_opener.find_elements_by_xpath("//tr[@class='gray01 text_10p']"):
+                    train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = e.text.split()
+
+                    break
+
                 ticket.click()
                 time.sleep(random.randint(1, 5))
 
@@ -101,9 +107,11 @@ def book_ticket(param, cropped=1):
 
                 break
 
+        '''
         filepath_failed = os.path.join(tra_fail_dir(), "{}.jpg".format(1000*time.time()))
         web_opener.save_screenshot(filepath_failed)
         print "save failed screenshot in {}".format(filepath_failed)
+        '''
 
         time.sleep(random.randint(1, 5))
         retry -= 1
@@ -111,7 +119,7 @@ def book_ticket(param, cropped=1):
     time.sleep(2)
     print "retry again({})".format(retry)
 
-    return ticket_number, ticket_filepath
+    return ticket_number, ticket_filepath, (train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time)
 
 if __name__ == "__main__":
-    book_ticket(testing_params)
+    print book_ticket(testing_params)
