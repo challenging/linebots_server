@@ -146,7 +146,7 @@ class TicketMode(Mode):
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入張數",
                                 text="How many tickets do you book?",
-                                actions=[PostbackTemplateAction(label=c, data='ticket=book+{}'.format(c)) for c in range(1, 5)]
+                                actions=[PostbackTemplateAction(label="{}張".format(c), data='ticket=book+{}'.format(c)) for c in range(1, 5)]
                             ))
             elif self.memory[user_id].get("train_type", None) is None:
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
