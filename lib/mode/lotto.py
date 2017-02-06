@@ -19,7 +19,7 @@ class LottoMode(Mode):
 
                  count = 0
                  users = set()
-                 for row in db_lotto.query():
+                 for row in lotto.db_lotto.query():
                      user_id, user_name, creation_datetime, money = row
                      if money > 0 and money < self.MONEY:
                         if user_id not in users and fee == money:
