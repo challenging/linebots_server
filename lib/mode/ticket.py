@@ -146,14 +146,14 @@ class TicketMode(Mode):
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入張數",
                                 text="How many tickets do you book?",
-                                actions=[PostbackTemplateAction(label="{}張".format(c), data='ticket=book+{}'.format(c)) for c in range(1, 7)])
-                            )
+                                actions=[PostbackTemplateAction(label=c, data='ticket=book+{}'.format(c)) for c in range(1, 7)]
+                            ))
             elif self.memory[user_id].get("train_type", None) is None:
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入車種",
                                 text="What kind of train do you choose?",
-                                actions=[PostbackTemplateAction(label=k, data=k) for k in tra_train_type.keys()])
-                            )
+                                actions=[PostbackTemplateAction(label=k, data=k) for k in tra_train_type.keys()]
+                            ))
             elif self.is_filled(user_id):
                 message = ""
                 for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
