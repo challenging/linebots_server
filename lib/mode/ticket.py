@@ -146,7 +146,7 @@ class TicketMode(Mode):
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                                 title="請輸入車種",
                                 text="What kind of train do you choose?",
-                                actions=[PostbackTemplateAction(label=k, data=k) for k in tra_train_type.keys()]
+                                actions=[MessageTemplateAction(label=k, text=k) for k in tra_train_type.keys()]
                             ))
             elif self.is_filled(user_id):
                 message = ""
