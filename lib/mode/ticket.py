@@ -4,6 +4,8 @@
 import re
 import json
 import pprint
+import requests
+import threading
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage
@@ -57,6 +59,20 @@ class TRATicketDB(DB):
 
         return done
 
+    def get_person_id(self, user_id, ticket_number):
+        sql = "SELECT ticket::json->'person_id' as uid FROM ticket WHERE user_id = '{}' and ticket_number = {} ORDER BY creation_datetime DESC LIMIT 1".format(user_id, ticket_number)
+
+        person_id = None
+
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        for row in cursor.fetchall():
+            person_id = row[0]
+
+        cursor.close()
+
+        return person_id
+
 class TicketMode(Mode):
     memory = {}
 
@@ -71,82 +87,90 @@ class TicketMode(Mode):
         if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
             self.new_memory(user_id)
 
-        if check_taiwan_id_number(question):
-            self.memory[user_id]["person_id"] = question.upper()
-        elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question):
-            try:
-                booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+        if re.search("ticket=cancel\+([\d]{6})", question):
+            m = re.match("ticket=cancel\+([\d]{6})", question)
+            ticket_number = m.group(1)
 
-                if booked_date > datetime.datetime.now():
-                    self.memory[user_id]["getin_date"] = "{}-00".format(question)
-            except ValueError as e:
-                print "Error: {}".format(e)
-        elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
-            question = int(question)
+            person_id = self.db.get_person_id(user_id, ticket_number)
+            requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
+            reply_txt = "已經取消號碼為{}的車票".format(ticket_number)
+        else:
+            if check_taiwan_id_number(question):
+                self.memory[user_id]["person_id"] = question.upper()
+            elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question):
+                try:
+                    booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
 
-            if question > -1 and question < 24:
-                self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
-        elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_end_dtime", None) is None:
-            question = int(question)
-            diff_dtime = question - int(self.memory[user_id]["getin_start_dtime"].split(":")[0])
+                    if booked_date > datetime.datetime.now():
+                        self.memory[user_id]["getin_date"] = "{}-00".format(question)
+                except ValueError as e:
+                    print "Error: {}".format(e)
+            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
+                question = int(question)
 
-            if question > -1 and question < 24 and diff_dtime > 0 and diff_dtime < 9:
-                self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(int(question))
-        elif get_station_number(question) and self.memory[user_id].get("from_station", None) is None:
-            self.memory[user_id]["from_station"] = get_station_number(question)
-        elif get_station_number(question) and self.memory[user_id].get("to_station", None) is None:
-            self.memory[user_id]["to_station"] = get_station_number(question)
-        elif question.isdigit() and int(question) > 0 and int(question) < 7 and self.memory[user_id].get("order_qty_str", None) is None:
-            self.memory[user_id]["order_qty_str"] = question
-        elif get_train_type(question) and self.memory[user_id].get("train_type", None) is None:
-            self.memory[user_id]["train_type"] = get_train_type(question)
+                if question > -1 and question < 24:
+                    self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
+            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_end_dtime", None) is None:
+                question = int(question)
+                diff_dtime = question - int(self.memory[user_id]["getin_start_dtime"].split(":")[0])
 
-        if self.memory[user_id].get("person_id", None) is None:
-            reply_txt = "請輸入身份證字號(A123456789)"
-        elif self.memory[user_id].get("getin_date", None) is None:
-            reply_txt = "請輸入欲搭車日期(YYYY/MM/DD)"
-        elif self.memory[user_id].get("getin_start_dtime", None) is None:
-            reply_txt = "請輸入起始時間(0-23)"
-        elif self.memory[user_id].get("getin_end_dtime", None) is None:
-            reply_txt = "請輸入終止時間(0-23)"
-        elif self.memory[user_id].get("from_station", None) is None:
-            reply_txt = "請輸入上車車站"
-        elif self.memory[user_id].get("to_station", None) is None:
-            reply_txt = "請輸入下車車站"
-        elif self.memory[user_id].get("order_qty_str", None) is None:
-            reply_txt = "請輸入車票張數"
-        elif self.memory[user_id].get("train_type", None) is None:
-            reply_txt = "請輸入車種"
-        elif self.is_filled(user_id):
-            message = ""
-            for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
-                            ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
-                if k.find("station") > -1:
-                    message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_station_name(self.memory[user_id][k]))
-                elif k == "train_type":
-                    message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_train_name(self.memory[user_id][k]))
+                if question > -1 and question < 24 and diff_dtime > 0 and diff_dtime < 9:
+                    self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(int(question))
+            elif get_station_number(question) and self.memory[user_id].get("from_station", None) is None:
+                self.memory[user_id]["from_station"] = get_station_number(question)
+            elif get_station_number(question) and self.memory[user_id].get("to_station", None) is None:
+                self.memory[user_id]["to_station"] = get_station_number(question)
+            elif question.isdigit() and int(question) > 0 and int(question) < 7 and self.memory[user_id].get("order_qty_str", None) is None:
+                self.memory[user_id]["order_qty_str"] = question
+            elif get_train_type(question) and self.memory[user_id].get("train_type", None) is None:
+                self.memory[user_id]["train_type"] = get_train_type(question)
+
+            if self.memory[user_id].get("person_id", None) is None:
+                reply_txt = "請輸入身份證字號(A123456789)"
+            elif self.memory[user_id].get("getin_date", None) is None:
+                reply_txt = "請輸入欲搭車日期(YYYY/MM/DD)"
+            elif self.memory[user_id].get("getin_start_dtime", None) is None:
+               reply_txt = "請輸入起始時間(0-23)"
+            elif self.memory[user_id].get("getin_end_dtime", None) is None:
+                reply_txt = "請輸入終止時間(0-23)"
+            elif self.memory[user_id].get("from_station", None) is None:
+                reply_txt = "請輸入上車車站"
+            elif self.memory[user_id].get("to_station", None) is None:
+                reply_txt = "請輸入下車車站"
+            elif self.memory[user_id].get("order_qty_str", None) is None:
+                reply_txt = "請輸入車票張數"
+            elif self.memory[user_id].get("train_type", None) is None:
+                reply_txt = "請輸入車種"
+            elif self.is_filled(user_id):
+                message = ""
+                for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
+                                ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
+                    if k.find("station") > -1:
+                        message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_station_name(self.memory[user_id][k]))
+                    elif k == "train_type":
+                        message += "{}: {}({})\n".format(name, self.memory[user_id][k], get_train_name(self.memory[user_id][k]))
+                    else:
+                        message += "{}: {}\n".format(name, self.memory[user_id][k])
+                message = message.strip()
+
+                if question not in ["ticket=confirm", "ticket=again"]:
+                    template = ConfirmTemplate(text=message, actions=[
+                        MessageTemplateAction(label="確認訂票", text='ticket=confirm'),
+                        MessageTemplateAction(label="重新輸入", text='ticket=again'),
+                    ])
+
+                    reply_txt = TemplateSendMessage(
+                        alt_text=txt_not_support(), template=template)
                 else:
-                    message += "{}: {}\n".format(name, self.memory[user_id][k])
-            message = message.strip()
+                    if question == "ticket=confirm":
+                        del self.memory[user_id]["creation_datetime"]
+                        self.db.ask(user_id, "tra", json.dumps(self.memory[user_id]))
 
-            if question not in ["ticket=confirm", "ticket=again"]:
-                template = ConfirmTemplate(text=message, actions=[
-                    MessageTemplateAction(label="確認訂票", text='ticket=confirm'),
-                    MessageTemplateAction(label="重新輸入", text='ticket=again'),
-                ])
+                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                    else:
+                        reply_txt = "請輸入身分證號字號"
 
-                reply_txt = TemplateSendMessage(
-                    alt_text=txt_not_support(), template=template)
-            else:
-                if question == "ticket=confirm":
-                    del self.memory[user_id]["creation_datetime"]
-                    self.db.ask(user_id, "tra", json.dumps(self.memory[user_id]))
-
-                    reply_txt = "懶人RC已將您的訂票需求排入排程，一旦訂到票，將會立即通知，感謝使用此服務"
-                else:
-                    reply_txt = "請輸入身分證號字號"
-
-                del self.memory[user_id]
+                    del self.memory[user_id]
 
         return reply_txt
 

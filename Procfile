@@ -1,1 +1,1 @@
-web: python app/push.py
+web: python app/app.py

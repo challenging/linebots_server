@@ -168,7 +168,8 @@ def message_text(event):
             elif mode_ticket.is_process(mode):
                 if msg == "booking tra":
                     reply_txt = "開始處理訂票需求"
-                    threading.Thread(target=requests.get("https://lazyrc-reply.herokuapp.com/tra_booking"))
+                    thread = threading.Thread(target=requests.get("https://lazyrc-reply.herokuapp.com/tra_booking"))
+                    thread.start()
 
                     is_system_cmd = True
 
