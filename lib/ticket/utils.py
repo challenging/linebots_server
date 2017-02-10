@@ -205,3 +205,24 @@ def get_train_name(train_type):
 
 get_station_number = lambda station_name: tra_stations.get(station_name, None)
 get_train_type = lambda train_name: tra_train_type.get(train_name, None)
+
+def thsr_dir(f):
+    folder = os.path.join(data_dir("captcha"), "thsr", f)
+    check_folder(folder, is_folder=True)
+
+    return folder
+
+def thsr_img_dir():
+    return thsr_dir("source")
+
+def thsr_screen_dir():
+    return thsr_dir("screenshot")
+
+def thsr_success_dir():
+    return thsr_dir("success")
+
+def thsr_fail_dir():
+    return thsr_dir("fail")
+
+def thsr_ticket_dir():
+    return thsr_dir("ticket")

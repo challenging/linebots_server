@@ -5,6 +5,7 @@ import sys
 import time
 import glob
 import click
+import pickle
 import numpy as np
 
 from sklearn.model_selection import train_test_split
@@ -27,18 +28,14 @@ seed = 7
 np.random.seed(seed)
 
 def load_data(files, parts=range(0, 10)+["x"]):
-    parts = range(0, 10) + ["x"]
     dataset_x, dataset_y = [], []
 
     for part in parts:
         for filepath in glob.iglob(files.format(part)):
             x = np.load(filepath)
 
-            y = [0]*11
-            if isinstance(part, int):
-                y[part] = 1
-            else:
-                y[-1] = 1
+            y = [0]*len(parts)
+            y[parts.index(part)] = 1
 
             dataset_x.append(x)
             dataset_y.append(y)
@@ -80,12 +77,32 @@ def simple_cnn_model(shape, output_dim):
 
     return model
 
-def complex_cnn_model(shape, output_dim):
+def thsr_complex_cnn_model(shape, output_dim):
     # create model
     model = Sequential()
-    model.add(Convolution2D(32, 5, 5, border_mode='valid', input_shape=shape, activation='relu'))
+    model.add(Convolution2D(48, 5, 5, border_mode='valid', input_shape=shape, activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(16, 4, 4, activation='relu'))
+    model.add(Convolution2D(64, 4, 4, activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Convolution2D(128, 4, 4, activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.2))
+    model.add(Flatten())
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(output_dim, activation='softmax'))
+
+    # Compile model
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    return model
+
+def tra_complex_cnn_model(shape, output_dim):
+    # create model
+    model = Sequential()
+    model.add(Convolution2D(16, 5, 5, border_mode='valid', input_shape=shape, activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Convolution2D(32, 4, 4, activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.2))
     model.add(Flatten())
@@ -103,12 +120,22 @@ def fit(model, X_train, X_validation, y_train, y_validation, nepoch=32, batch_si
 
 @click.command()
 @click.option("-m", "--mode", type=click.Choice(["mlp", "simple_cnn", "complex_cnn"]))
+@click.option("-c", "--company", type=click.Choice(["tra", "thsr"]))
 @click.option("-t", "--test-size", default=0.33)
 @click.option("-e", "--epoch", default=32)
 @click.option("-b", "--batch-size", default=16)
-def main(mode, test_size, epoch, batch_size):
-    basepath_data_input = os.path.join(data_dir(), "train", "number")
-    dataset_x, dataset_y = load_data(os.path.join(basepath_data_input, "{}", "*.npy"))
+def main(mode, company, test_size, epoch, batch_size):
+    basepath_data_input = os.path.join(data_dir(), company, "train", "number")
+
+    parts = range(0, 10) + ["x"]
+    if company == "thsr":
+        parts = []
+        for folder in os.listdir(basepath_data_input):
+            if len(folder) == 1:
+                parts.append(folder)
+
+    print parts
+    dataset_x, dataset_y = load_data(os.path.join(basepath_data_input, "{}", "*.npy"), parts)
 
     model = None
     if mode == "mlp":
@@ -121,7 +148,10 @@ def main(mode, test_size, epoch, batch_size):
         if mode == "simple_cnn":
             model = simple_cnn_model((1, h, w), dataset_y.shape[1])
         elif mode == "complex_cnn":
-            model = complex_cnn_model((1, h, w), dataset_y.shape[1])
+            if company == "tra":
+                model = tra_complex_cnn_model((1, h, w), dataset_y.shape[1])
+            elif company == "thsr":
+                model = thsr_complex_cnn_model((1, h, w), dataset_y.shape[1])
         else:
             raise NotImplementedError
 
@@ -131,8 +161,11 @@ def main(mode, test_size, epoch, batch_size):
     scores = model.evaluate(X_validation, y_validation, verbose=0)
     print "Baseline Error of Validation Set: {:.8f}%".format(100-scores[1]*100)
 
-    folder = os.path.join(model_dir(), str(int(time.time())))
-    check_folder(folder)
+    folder = os.path.join(model_dir(company), str(int(time.time())))
+    check_folder(folder, is_folder=True)
+
+    with open(os.path.join(folder, "y.pkl"), "wb") as out_file:
+        pickle.dump(parts, out_file)
 
     filepath_json = os.path.join(folder, "model={}.epoch={}.batch={}.json".format(mode, epoch, batch_size))
     filepath_weight = os.path.join(folder, "model={}.epoch={}.batch={}.h5".format(mode, epoch, batch_size))

@@ -38,7 +38,6 @@ class PlaceBot(Bot):
         places = []
         if type is not None:
             r = self.client.places_nearby(keyword=type, location=location, language=lang, open_now=True, rank_by='distance', type=type)
-            print r
             for idx, results in enumerate(r["results"]):
                 message = {}
 
@@ -52,10 +51,13 @@ class PlaceBot(Bot):
                 message["location"] = (results["geometry"]["location"]["lat"], results["geometry"]["location"]["lng"])
 
                 uri = google_search.bot.bots(message["name"].encode(UTF8))
+
+                # if not fetch the URL fomr results, use default URL - http://tw.yahoo.com
                 message["uri"] = uri if uri else "http://tw.yahoo.com"
+
                 places.append(message)
 
-                if idx > 1:
+                if idx > 0:
                     break
 
         return places

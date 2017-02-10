@@ -30,9 +30,10 @@ def copy_image_to_number_folder(data_input, data_output):
 
 @click.command()
 @click.option("-i", "--input")
-def main(input):
-    data_input = os.path.join(data_dir(), "train", input)
-    data_output = os.path.join(data_dir(), "train", "number")
+@click.option("-c", "--company", type=click.Choice(["tra", "thsr"]))
+def main(input, company):
+    data_input = os.path.join(data_dir(), company, "train", input)
+    data_output = os.path.join(data_dir(), company, "train", "number")
 
     copy_image_to_number_folder(data_input, data_output)
 

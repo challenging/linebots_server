@@ -1,20 +1,33 @@
 #!/usr/bin/env python
 
 import os
+import io
 import sys
+import hashlib
+import pickle
 import numpy as np
 
+from lib.common.utils import check_folder
 from keras.models import model_from_json
 from PIL import Image, ImageFilter, ImageEnhance
+
+encoder = hashlib.md5()
 
 def data_dir():
     return os.path.join(os.path.dirname(__file__), "etc")
 
-def model_dir():
-    return os.path.join(data_dir(), "model")
+def model_dir(folder):
+    return os.path.join(data_dir(), folder, "model")
 
-def cracker_dir():
-    return os.path.join(data_dir(), "cracker")
+def cracker_dir(folder):
+    return os.path.join(data_dir(), folder, "cracker")
+
+def get_digest(im):
+    output = io.BytesIO()
+    im.save(output, format='JPEG')
+    encoder.update(output.getvalue())
+
+    return encoder.hexdigest()
 
 def image_l(filepath):
     im = Image.open(filepath)
@@ -61,9 +74,9 @@ def load(filepath_json, filepath_weight, model):
 
     return model
 
-def latest_model(model):
-    model_json = os.path.join(model_dir(), "model.json")
-    model_h5 = os.path.join(model_dir(), "model.h5")
+def latest_model(model, company="tra"):
+    model_json = os.path.join(model_dir(company), "model.json")
+    model_h5 = os.path.join(model_dir(company), "model.h5")
 
     if os.path.exists(model_json) and os.path.exists(model_h5):
         return load(model_json, model_h5, model)
@@ -72,3 +85,12 @@ def latest_model(model):
             model_json, os.path.exists(model_json), model_h5, os.path.exists(model_h5))
 
         sys.exit(998)
+
+def latest_Y(company):
+    filepath = os.path.join(model_dir(company), "y.pkl")
+
+    y = None
+    with open(filepath, "rb") as in_file:
+        y = pickle.load(in_file)
+
+    return y

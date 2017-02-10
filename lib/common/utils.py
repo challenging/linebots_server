@@ -23,6 +23,8 @@ MODE_NORMAL = "normal"
 MODE_LOTTO = "lotto"
 MODE_TICKET = "ticket"
 
+URL_THSR = "https://irs.thsrc.com.tw/IMINT/"
+
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
 channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]

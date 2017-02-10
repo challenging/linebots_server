@@ -8,15 +8,26 @@ import numpy as np
 
 from lib.common.utils import check_folder
 
-from convert import convert_wb_1, convert_wb_2, crop_component, detect_connected_component
-from model import cnn_preprocess
-from utils import latest_model, image_l, data_dir, cracker_dir
+from lib.ocr.thsr.convert import crop
+from lib.ocr.convert import convert_wb_1, convert_wb_2, crop_component, detect_connected_component
+from lib.ocr.model import cnn_preprocess
+from lib.ocr.utils import latest_Y, latest_model, image_l, data_dir, cracker_dir
 
 model = None
-if model is None:
-    model = latest_model(model)
+Y = None
 
-def crack(input, cropped, basefolder=cracker_dir()):
+def init_model(company):
+    global model, Y
+
+    if model is None:
+        model = latest_model(model, company)
+
+    if company == "thsr":
+        Y = latest_Y(company)
+
+def crack_tra(input, cropped, basefolder=cracker_dir("tra")):
+    global model
+
     filename = os.path.basename(input)
 
     filepath_wb_1, _ = convert_wb_1(input)
@@ -32,7 +43,7 @@ def crack(input, cropped, basefolder=cracker_dir()):
 
     answer = ""
     scanned_files = os.path.join(basefolder, "cropped_{}".format(folder), filename, "*.jpg")
-    for filepath in sorted(glob.glob(scanned_files), key=os.path.basename):
+    for filepath in sorted(glob.glob(scanned_files), key=os.path.getctime):
         _, csgraph = image_l(filepath)
         dataset, _, _ = cnn_preprocess(np.array([csgraph]))
 
@@ -42,22 +53,52 @@ def crack(input, cropped, basefolder=cracker_dir()):
 
     return answer
 
+def crack_thsr(input, cropped, basefolder=cracker_dir("thsr")):
+    global model, Y
+
+    init_model("thsr")
+
+    filename = os.path.basename(input)
+
+    folder_cropped_1 = os.path.join(basefolder, "cropped_1")
+    folder_cropped_2 = os.path.join(basefolder, "cropped_2")
+    for f in [folder_cropped_1, folder_cropped_2]:
+        check_folder(f, is_folder=True)
+
+    crop(input, folder_cropped_1, folder_cropped_2)
+
+    answer = ""
+    scanned_files = os.path.join(basefolder, "cropped_{}".format(cropped), filename, "*.jpg")
+    for filepath in sorted(glob.glob(scanned_files), key=os.path.getctime):
+        _, csgraph = image_l(filepath)
+        dataset, _, _ = cnn_preprocess(np.array([csgraph]))
+
+        answer += Y[np.argmax(model.predict(dataset), axis=1)[0]]
+
+    return answer
+
 @click.command()
 @click.option("-i", "--input")
-@click.option("-c", "--cropped", type=click.Choice(["1", "2"]))
-def process(input, cropped):
+@click.option("-c", "--company", type=click.Choice(["tra", "thsr"]))
+@click.option("-t", "--type", type=click.Choice(["1", "2"]))
+def process(input, company, type):
     global model
 
     if input is None:
         print "Not found --input parameter"
 
         sys.exit(999)
+    else:
+        init_model(company)
 
     count_all, count_number, count_right = 0, 0, 0
     for input in glob.iglob(input):
         number = os.path.basename(input).split(".")[0]
 
-        answer = crack(input, cropped)
+        if company == "tra":
+            answer = crack_tra(input, type)
+        elif company == "thsr":
+            answer = crack_thsr(input, type)
 
         mark_len = "x"
         if len(answer) == len(number):
@@ -69,7 +110,7 @@ def process(input, cropped):
             mark_correct = "+"
             count_right += 1
 
-        print "[{}]. {}{} The prediction/real answer is {}/{}".format(cropped, mark_len, mark_correct, answer, number)
+        print "[{}]. {}{} The prediction/real answer is {}/{}".format(type, mark_len, mark_correct, answer, number)
 
         count_all += 1
 
