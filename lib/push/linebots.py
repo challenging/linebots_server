@@ -20,8 +20,6 @@ from linebot.models import (
     MessageTemplateAction, ConfirmTemplate, TemplateSendMessage
 )
 
-from apscheduler.schedulers.blocking import BlockingScheduler
-
 blueprint = Blueprint('LINEBOTS_PUSH', __name__)
 
 # get channel_secret and channel_access_token from your environment variable
@@ -86,6 +84,4 @@ def push_ticket():
     return booking()
 
 if __name__ == "__main__":
-    sched = BlockingScheduler()
-    sched.add_job(push_ticket, 'cron', minute=2)
-    sched.start()
+    booking()
