@@ -99,8 +99,8 @@ class TRATicketMode(Mode):
         if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
             self.new_memory(user_id)
 
-        if re.search("ticket=cancel\+([\d]{6})", question):
-            m = re.match("ticket=cancel\+([\d]{6})", question)
+        if re.search("ticket_tra=cancel\+([\d]{6})", question):
+            m = re.match("ticket_tra=cancel\+([\d]{6})", question)
             ticket_number = m.group(1)
 
             person_id = self.db.get_person_id(user_id, ticket_number)
@@ -171,16 +171,16 @@ class TRATicketMode(Mode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                if question not in ["ticket=confirm", "ticket=again"]:
+                if question not in ["ticket_tra=confirm", "ticket_tra=again"]:
                     template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label="確認訂票", text='ticket=confirm'),
-                        MessageTemplateAction(label="重新輸入", text='ticket=again'),
+                        MessageTemplateAction(label="確認訂票", text='ticket_tra=confirm'),
+                        MessageTemplateAction(label="重新輸入", text='ticket_tra=again'),
                     ])
 
                     reply_txt = TemplateSendMessage(
                         alt_text=txt_not_support(), template=template)
                 else:
-                    if question == "ticket=confirm":
+                    if question == "ticket_tra=confirm":
                         del self.memory[user_id]["creation_datetime"]
                         self.db.ask(user_id, "tra", json.dumps(self.memory[user_id]))
 
