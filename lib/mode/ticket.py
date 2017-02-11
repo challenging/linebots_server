@@ -286,6 +286,11 @@ class THSRTicketMode(TRATicketMode):
                 self.memory[user_id]["selectStartStation"] = question
             elif question in thsr_stations and self.memory[user_id].get("selectDestinationStation", None) is None:
                 self.memory[user_id]["selectDestinationStation"] = question
+            elif self.memory[user_id]["booking_type"] == "student" and re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:4:ticketAmount", None) is None:
+                question = int(question)
+
+                if question >= 0 and question < 11:
+                    self.memory[user_id]["ticketPanel:rows:4:ticketAmount"] = question
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
                 question = int(question)
 
@@ -296,11 +301,6 @@ class THSRTicketMode(TRATicketMode):
 
                 if question >= 0 and question < 11:
                     self.memory[user_id]["ticketPanel:rows:1:ticketAmount"] = question
-            elif self.memory[user_id]["booking_type"] == "student" and re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:4:ticketAmount", None) is None:
-                question = int(question)
-
-                if question >= 0 and question < 11:
-                    self.memory[user_id]["ticketPanel:rows:4:ticketAmount"] = question
 
             if self.memory[user_id].get("person_id", None) is None:
                 reply_txt = "請輸入身份證字號(A123456789)"
@@ -327,7 +327,7 @@ class THSRTicketMode(TRATicketMode):
                 reply_txt = "請輸入學生張數(1-10)"
             elif self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
                 reply_txt = "請輸入成人張數(1-10)"
-            elif self.memory[user_id]["booking_type"] != "general" and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
+            elif self.memory[user_id]["booking_type"] != "student" and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
                 reply_txt = "請輸入小孩張數(1-10)"
             elif self.is_filled(user_id):
                 message = "高鐵訂票資訊如下\n====================\n"
