@@ -332,7 +332,7 @@ class THSRTicketMode(TRATicketMode):
             elif self.is_filled(user_id):
                 message = "高鐵訂票資訊如下\n====================\n"
                 for name, k in [("身份證字號", "person_id"), ("手機號碼", "cellphone"), ("欲搭車日期", "booking_date"), ("起始時間", "booking_stime"), ("終止時間", "booking_etime"), ("上車車站", "selectStartStation"), ("下車車站", "selectDestinationStation"), ("成人票張數", "ticketPanel:rows:0:ticketAmount"), ("小孩票張數", "ticketPanel:rows:1:ticketAmount"), ("學生票張數", "ticketPanel:rows:4:ticketAmount")]:
-                    if k in self.memory[user_id]:
+                    if self.memory[user_id].get(k, None) is not None:
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
@@ -353,6 +353,8 @@ class THSRTicketMode(TRATicketMode):
                         reply_txt = "請輸入身分證號字號"
 
                     del self.memory[user_id]
+        else:
+            reply_txt = "輸入資訊有誤，請重新輸入"
 
         return reply_txt
 
@@ -375,6 +377,10 @@ class THSRTicketMode(TRATicketMode):
 
     def is_filled(self, user_id):
         is_pass, ticket_count = True, 0
+
+        if self.memory[user_id]["booking_type"] == "student":
+            del self.memory[user_id]["ticketPanel:rows:1:ticketAmount"]
+
         for k, v in self.memory[user_id].items():
             if v is None:
                 is_pass = False
@@ -384,7 +390,7 @@ class THSRTicketMode(TRATicketMode):
                 if k.find("Amount") > -1:
                     ticket_count += v
 
-        return is_pass and ticket_count > 0
+        return is_pass and ticket_count > 0 and ticket_count < 11
 
 mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 
