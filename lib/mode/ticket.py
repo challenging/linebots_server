@@ -204,6 +204,10 @@ class TRATicketMode(Mode):
                         reply_txt = "請輸入身分證號字號"
 
                     del self.memory[user_id]
+            else:
+                del self.memory[user_id]
+
+                reply_txt = "輸入資訊有誤，請重新輸入"
 
         return reply_txt
 
@@ -353,7 +357,9 @@ class THSRTicketMode(TRATicketMode):
                         reply_txt = "請輸入身分證號字號"
 
                     del self.memory[user_id]
-        else:
+            else:
+                del self.memory[user_id]
+
             reply_txt = "輸入資訊有誤，請重新輸入"
 
         return reply_txt
