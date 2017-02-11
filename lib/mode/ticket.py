@@ -253,14 +253,14 @@ class THSRTicketMode(TRATicketMode):
             else:
                 reply_txt = "取消高鐵車票({})失敗，請稍後再試！或者請上高鐵網站取消".format(ticket_number)
         else:
-            if re.search("booking_type=([\w]+)", question):
-                m = re.match("booking_type=([\w]+)", question)
-
-                self.memory[user_id]["booking_type"] = m.group(1)
-            elif check_taiwan_id_number(question):
+            if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
             elif re.search("([\d]{10})", question) and self.memory[user_id].get("cellphone", None) is None:
                 self.memory[user_id]["cellphone"] = question
+            elif re.search("booking_type=([\w]+)", question):
+                m = re.match("booking_type=([\w]+)", question)
+
+                self.memory[user_id]["booking_type"] = m.group(1)
             elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) and self.memory[user_id].get("booking_date", None) is None:
                 try:
                     booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
@@ -295,17 +295,17 @@ class THSRTicketMode(TRATicketMode):
                 if question >= 0 and question < 11:
                     self.memory[user_id]["ticketPanel:rows:1:ticketAmount"] = question
 
-            if self.memory[user_id].get("booking_type", None) is None:
+            if self.memory[user_id].get("person_id", None) is None:
+                reply_txt = "請輸入身份證字號(A123456789)"
+            elif self.memory[user_id].get("cellphone", None) is None:
+                reply_txt = "請輸入手機號碼(0912345678)"
+            elif self.memory[user_id].get("booking_type", None) is None:
                 template = ConfirmTemplate(text="請選擇訂票身份", actions=[
                     MessageTemplateAction(label="一般訂票", text='booking_type=general'),
                     MessageTemplateAction(label="學生訂票", text='booking_type=student'),
                 ])
 
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
-            elif self.memory[user_id].get("person_id", None) is None:
-                reply_txt = "請輸入身份證字號(A123456789)"
-            elif self.memory[user_id].get("cellphone", None) is None:
-                reply_txt = "請輸入手機號碼(0912345678)"
             elif self.memory[user_id].get("booking_date", None) is None:
                 reply_txt = "請輸入欲搭車日期(YYYY/MM/DD)"
             elif self.memory[user_id].get("booking_stime", None) is None:

@@ -19,5 +19,8 @@ class Mode(object):
     def mode(self, mode):
         self._mode = mode
 
+    def is_process(self, mode, question):
+        raise mode.lower() == self.mode.lower()
+
     def conversion(self, question, user_id, user_name):
         raise NotImplementedError

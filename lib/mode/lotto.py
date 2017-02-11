@@ -8,9 +8,6 @@ from lib.common.mode import Mode
 class LottoMode(Mode):
     MONEY = 35
 
-    def is_process(self, mode):
-        return self.mode.lower() == mode.lower()
-
     def conversion(self, question, user_id=None, user_name=None):
         if question.isdigit():
             fee = int(question)
