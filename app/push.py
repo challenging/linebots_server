@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 import click
+import random
 
-from flask import Flask
-from lib.push import linebots
+import logging
+logging.basicConfig(filename=os.path.join(os.path.dirname(__file__), "{}.log".format(os.path.basename(__file__))),
+                    format='%(asctime)s %(levelname)s %(message)s'
+                   )
+
+from lib.push.linebots import booking
 
 @click.command()
-@click.option("-p", "--port", default=8000)
-@click.option("-h", "--host", default="0.0.0.0")
-def run(port, host):
-    app = Flask(__name__)
-    app.register_blueprint(linebots.blueprint)
+def run():
+    while True:
+        logging.info("start to process cracker tasks of TRA")
+        booking()
+        logging.info("end the cracker tasks of TRA")
 
-    port = int(os.environ.get("PORT", port))
-    app.run(host=host, port=port)
+        time.sleep(random.randint(30, 60))
 
 if __name__ == "__main__":
     run()

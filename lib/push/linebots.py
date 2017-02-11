@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint
-from flask import Flask, request, abort, send_from_directory
-
 from lib.mode.ticket import mode_ticket
 
 from lib.ticket import booking_tra
@@ -20,8 +17,6 @@ from linebot.models import (
     MessageTemplateAction, ConfirmTemplate, TemplateSendMessage
 )
 
-blueprint = Blueprint('LINEBOTS_PUSH', __name__)
-
 # get channel_secret and channel_access_token from your environment variable
 line_bot_api = LineBotApi(channel_access_token)
 
@@ -31,27 +26,6 @@ def collect(db):
         questions.append("\t".join(r if isinstance(r, (str, unicode)) else str(r) for r in row))
 
     return "<br/>".join(questions)
-
-@blueprint.route("/")
-def root():
-    return "LINEBOTS - Pushing Service"
-
-@blueprint.route("/ticket/<path:path>")
-def ticket(path):
-    return send_from_directory(tra_ticket_dir(), path)
-
-@blueprint.route("/fail/<path:path>")
-def fail(path):
-    return send_from_directory(tra_fail_dir(), path)
-
-def push(user_id, reply_txt):
-    line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
-
-'''
-@blueprint.route("/list_tickets")
-def list_tickets():
-    return collect(mode_ticket.db)
-'''
 
 def booking():
     requests = mode_ticket.db.non_booking()
@@ -78,10 +52,6 @@ def booking():
             line_bot_api.push_message(user_id, message)
 
     return "done..."
-
-@blueprint.route("/tra_booking")
-def push_ticket():
-    return booking()
 
 if __name__ == "__main__":
     booking()
