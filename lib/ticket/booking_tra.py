@@ -8,7 +8,7 @@ from PIL import Image
 
 from lib.ocr.cracker import init_model, crack_tra
 from lib.ocr.utils import get_digest
-from lib.common.utils import get_chrome_driver, get_phantom_driver
+from lib.common.utils import get_chrome_driver, get_phantom_driver, log
 from lib.ticket.utils import URL_TRA
 from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_fail_dir, tra_ticket_dir
 
@@ -39,7 +39,7 @@ def book_ticket(param, cropped=1):
 
         filepath_screenshot = os.path.join(tra_screen_dir(), "{}.jpg".format(int(time.time()*1000)))
         web_opener.save_screenshot(filepath_screenshot)
-        print "save the screenshot in {}".format(filepath_screenshot)
+        log("save the screenshot in {}".format(filepath_screenshot))
 
         im = Image.open(filepath_screenshot)
         #im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
@@ -47,11 +47,11 @@ def book_ticket(param, cropped=1):
 
         im_filepath = os.path.join(tra_img_dir(), "{}.jpg".format(get_digest(im)))
         im.save(im_filepath)
-        print "save the cropped image in {}".format(im_filepath)
+        log("save the cropped image in {}".format(im_filepath))
 
         answer = crack_tra(im_filepath, cropped, basefolder=os.path.join(tra_img_dir(), ".."))
         web_opener.find_element_by_id("randInput").send_keys(answer)
-        print "for {}, the predicted input is {}".format(im_filepath, answer)
+        log("for {}, the predicted input is {}".format(im_filepath, answer))
         time.sleep(2)
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
@@ -77,7 +77,7 @@ def book_ticket(param, cropped=1):
 
                 ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(\
                     param["person_id"], param["ticket"]))
-                print "the filepath_ticket is {}".format(ticket_filepath)
+                log("the filepath_ticket is {}".format(ticket_filepath))
 
                 web_opener.save_screenshot(ticket_filepath)
 
@@ -85,7 +85,7 @@ def book_ticket(param, cropped=1):
 
                 break
 
-        print "book the ticket number - {}".format(ticket_number)
+        log("book the ticket number - {}".format(ticket_number))
 
         time.sleep(random.randint(1, 5))
         retry -= 1

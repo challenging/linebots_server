@@ -11,7 +11,7 @@ from linebot.models import PostbackTemplateAction, ButtonsTemplate
 from lib.common.mode import Mode
 from lib.common.db import DB
 
-from lib.common.utils import MODE_TRA_TICKET, log
+from lib.common.utils import MODE_TRA_TICKET, MODE_THSR_TICKET, log
 from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
@@ -214,6 +214,11 @@ class TRATicketMode(Mode):
         return is_pass
 
 mode_tra_ticket = TRATicketMode(MODE_TRA_TICKET)
+
+class THSRTicketMode(Mode):
+    pass
+
+mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 
 if __name__ == "__main__":
     user_id = "L122760167"

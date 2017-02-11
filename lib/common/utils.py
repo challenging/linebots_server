@@ -14,8 +14,7 @@ import logging
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s'
-                   )
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
 
 from tqdm import tqdm
 from selenium import webdriver
@@ -36,10 +35,10 @@ def get_chrome_driver():
     # Set chrome driver path
     chromedriver = os.path.join(data_dir("driver"), "chromedriver_{}".format("mac64" if sys.platform == "darwin" else "linux64"))
     if not os.path.exists(chromedriver):
-        print "Not found the driver of Chrome from {}".format(chromedriver)
+        log("Not found the driver of Chrome from {}".format(chromedriver))
     else:
         os.environ["webdriver.chrome.driver"] = chromedriver
-        print "export webdriver.chrome.driver={}".format(chromedriver)
+        log("export webdriver.chrome.driver={}".format(chromedriver))
 
     return webdriver.Chrome(chromedriver)
 
@@ -47,9 +46,9 @@ def get_phantom_driver():
     driver = os.path.join(data_dir("driver"), "phantomjs-2.1.1-{}".format("mac64" if sys.platform == "darwin" else "linux64"), "bin", "phantomjs")
 
     if not os.path.exists(driver):
-        print "Not found the driver of PhantomJS from {}".format(driver)
+        log("Not found the driver of PhantomJS from {}".format(driver))
 
-    print driver
+    log(driver)
     return webdriver.PhantomJS(driver)
 
 def get_db_connection():
@@ -91,7 +90,7 @@ def crawl(url, subfolder, filename=None, compression=True):
     filename = os.path.join(data_dir(subfolder), "{}.bak".format("{}.gz".format(filename) if compression else filename))
     if not os.path.exists(os.path.dirname(filename)):
         os.makedirs(os.path.dirname(filename))
-        print "Create {} to be the repository for the data of {}".format(os.path.dirname(filename), subfolder)
+        log("Create {} to be the repository for the data of {}".format(os.path.dirname(filename), subfolder))
 
     response = requests.get(url, stream=True)
 
@@ -101,10 +100,10 @@ def crawl(url, subfolder, filename=None, compression=True):
             for data in tqdm(response.iter_content()):
                 handle.write(data)
 
-            print "Save {} in {} successfully".format(url, filename)
+            log("Save {} in {} successfully".format(url, filename))
             is_pass = True
         except AttributeError as e:
-            print "Save {} in {} failed".format(url, filename)
+            log("Save {} in {} failed".format(url, filename))
 
     if is_pass:
         # rename file
