@@ -162,7 +162,7 @@ class TRATicketMode(Mode):
                                 actions=[MessageTemplateAction(label=k, text=k) for k in tra_train_type.keys()]
                             ))
             elif self.is_filled(user_id):
-                message = ""
+                message = "台鐵訂票資訊如下\n====================\n"
                 for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
                                 ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
                     if k.find("station") > -1:
@@ -296,7 +296,7 @@ class THSRTicketMode(TRATicketMode):
             elif self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
                 reply_txt = "請輸入小孩張數(1-10)"
             elif self.is_filled(user_id):
-                message = ""
+                message = "高鐵訂票資訊如下\n====================\n"
                 for name, k in [("身份證字號", "person_id"), ("手機號碼", "cellphone"), ("欲搭車日期", "booking_date"), ("起始時間", "booking_stime"), ("終止時間", "booking_etime"), ("上車車站", "selectStartStation"), ("下車車站", "selectDestinationStation"), ("成人票張數", "ticketPanel:rows:0:ticketAmount"), ("小孩票張數", "ticketPanel:rows:1:ticketAmount")]:
                     message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
