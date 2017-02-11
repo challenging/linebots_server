@@ -360,7 +360,7 @@ class THSRTicketMode(TRATicketMode):
             else:
                 del self.memory[user_id]
 
-            reply_txt = "輸入資訊有誤，請重新輸入"
+                reply_txt = "輸入資訊有誤，請重新輸入"
 
         return reply_txt
 
