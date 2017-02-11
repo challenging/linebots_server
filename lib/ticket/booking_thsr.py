@@ -4,6 +4,7 @@
 import os
 import time
 import random
+import datetime
 
 from PIL import Image
 
@@ -19,8 +20,12 @@ from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, th
 
 init_model("thsr")
 
-def book_ticket(param, cropped=2):
-    opener = get_phantom_driver()
+def book_ticket(param, cropped=2, driver="phantom"):
+    opener = None
+    if driver == "chrome":
+        opener = get_chrome_driver()
+    else:
+        opener = get_phantom_driver()
 
     retry, ticket_number = 2, None
     while retry >= 0:
@@ -43,7 +48,7 @@ def book_ticket(param, cropped=2):
         opener.execute_script("arguments[0].value = ''", input_field)
         input_field.send_keys(param["booking_date"])
         # preferred time
-        opener.find_element_by_name("toTimeTable").send_keys(param["booking_time"])
+        opener.find_element_by_name("toTimeTable").send_keys(param["booking_stime"])
         # ticket amount
         if param["ticketPanel:rows:0:ticketAmount"] != 1:
             opener.find_element_by_name("ticketPanel:rows:0:ticketAmount").send_keys(param["ticketPanel:rows:0:ticketAmount"])
@@ -112,7 +117,19 @@ def book_ticket(param, cropped=2):
             for radio_field in field.find_elements_by_name("TrainQueryDataViewPanel:TrainGroup"):
                 trains[-1].append(radio_field)
 
-        trains[0][-1].click()
+        button = None
+        stime, etime = datetime.datetime.strptime(param["booking_stime"], "%H:%M"), datetime.datetime.strptime(param["booking_etime"], "%H:%M")
+        for train in trains:
+            t = datetime.datetime.strptime(train[1], "%H:%M")
+
+            if stime <= t and etime >= t:
+                button = train[-1]
+
+            if button:
+                break
+
+        button.click()
+
         opener.find_element_by_name("SubmitButton").click()
         time.sleep(random.randint(1, 3))
 
@@ -149,7 +166,8 @@ if __name__ == "__main__":
                       "person_id": "L122760167",
                       "cellphone": "0921747196",
                       "booking_date": "2017/03/01",
-                      "booking_time": "130P",
+                      "booking_stime": "10:00",
+                      "booking_etime": "12:00",
                       "selectStartStation": "桃園",
                       "selectDestinationStation": "台中",
                       "preferred_seat": "seatRadio1",
@@ -158,4 +176,4 @@ if __name__ == "__main__":
                       "ticketPanel:rows:0:ticketAmount": 1,
                       "ticketPanel:rows:1:ticketAmount": 0}
 
-    print book_ticket(testing_params)
+    print book_ticket(testing_params, driver="chrome")

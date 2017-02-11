@@ -16,6 +16,7 @@ from lib.common.utils import MODE_TRA_TICKET, MODE_THSR_TICKET, log
 from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
+from lib.ticket.utils import thsr_stations
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
 from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED
 
@@ -28,7 +29,7 @@ class TicketDB(DB):
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx ON {table_name} (ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.close()
 
-    def ask(self, user_id, ticket_type, ticket):
+    def ask(self, user_id, ticket, ticket_type):
         sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', -1, 'scheduled');".format(\
             self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
 
@@ -36,9 +37,9 @@ class TicketDB(DB):
         cursor.execute(sql)
         cursor.close()
 
-    def non_booking(self, status=TICKET_STATUS_SCHEDULED):
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime BETWEEN '{}' AND '{}' AND status = '{}'".format(\
-            self.table_name, datetime.datetime.now().strftime("%Y-%m-%dT00:00:00"), (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"), status)
+    def non_booking(self, ticket_type, status=TICKET_STATUS_SCHEDULED):
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, datetime.datetime.now().strftime("%Y-%m-%dT00:00:00"), (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -51,9 +52,9 @@ class TicketDB(DB):
 
         return requests
 
-    def book(self, user_id, creation_datetime, ticket_number, status):
-        sql = "UPDATE {} SET ticket_number = {}, status = '{}' WHERE user_id = '{}' and creation_datetime = '{}'".format(\
-            self.table_name, ticket_number, status, user_id, creation_datetime)
+    def book(self, user_id, creation_datetime, ticket_number, status, ticket_type):
+        sql = "UPDATE {} SET ticket_number = {}, status = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, ticket_number, status, user_id, creation_datetime, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -61,9 +62,9 @@ class TicketDB(DB):
 
         return done
 
-    def cancel(self, user_id, ticket_number):
-        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = {}".format(\
-            self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number)
+    def cancel(self, user_id, ticket_number, ticket_type):
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = {} AND ticket_type = '{}'".format(\
+            self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -71,8 +72,9 @@ class TicketDB(DB):
 
         return done
 
-    def get_person_id(self, user_id, ticket_number):
-        sql = "SELECT ticket::json->'person_id' as uid FROM ticket WHERE user_id = '{}' and ticket_number = {} ORDER BY creation_datetime DESC LIMIT 1".format(user_id, ticket_number)
+    def get_person_id(self, user_id, ticket_number, ticket_type):
+        sql = "SELECT ticket::json->'person_id' as uid FROM ticket WHERE user_id = '{}' and ticket_number = {} AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
+            user_id, ticket_number, ticket_type)
 
         person_id = None
 
@@ -90,6 +92,7 @@ class TRATicketMode(Mode):
 
     def init(self):
         self.db = TicketDB()
+        self.ticket_type = "tra"
 
     def is_process(self, mode):
         return self.mode.lower() == mode.lower()
@@ -103,15 +106,15 @@ class TRATicketMode(Mode):
             m = re.match("ticket_tra=cancel\+([\d]{6})", question)
             ticket_number = m.group(1)
 
-            person_id = self.db.get_person_id(user_id, ticket_number)
+            person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)
             requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
 
-            self.db.cancel(user_id, ticket_number)
-            reply_txt = "已經取消號碼為{}的車票".format(ticket_number)
+            self.db.cancel(user_id, ticket_number, self.ticket_type)
+            reply_txt = "已經取消號碼為{}的台鐵車票".format(ticket_number)
         else:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
-            elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question):
+            elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) and self.memory[user_id].get("getin_date", None) is None:
                 try:
                     booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
 
@@ -182,7 +185,7 @@ class TRATicketMode(Mode):
                 else:
                     if question == "ticket_tra=confirm":
                         del self.memory[user_id]["creation_datetime"]
-                        self.db.ask(user_id, "tra", json.dumps(self.memory[user_id]))
+                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
 
                         reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
                     else:
@@ -216,18 +219,158 @@ class TRATicketMode(Mode):
 
 mode_tra_ticket = TRATicketMode(MODE_TRA_TICKET)
 
-class THSRTicketMode(Mode):
-    pass
+class THSRTicketMode(TRATicketMode):
+    def init(self):
+        self.db = TicketDB()
+        self.ticket_type = "thsr"
+
+    def conversion(self, question, user_id=None, user_name=None):
+        reply_txt = None
+        if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
+            self.new_memory(user_id)
+
+        if re.search("ticket_thsr=cancel\+([\d]{6})", question):
+            m = re.match("ticket_thsr=cancel\+([\d]{6})", question)
+            ticket_number = m.group(1)
+
+            person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)
+            #requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
+
+            self.db.cancel(user_id, ticket_number, self.ticket_type)
+            reply_txt = "已經取消號碼為{}的高鐵車票".format(ticket_number)
+        else:
+            if check_taiwan_id_number(question):
+                self.memory[user_id]["person_id"] = question.upper()
+            elif re.search("([\d]{10})", question) and self.memory[user_id].get("cellphone", None) is None:
+                self.memory[user_id]["cellphone"] = question
+            elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) and self.memory[user_id].get("booking_date", None) is None:
+                try:
+                    booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+
+                    if booked_date > datetime.datetime.now():
+                        self.memory[user_id]["booking_date"] = question
+                except ValueError as e:
+                    log("Error: {}".format(e))
+            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("booking_stime", None) is None:
+                question = int(question)
+
+                if question > -1 and question < 24:
+                    self.memory[user_id]["booking_stime"] = "{:02d}:00".format(int(question))
+            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("booking_etime", None) is None:
+                question = int(question)
+                diff_dtime = question - int(self.memory[user_id]["booking_stime"].split(":")[0])
+
+                if question > -1 and question < 24 and diff_dtime > 0:
+                    self.memory[user_id]["booking_etime"] = "{:02d}:00".format(int(question))
+            elif question in thsr_stations and self.memory[user_id].get("selectStartStation", None) is None:
+                self.memory[user_id]["selectStartStation"] = get_station_number(question)
+            elif question in thsr_stations and self.memory[user_id].get("selectDestinationStation", None) is None:
+                self.memory[user_id]["selectDestinationStation"] = get_station_number(question)
+            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
+                question = int(question)
+
+                if question >= 0 and question < 11:
+                    self.memory[user_id]["ticketPanel:rows:0:ticketAmount"] = question
+            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
+                question = int(question)
+
+                if question >= 0 and question < 11:
+                    self.memory[user_id]["ticketPanel:rows:1:ticketAmount"] = question
+
+            if self.memory[user_id].get("person_id", None) is None:
+                reply_txt = "請輸入身份證字號(A123456789)"
+            elif self.memory[user_id].get("cellphone", None) is None:
+                reply_txt = "請輸入手機號碼(0912345678)"
+            elif self.memory[user_id].get("booking_date", None) is None:
+                reply_txt = "請輸入欲搭車日期(YYYY/MM/DD)"
+            elif self.memory[user_id].get("booking_stime", None) is None:
+               reply_txt = "請輸入起始時間(0-23)"
+            elif self.memory[user_id].get("booking_etime", None) is None:
+                reply_txt = "請輸入終止時間(0-23)"
+            elif self.memory[user_id].get("selectStartStation", None) is None:
+                reply_txt = "請輸入上車車站"
+            elif self.memory[user_id].get("selectDestinationStation", None) is None:
+                reply_txt = "請輸入下車車站"
+            elif self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
+                reply_txt = "請輸入成人張數(1-10)"
+            elif self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
+                reply_txt = "請輸入小孩張數(1-10)"
+            elif self.is_filled(user_id):
+                message = ""
+                for name, k in [("身份證字號", "person_id"), ("手機號碼", "cellphone"), ("欲搭車日期", "booking_date"), ("起始時間", "booking_stime"), ("終止時間", "booking_etime"), ("上車車站", "selectStartStation"), ("下車車站", "selectDestinationStation"), ("成人票張數", "ticketPanel:rows:0:ticketAmount"), ("小孩票張數", "ticketPanel:rows:1:ticketAmount")]:
+                    message += "{}: {}\n".format(name, self.memory[user_id][k])
+                message = message.strip()
+
+                if question not in ["ticket_thsr=confirm", "ticket_thsr=again"]:
+                    template = ConfirmTemplate(text=message, actions=[
+                        MessageTemplateAction(label="確認訂票", text='ticket_thsr=confirm'),
+                        MessageTemplateAction(label="重新輸入", text='ticket_thsr=again'),
+                    ])
+
+                    reply_txt = TemplateSendMessage(
+                        alt_text=txt_not_support(), template=template)
+                else:
+                    if question == "ticket_thsr=confirm":
+                        del self.memory[user_id]["creation_datetime"]
+                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
+
+                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                    else:
+                        reply_txt = "請輸入身分證號字號"
+
+                    del self.memory[user_id]
+
+        return reply_txt
+
+    def new_memory(self, user_id):
+        self.memory.setdefault(user_id, {})
+        self.memory[user_id] = {"booking_type": "general",
+                                "creation_datetime": datetime.datetime.now(),
+                                "person_id": None,
+                                "cellphone": None,
+                                "booking_date": None,
+                                "booking_stime": None,
+                                "booking_etime": None,
+                                "selectStartStation": None,
+                                "selectDestinationStation": None,
+                                "preferred_seat": "seatRadio1",
+                                "booking": "bookingMethod1",
+                                "onlyQueryOffPeakCheckBox": False,
+                                "ticketPanel:rows:0:ticketAmount": None,
+                                "ticketPanel:rows:1:ticketAmount": None}
+
+    def is_filled(self, user_id):
+        is_pass, ticket_count = True, 0
+        for k, v in self.memory[user_id].items():
+            if v is None:
+                is_pass = False
+
+                break
+            else:
+                if k.find("Amount") > -1:
+                    ticket_count += v
+
+        return is_pass and ticket_count > 0
 
 mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 
 if __name__ == "__main__":
     user_id = "L122760167"
 
+    '''
     questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
             print message
         else:
+            print message.as_json_string()
+    '''
+
+    questions = ["我試試", user_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
+    for question in questions:
+        message = mode_thsr_ticket.conversion(question, user_id)
+        if isinstance(message, str):
+            print message
+        elif message is not None:
             print message.as_json_string()

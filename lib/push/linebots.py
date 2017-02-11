@@ -27,8 +27,8 @@ def collect(db):
 
     return "<br/>".join(questions)
 
-def booking():
-    requests = mode_tra_ticket.db.non_booking()
+def booking(ticket_type):
+    requests = mode_tra_ticket.db.non_booking(ticket_type)
     for user_id, creation_datetime, param in requests:
         message = None
 
@@ -54,4 +54,4 @@ def booking():
     return "done..."
 
 if __name__ == "__main__":
-    booking()
+    booking("tra")
