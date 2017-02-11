@@ -88,9 +88,8 @@ class TicketDB(DB):
         return person_id
 
 class TRATicketMode(Mode):
-    memory = {}
-
     def init(self):
+        self.memory = {}
         self.db = TicketDB()
         self.ticket_type = "tra"
 
@@ -221,6 +220,7 @@ mode_tra_ticket = TRATicketMode(MODE_TRA_TICKET)
 
 class THSRTicketMode(TRATicketMode):
     def init(self):
+        self.memory = {}
         self.db = TicketDB()
         self.ticket_type = "thsr"
 
@@ -263,9 +263,9 @@ class THSRTicketMode(TRATicketMode):
                 if question > -1 and question < 24 and diff_dtime > 0:
                     self.memory[user_id]["booking_etime"] = "{:02d}:00".format(int(question))
             elif question in thsr_stations and self.memory[user_id].get("selectStartStation", None) is None:
-                self.memory[user_id]["selectStartStation"] = get_station_number(question)
+                self.memory[user_id]["selectStartStation"] = question
             elif question in thsr_stations and self.memory[user_id].get("selectDestinationStation", None) is None:
-                self.memory[user_id]["selectDestinationStation"] = get_station_number(question)
+                self.memory[user_id]["selectDestinationStation"] = question
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
                 question = int(question)
 
