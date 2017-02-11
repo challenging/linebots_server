@@ -157,7 +157,7 @@ def message_text(event):
         if not is_system_cmd:
             if mode_tra_ticket.is_process(mode):
                 reply_txt = mode_tra_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
-            elif mode_thrs_ticket.is_process(mode):
+            elif mode_thsr_ticket.is_process(mode):
                 reply_txt = mode_thsr_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
             elif mode_lotto.is_process(mode):
                 reply_txt = mode_lotto.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
