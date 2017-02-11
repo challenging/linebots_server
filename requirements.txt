@@ -60,14 +60,12 @@ ptyprocess==0.5.1
 pyasn1==0.1.9
 pyasn1-modules==0.0.8
 Pygments==2.2.0
-pymongo==3.4.0
 python-dateutil==2.6.0
 pytz==2016.10
 PyYAML==3.12
 pyzmq==16.0.2
 qtconsole==4.2.1
 ratelim==0.1.6
-redis==2.10.5
 requests==2.13.0
 rsa==3.4.2
 scandir==1.4

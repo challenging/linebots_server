@@ -52,8 +52,6 @@ class TicketDB(DB):
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = '-1' AND creation_datetime > '{}' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
             self.table_name, now.strftime("%Y-%m-%dT00:00:00"), booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
 
-        print sql
-
         cursor = self.conn.cursor()
         cursor.execute(sql)
 
@@ -88,8 +86,6 @@ class TicketDB(DB):
     def get_person_id(self, user_id, ticket_number, ticket_type):
         sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
             self.table_name, user_id, ticket_number, ticket_type)
-
-        print sql
 
         person_id = None
 
