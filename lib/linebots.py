@@ -27,9 +27,9 @@ from db.mode import db_mode
 from db.lotto import db_lotto
 
 from mode.lotto import mode_lotto
-from mode.ticket import mode_ticket
+from mode.ticket import mode_tra_ticket
 
-from lib.common.utils import get_location, is_admin
+from lib.common.utils import get_location, is_admin, log
 from lib.common.utils import UTF8, channel_secret, channel_access_token
 from lib.common.message import txt_error, txt_hello, txt_mode
 from lib.message_route import mode_change_button, run_normal
@@ -86,7 +86,7 @@ def callback():
 def handle_location_message(event):
     profile = line_bot_api.get_profile(event.source.user_id)
     lat, lng = event.message.latitude, event.message.longitude
-    print "Get the {}'s location({},{})".format(profile.user_id, lat, lng),
+    log("Get the {}'s location({},{})".format(profile.user_id, lat, lng),)
 
     g = get_location(lat, lng)
 
@@ -95,43 +95,25 @@ def handle_location_message(event):
     db_location.ask(profile.user_id, lat, lng)
 
     reply_txt = "現為您的地點設定在 {}".format(state)
-    print "location mode: {}".format(state)
+    log("location mode: {}".format(state))
 
     line_bot_api.reply_message(
         event.reply_token,
         TextSendMessage(text=reply_txt)
     )
 
-@handler.add(MessageEvent, message=StickerMessage)
-def handle_sticker_message(event):
-    '''
-    line_bot_api.reply_message(
-        event.reply_token,
-        StickerSendMessage(
-            package_id=event.message.package_id,
-            sticker_id=event.message.sticker_id)
-    )
-    '''
-    pass
-
 @handler.add(PostbackEvent)
 def handle_postback(event):
     profile = line_bot_api.get_profile(event.source.user_id)
 
-    if re.search("ticket=([\w]+)", event.postback.data):
-        m = re.match("ticket=([\w]+)", event.postback.data)
-        service = m.group(1)
-
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=service))
-    elif re.search("mode=([\w]+)", event.postback.data):
+    if re.search("mode=([\w]+)", event.postback.data):
         m = re.match("mode=([\w]+)", event.postback.data)
         mode = m.group(1)
 
-        line_bot_api.reply_message(
-            event.reply_token, TextSendMessage(text=txt_mode(mode)))
-
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=txt_mode(mode)))
         db_mode.ask(profile.user_id, mode)
+    else:
+        pass
 
 @handler.add(MessageEvent, message=TextMessage)
 def message_text(event):
@@ -165,20 +147,16 @@ def message_text(event):
                     is_system_cmd = True
 
                     db_lotto.delete()
-            elif mode_ticket.is_process(mode):
-                '''
-                if msg == "booking tra":
-                    reply_txt = "開始處理訂票需求"
-                    thread = threading.Thread(target=requests.get("https://lazyrc-reply.herokuapp.com/tra_booking"))
-                    thread.start()
-
-                    is_system_cmd = True
-                '''
+                else:
+                    pass
+            else:
                 pass
+        else:
+            pass
 
         if not is_system_cmd:
-            if mode_ticket.is_process(mode):
-                reply_txt = mode_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
+            if mode_tra_ticket.is_process(mode):
+                reply_txt = mode_tra_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
             elif mode_lotto.is_process(mode):
                 reply_txt = mode_lotto.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
             else:

@@ -10,7 +10,7 @@ from google.modules.utils import get_html
 from bs4 import BeautifulSoup
 
 from lib.common.bot import Bot
-from lib.common.utils import UTF8, crawl, data_dir
+from lib.common.utils import UTF8, crawl, data_dir, check_folder
 
 class WeatherBot(Bot):
     repository = "weather"
@@ -121,9 +121,7 @@ class WeatherBot(Bot):
         filepath = os.path.join(data_dir(WeatherBot.repository), WeatherBot.filename)
         folder = os.path.dirname(filepath)
 
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-            print "create {} successfully".format(folder)
+        check_folder(folder, is_folder=True)
 
         with open(filepath, "wb") as out_file:
             json.dump(results, out_file)

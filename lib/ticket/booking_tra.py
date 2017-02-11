@@ -14,9 +14,8 @@ from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_f
 
 init_model("tra")
 
-web_opener = get_phantom_driver()
 def book_ticket(param, cropped=1):
-    global web_opener
+    web_opener = get_phantom_driver()
 
     retry = 2
     train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time= None, None, None, None, None, None, None, None
@@ -91,7 +90,7 @@ def book_ticket(param, cropped=1):
         time.sleep(random.randint(1, 5))
         retry -= 1
 
-    time.sleep(2)
+    web_opener.quit()
 
     return ticket_number, ticket_filepath, (train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time)
 

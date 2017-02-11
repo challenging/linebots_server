@@ -12,16 +12,15 @@ from selenium.common.exceptions import NoSuchElementException
 
 from lib.ocr.cracker import init_model, crack_thsr
 from lib.common.utils import UTF8
-from lib.common.utils import check_folder, get_chrome_driver, get_phantom_driver
+from lib.common.utils import check_folder, get_chrome_driver, get_phantom_driver, log
 from lib.ocr.utils import get_digest
 from lib.ticket.utils import get_thsr_url
 from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, thsr_fail_dir, thsr_ticket_dir
 
 init_model("thsr")
 
-opener = get_phantom_driver()
 def book_ticket(param, cropped=2):
-    global opener
+    opener = get_phantom_driver()
 
     retry, ticket_number = 2, None
     while retry >= 0:
@@ -67,7 +66,7 @@ def book_ticket(param, cropped=2):
 
                 filepath_screenshot = os.path.join(thsr_screen_dir(), "{}.jpg".format(int(1000*time.time())))
                 opener.save_screenshot(filepath_screenshot)
-                print "save image in {}".format(filepath_screenshot)
+                log("save image in {}".format(filepath_screenshot))
 
                 im = Image.open(filepath_screenshot)
                 im = im.crop((location["x"], location["y"], location["x"]+size["width"], location["y"] + size["height"]))
@@ -78,7 +77,7 @@ def book_ticket(param, cropped=2):
                 im_filepath = os.path.join(thsr_img_dir(), "{}.jpg".format(get_digest(im)))
                 check_folder(im_filepath)
                 im.save(im_filepath)
-                print "save cropped image in {}".format(im_filepath)
+                log("save cropped image in {}".format(im_filepath))
 
                 answer = crack_thsr(im_filepath, cropped=2)
 
@@ -131,15 +130,17 @@ def book_ticket(param, cropped=2):
 
             filepath_ticket = os.path.join(thsr_ticket_dir(), "{}.jpg".format(ticket_number))
             opener.save_screenshot(filepath_ticket)
-            print "save ticket image in {}".format(filepath_ticket)
+            log("save ticket image in {}".format(filepath_ticket))
 
             filepath_success = os.path.join(thsr_success_dir(), "{}.jpg".format(answer))
             os.rename(im_filepath, filepath_success)
-            print "book the ticket number - {}".format(ticket_number)
+            log("book the ticket number - {}".format(ticket_number))
 
             break
         else:
             retry -= 1
+
+    opener.quit()
 
     return ticket_number
 

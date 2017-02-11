@@ -3,9 +3,6 @@
 
 import re
 import json
-import pprint
-import requests
-import threading
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage
@@ -14,14 +11,14 @@ from linebot.models import PostbackTemplateAction, ButtonsTemplate
 from lib.common.mode import Mode
 from lib.common.db import DB
 
-from lib.common.utils import MODE_TICKET
+from lib.common.utils import MODE_TRA_TICKET, log
 from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
 from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED
 
-class TRATicketDB(DB):
+class TicketDB(DB):
     table_name = "ticket"
 
     def create_table(self):
@@ -87,11 +84,11 @@ class TRATicketDB(DB):
 
         return person_id
 
-class TicketMode(Mode):
+class TRATicketMode(Mode):
     memory = {}
 
     def init(self):
-        self.db = TRATicketDB()
+        self.db = TicketDB()
 
     def is_process(self, mode):
         return self.mode.lower() == mode.lower()
@@ -120,7 +117,7 @@ class TicketMode(Mode):
                     if booked_date > datetime.datetime.now():
                         self.memory[user_id]["getin_date"] = "{}-00".format(question)
                 except ValueError as e:
-                    print "Error: {}".format(e)
+                    log("Error: {}".format(e))
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
                 question = int(question)
 
@@ -216,14 +213,14 @@ class TicketMode(Mode):
 
         return is_pass
 
-mode_ticket = TicketMode(MODE_TICKET)
+mode_tra_ticket = TRATicketMode(MODE_TRA_TICKET)
 
 if __name__ == "__main__":
     user_id = "L122760167"
 
     questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
     for question in questions:
-        message = mode_ticket.conversion(question, user_id)
+        message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
             print message
         else:

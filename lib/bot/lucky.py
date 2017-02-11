@@ -11,7 +11,7 @@ from google.modules.utils import get_html
 from bs4 import BeautifulSoup
 
 from lib.common.bot import Bot
-from lib.common.utils import UTF8, crawl, data_dir
+from lib.common.utils import UTF8, crawl, data_dir, check_folder, log
 
 from lib.langconv import *
 
@@ -68,7 +68,7 @@ class LuckyBot(Bot):
             if link:
                 self.link = link
         except requests.exceptions.ConnectionError:
-            print "Fail to link {}".format(url)
+            log("Fail to link {}".format(url))
 
         if hasattr(self, "link"):
             self.dataset = [(self.link, self.filename),]
@@ -105,10 +105,7 @@ class LuckyBot(Bot):
         filepath = os.path.join(data_dir(self.repository), self.filename)
         folder = os.path.dirname(filepath)
 
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-            print "create {} successfully".format(folder)
-
+        check_folder(folder, is_folder=True)
         with open(filepath, "wb") as out_file:
             json.dump(results, out_file)
 
@@ -120,7 +117,7 @@ class LuckyBot(Bot):
         with open(filepath, "rb") as in_file:
             self.info = json.load(in_file)
 
-        print "rebuild the info of {} successfully".format(type(self).__name__)
+        log("rebuild the info of {} successfully".format(type(self).__name__))
 
     def bots(self, question):
         answer = None

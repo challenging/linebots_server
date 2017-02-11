@@ -4,6 +4,7 @@
 import os
 import sys
 
+import inspect
 import geocoder
 import requests
 import psycopg2
@@ -13,6 +14,9 @@ import logging
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s'
+                   )
+
 from tqdm import tqdm
 from selenium import webdriver
 
@@ -21,7 +25,8 @@ CONN = None
 
 MODE_NORMAL = "normal"
 MODE_LOTTO = "lotto"
-MODE_TICKET = "ticket"
+MODE_TRA_TICKET = "ticket_tra"
+MODE_THSR_TICKET = "ticket_thsr"
 
 # get channel_secret and channel_access_token from your environment variable
 channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
@@ -124,6 +129,11 @@ def read_cfg(filepath):
     config.read(filepath)
 
     return config
+
+def log(message):
+    global logging
+
+    logging.info("{}\t{}".format(inspect.getmodule(inspect.stack()[1]).__name__, message))
 
 if __name__ == "__main__":
     g = get_location(24.58610, 120.82952)

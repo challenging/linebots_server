@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from lib.common.utils import MODE_NORMAL, MODE_LOTTO, MODE_TICKET
+from lib.common.utils import MODE_NORMAL, MODE_LOTTO, MODE_TRA_TICKET, MODE_THSR_TICKET
 
 def txt_hello(user_name, answer):
     return "嗨！ {},\n{}".format(user_name, answer)
@@ -46,9 +46,14 @@ def txt_mode(mode):
     elif mode == MODE_LOTTO:
         mode_name = "競標"
         comments = ""
-    elif mode == MODE_TICKET:
-        mode_name = "訂票"
+    elif mode == MODE_TRA_TICKET:
+        mode_name = "台鐵訂票"
         comments = "(請先輸入身份證字號)"
+    elif mode == MODE_THSR_TICKET:
+        mode_name = "高鐵訂票"
+        comments = "(請先輸入身份證字號)"
+    else:
+        pass
 
     return "目前模式為{}{}".format(mode_name, comments)
 

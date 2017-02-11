@@ -6,7 +6,7 @@ import re
 import sys
 import pandas as pd
 
-from lib.common.utils import crawl, data_dir
+from lib.common.utils import crawl, data_dir, log
 from lib.common.bot import Bot
 
 class RateBot(Bot):
@@ -72,7 +72,7 @@ class RateBot(Bot):
             currency, buy_cash, buy_spot, sell_cash, sell_spot = value[0], value[2], value[3], value[12], value[13]
             self.info.setdefault(currency, (buy_cash, buy_spot, sell_cash, sell_spot))
 
-        print "rebuild fxrate_info successfully"
+        log("rebuild fxrate_info successfully")
 
     def crawl_job(self):
         for url, filename in self.dataset:

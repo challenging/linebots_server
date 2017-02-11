@@ -13,11 +13,10 @@ from lib.mode.lotto import mode_lotto
 
 from lib.bot import fxrate, google_search, weather, lucky, bus, place
 
-from lib.common.utils import get_location
-from lib.common.utils import UTF8, MODE_NORMAL, MODE_LOTTO, MODE_TICKET
+from lib.common.utils import get_location, log
+from lib.common.utils import UTF8, MODE_NORMAL, MODE_TRA_TICKET, MODE_THSR_TICKET
 
 from lib.common.message import txt_help, txt_not_support, txt_article, txt_google, txt_hello
-from lib.common.message import txt_ticket, txt_ticket_title, txt_ticket_body
 from lib.common.message import txt_error_location, txt_error_lucky
 
 # init bots
@@ -39,21 +38,11 @@ def mode_change_button():
     message = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
         title="歡迎使用懶人RC機器人", text="請選擇以下模式", actions=[
             PostbackTemplateAction(label="查詢模式", data='mode={}'.format(MODE_NORMAL)),
-            PostbackTemplateAction(label="台鐵訂票模式", data='mode={}'.format(MODE_TICKET)),
-            PostbackTemplateAction(label="競標模式", data='mode={}'.format(MODE_LOTTO))
+            PostbackTemplateAction(label="台鐵訂票模式", data='mode={}'.format(MODE_TRA_TICKET)),
+            PostbackTemplateAction(label="高鐵訂票模式", data='mode={}'.format(MODE_THSR_TICKET))
         ]))
 
     return message
-
-def mode_ticket_button(question):
-    buttons = ButtonsTemplate(
-        title=txt_ticket_title(), text=txt_ticket_body(), actions=[
-            PostbackTemplateAction(label=txt_ticket("tra"), data='ticket=tra'),
-            PostbackTemplateAction(label=txt_ticket("thsr"), data='ticket=thsr'),
-            PostbackTemplateAction(label=txt_ticket("fly"), data='ticket=fly')
-        ])
-
-    return TemplateSendMessage(alt_text=txt_not_support(), template=buttons)
 
 def run_normal(profile, msg, mode, db_mode, db_location, db_question):
     global KEYWORD_TICKET, KEYWORD_LUCKY, KEYWORD_WEATHER
@@ -64,28 +53,24 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
     # get location
     latlng, state = None, None
     for row in db_location.query(profile.user_id):
-        print "{}'s location is at {}".format(profile.display_name.encode(UTF8), row),
+        log("{}'s location is at {}".format(profile.display_name.encode(UTF8), row),)
         _, _, lat, lng = row
         latlng = (lat, lng)
 
         g = get_location(lat, lng)
         state = g.state if g.state else g.county
 
-        print "{} base on ({},{})".format(state, lat, lng)
+        log("{} base on ({},{})".format(state, lat, lng))
 
         break
 
     # get lucky
     twelve = None
-    if msg in KEYWORD_TICKET:
-        reply_txt = mode_ticket_button()
-
-        find_answer = True
-    elif re.search(r"^(help|幫助)$", msg):
+    if re.search(r"^(help|幫助)$", msg):
         find_answer = True
     elif msg in KEYWORD_WEATHER:
         if state:
-            print "weather mode: ", state
+            log("weather mode: ", state)
 
             reply_txt = bots[bots_name.index("weather")](state)
         else:
@@ -93,7 +78,7 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
 
         find_answer = True
     elif msg in KEYWORD_LUCKY and twelve:
-        print "lucky mode: ", twelve
+        log("lucky mode: ", twelve)
 
         answer = bots[bots_name.index("lucky")](twelve)
         if anwer is not None:
@@ -103,11 +88,11 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
 
         find_answer = True
     else:
-        print "Not found the quickly matching keyword"
+        log("Not found the quickly matching keyword")
 
     if not find_answer:
         for name, bot in zip(bots_name, bots):
-            print "{} mode: {}".format(name, msg)
+            log("{} mode: {}".format(name, msg))
 
             if name == "place" and latlng:
                 answer = bot((latlng, msg))
@@ -141,7 +126,7 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
 
                 break
             else:
-                print "Not found answer for {} based on {} mode".format(msg, name)
+                log("Not found answer for {} based on {} mode".format(msg, name))
 
     if isinstance(reply_txt, (str, unicode)):
         db_question.ask(profile.user_id, profile.display_name, msg, reply_txt)

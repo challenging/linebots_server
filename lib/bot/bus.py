@@ -11,7 +11,7 @@ import difflib
 import threading
 
 from lib.common.bot import Bot
-from lib.common.utils import UTF8, crawl, data_dir
+from lib.common.utils import UTF8, crawl, data_dir, log
 
 class BusBot(Bot):
     repository = "bus"
@@ -40,11 +40,11 @@ class BusBot(Bot):
             self.ticket = self.get_ticket()
 
             if self.ticket is not None:
-                print "set the ticket({}) successfully".format(self.ticket)
+                log("set the ticket({}) successfully".format(self.ticket))
 
                 break
             else:
-                print "retry to get the ticket"
+                log("retry to get the ticket")
 
                 self.ticket = None
 
@@ -91,7 +91,7 @@ class BusBot(Bot):
 
     def gen_sub_results(self, target):
         target = target.lower()
-        print "start to build the information of {} bus".format(target)
+        log("start to build the information of {} bus".format(target))
 
         stop = {}
         filepath = os.path.join(data_dir(self.repository), "stop_{}.json".format(target))
@@ -105,12 +105,9 @@ class BusBot(Bot):
                     departure_stop = t.get("DepartureStopNameZh", None)
                     destination_stop = t.get("DestinationStopNameZh", None)
 
-                    #if departure_stop and destination_stop:
                     stop[route_id] = (destination_stop, departure_stop)
-                    #else:
-                    #    print "Not found the needed elements in this JSON on {}".format(filepath)
                 else:
-                    print "Not found RouteID element of JSON file({})".format(filepath)
+                    log("Not found RouteID element of JSON file({})".format(filepath))
 
         filepath = os.path.join(data_dir(self.repository), "time_{}.json".format(target))
         if not os.path.exists(filepath):
@@ -119,7 +116,7 @@ class BusBot(Bot):
         with open(filepath, "rb") as in_file:
             for t in json.load(in_file):
                 if "status" in t and not t["status"]:
-                    print "Not found the 'status' element of JSON file({}) at {}".format(filepath, target)
+                    log("Not found the 'status' element of JSON file({}) at {}".format(filepath, target))
 
                     return False
 
@@ -153,7 +150,7 @@ class BusBot(Bot):
                 self.info.setdefault(key, {})
                 self.info[key][direction] = estimation
 
-        print "rebuild the information of {} bus successfully".format(target)
+        log("rebuild the information of {} bus successfully".format(target))
 
         self.insert_answer()
 
