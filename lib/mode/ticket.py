@@ -65,7 +65,7 @@ class TRATicketDB(DB):
 
     def cancel(self, user_id, ticket_number):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = {}".format(\
-            self.table_name, user_id, TICKET_STATUS_CANCELED, ticket_number)
+            self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
