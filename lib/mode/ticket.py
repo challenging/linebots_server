@@ -3,6 +3,7 @@
 
 import re
 import json
+import requests
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage
