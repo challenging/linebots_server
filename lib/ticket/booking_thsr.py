@@ -64,6 +64,11 @@ def book_ticket(param, cropped=2, driver="phantom"):
         if param["ticketPanel:rows:0:ticketAmount"] != 1:
             opener.find_element_by_name("ticketPanel:rows:0:ticketAmount").send_keys(param["ticketPanel:rows:0:ticketAmount"])
 
+        if param["booking_type"] == "student":
+            tc = param.get("ticketPanel:rows:4:ticketAmount", 0)
+            if tc != 1:
+                opener.find_element_by_name("ticketPanel:rows:4:ticketAmount").send_keys(tc)
+
         opener.find_element_by_name("ticketPanel:rows:1:ticketAmount").send_keys(param["ticketPanel:rows:1:ticketAmount"])
 
         retry_crack = 5
@@ -144,19 +149,23 @@ def book_ticket(param, cropped=2, driver="phantom"):
         time.sleep(random.randint(1, 3))
 
         ticket_info = opener.find_element_by_xpath("//table[@class='table_simple']")
-        '''
-        去程 03/03 603 桃園 台中 07:15 07:51 430*2 - TWD 860
-        車廂：標準車廂 票數：全票 2 張  總票價 TWD 860
-
-        train_type, train_count, train_number, start_station, end_station, date, stime, etime, money
-        '''
         for idx, info in enumerate(ticket_info.text.split("\n")[1:]):
-            if idx == 0:
-                _, date, train_number, start_station, end_station, stime, etime, _, _, _, money = re.split("[\s]+", info)
-            elif idx == 1:
-                t = re.split("[\s]+", info)
-                train_type = t[0]
-                train_count = " ".join(t[1:-3])
+            if param["booking_type"] != "student":
+                if idx == 0:
+                    _, date, train_number, start_station, end_station, stime, etime, _, _, _, money = re.split("[\s]+", info)
+                elif idx == 1:
+                    t = re.split("[\s]+", info)
+                    train_type = t[0]
+                    train_count = " ".join(t[1:-3])
+            else:
+                if idx == 0:
+                    _, date, train_number, start_station, end_station, stime, etime, _, _ = re.split("[\s]+", info)
+                elif idx == 1:
+                    _, _, money = re.split("[\s]+", info)
+                elif idx == 2:
+                    t = re.split("[\s]+", info)
+                    train_type = t[0]
+                    train_count = " ".join(t[1:-3])
 
         opener.find_element_by_id("idNumber").send_keys(param["person_id"])
         opener.find_element_by_id("mobileInputRadio").click()
@@ -252,19 +261,20 @@ if __name__ == "__main__":
                       "ticketPanel:rows:0:ticketAmount": 1,
                       "ticketPanel:rows:1:ticketAmount": 0}
     '''
-    testing_params = {"person_id": "L122760167",
+    testing_params = {"booking_type": "student",
+                      "person_id": "L122760167",
                       "ticketPanel:rows:1:ticketAmount": 0,
                       "booking": "bookingMethod1",
                       "onlyQueryOffPeakCheckBox": False,
                       "booking_stime": "07:00",
                       "booking_date": "2017/03/03",
-                      "booking_type": "general",
                       "cellphone": "0921747196",
                       "selectDestinationStation": "台中",
                       "preferred_seat": "seatRadio1",
                       "booking_etime": "12:00",
                       "selectStartStation": "桃園",
-                      "ticketPanel:rows:0:ticketAmount": 2}
+                      "ticketPanel:rows:0:ticketAmount": 2,
+                      "ticketPanel:rows:4:ticketAmount": 1}
 
-    #print book_ticket(testing_params, driver="chrome")
-    cancel_ticket(person_id="L122760167", ticket_number="06038429")
+    print book_ticket(testing_params, cropped=2, driver="chrome")
+    #cancel_ticket(person_id="L122760167", ticket_number="06038429")

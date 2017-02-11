@@ -87,6 +87,8 @@ class TicketDB(DB):
         sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
             self.table_name, user_id, ticket_number, ticket_type)
 
+        print sql
+
         person_id = None
 
         cursor = self.conn.cursor()
@@ -289,11 +291,16 @@ class THSRTicketMode(TRATicketMode):
 
                 if question >= 0 and question < 11:
                     self.memory[user_id]["ticketPanel:rows:0:ticketAmount"] = question
-            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
+            elif self.memory[user_id]["booking_type"] != "student" and re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
                 question = int(question)
 
                 if question >= 0 and question < 11:
                     self.memory[user_id]["ticketPanel:rows:1:ticketAmount"] = question
+            elif self.memory[user_id]["booking_type"] == "student" and re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:4:ticketAmount", None) is None:
+                question = int(question)
+
+                if question >= 0 and question < 11:
+                    self.memory[user_id]["ticketPanel:rows:4:ticketAmount"] = question
 
             if self.memory[user_id].get("person_id", None) is None:
                 reply_txt = "請輸入身份證字號(A123456789)"
@@ -316,14 +323,17 @@ class THSRTicketMode(TRATicketMode):
                 reply_txt = "請輸入上車車站"
             elif self.memory[user_id].get("selectDestinationStation", None) is None:
                 reply_txt = "請輸入下車車站"
+            elif self.memory[user_id]["booking_type"] == "student" and self.memory[user_id].get("ticketPanel:rows:4:ticketAmount", None) is None:
+                reply_txt = "請輸入學生張數(1-10)"
             elif self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
                 reply_txt = "請輸入成人張數(1-10)"
-            elif self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
+            elif self.memory[user_id]["booking_type"] != "general" and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
                 reply_txt = "請輸入小孩張數(1-10)"
             elif self.is_filled(user_id):
                 message = "高鐵訂票資訊如下\n====================\n"
-                for name, k in [("身份證字號", "person_id"), ("手機號碼", "cellphone"), ("欲搭車日期", "booking_date"), ("起始時間", "booking_stime"), ("終止時間", "booking_etime"), ("上車車站", "selectStartStation"), ("下車車站", "selectDestinationStation"), ("成人票張數", "ticketPanel:rows:0:ticketAmount"), ("小孩票張數", "ticketPanel:rows:1:ticketAmount")]:
-                    message += "{}: {}\n".format(name, self.memory[user_id][k])
+                for name, k in [("身份證字號", "person_id"), ("手機號碼", "cellphone"), ("欲搭車日期", "booking_date"), ("起始時間", "booking_stime"), ("終止時間", "booking_etime"), ("上車車站", "selectStartStation"), ("下車車站", "selectDestinationStation"), ("成人票張數", "ticketPanel:rows:0:ticketAmount"), ("小孩票張數", "ticketPanel:rows:1:ticketAmount"), ("學生票張數", "ticketPanel:rows:4:ticketAmount")]:
+                    if k in self.memory[user_id]:
+                        message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
                 if question not in ["ticket_thsr=confirm", "ticket_thsr=again"]:
@@ -390,7 +400,6 @@ if __name__ == "__main__":
             print message
         else:
             print message.as_json_string()
-    '''
 
     questions = ["我試試", "booking_type=student", person_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
     for question in questions:
@@ -399,5 +408,6 @@ if __name__ == "__main__":
             print message
         elif message is not None:
             print message.as_json_string()
+    '''
 
-    #mode_thsr_ticket.conversion("ticket_thsr=cancel+06042356", user_id)
+    mode_thsr_ticket.conversion("ticket_thsr=cancel+06052042", user_id)
