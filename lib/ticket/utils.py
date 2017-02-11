@@ -216,7 +216,10 @@ thsr_stations = set(["南港", "台北", "板橋", "桃園", "新竹", "苗栗",
 
 def get_thsr_url(booking_type):
     url = "https://irs.thsrc.com.tw/IMINT/"
-    if booking_type == "student":
+
+    if booking_type == "general":
+        url = "https://irs.thsrc.com.tw/IMINT/"
+    elif booking_type == "student":
         url = "https://irs.thsrc.com.tw/IMINT/?student=university"
     elif booking_type == "credit":
         url = "https://irs.thsrc.com.tw/IMINT/creditcard"

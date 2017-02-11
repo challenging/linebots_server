@@ -253,7 +253,11 @@ class THSRTicketMode(TRATicketMode):
             else:
                 reply_txt = "取消高鐵車票({})失敗，請稍後再試！或者請上高鐵網站取消".format(ticket_number)
         else:
-            if check_taiwan_id_number(question):
+            if re.search("booking_type=([\w]+)", question):
+                m = re.match("booking_type=([\w]+)", question)
+
+                self.memory[user_id]["booking_type"] = m.group(1)
+            elif check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
             elif re.search("([\d]{10})", question) and self.memory[user_id].get("cellphone", None) is None:
                 self.memory[user_id]["cellphone"] = question
@@ -291,7 +295,14 @@ class THSRTicketMode(TRATicketMode):
                 if question >= 0 and question < 11:
                     self.memory[user_id]["ticketPanel:rows:1:ticketAmount"] = question
 
-            if self.memory[user_id].get("person_id", None) is None:
+            if self.memory[user_id].get("booking_type", None) is None:
+                template = ConfirmTemplate(text="請選擇訂票身份", actions=[
+                    MessageTemplateAction(label="一般訂票", text='booking_type=general'),
+                    MessageTemplateAction(label="學生訂票", text='booking_type=student'),
+                ])
+
+                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
+            elif self.memory[user_id].get("person_id", None) is None:
                 reply_txt = "請輸入身份證字號(A123456789)"
             elif self.memory[user_id].get("cellphone", None) is None:
                 reply_txt = "請輸入手機號碼(0912345678)"
@@ -321,8 +332,7 @@ class THSRTicketMode(TRATicketMode):
                         MessageTemplateAction(label="重新輸入", text='ticket_thsr=again'),
                     ])
 
-                    reply_txt = TemplateSendMessage(
-                        alt_text=txt_not_support(), template=template)
+                    reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
                 else:
                     if question == "ticket_thsr=confirm":
                         del self.memory[user_id]["creation_datetime"]
@@ -338,7 +348,7 @@ class THSRTicketMode(TRATicketMode):
 
     def new_memory(self, user_id):
         self.memory.setdefault(user_id, {})
-        self.memory[user_id] = {"booking_type": "general",
+        self.memory[user_id] = {"booking_type": None,
                                 "creation_datetime": datetime.datetime.now(),
                                 "person_id": None,
                                 "cellphone": None,
@@ -382,13 +392,12 @@ if __name__ == "__main__":
             print message.as_json_string()
     '''
 
-    '''
-    questions = ["我試試", person_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
+    questions = ["我試試", "booking_type=student", person_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, person_id)
         if isinstance(message, str):
             print message
         elif message is not None:
             print message.as_json_string()
-    '''
-    mode_thsr_ticket.conversion("ticket_thsr=cancel+06042356", user_id)
+
+    #mode_thsr_ticket.conversion("ticket_thsr=cancel+06042356", user_id)
