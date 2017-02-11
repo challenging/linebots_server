@@ -69,7 +69,10 @@ def book_ticket(param, cropped=2, driver="phantom"):
             if tc != 1:
                 opener.find_element_by_name("ticketPanel:rows:4:ticketAmount").send_keys(tc)
 
-        opener.find_element_by_name("ticketPanel:rows:1:ticketAmount").send_keys(param["ticketPanel:rows:1:ticketAmount"])
+        if "ticketPanel:rows:1:ticketAmount" in param:
+            tc = param.get("ticketPanel:rows:1:ticketAmount", 0)
+            if tc != 1:
+                opener.find_element_by_name("ticketPanel:rows:1:ticketAmount").send_keys(param["ticketPanel:rows:1:ticketAmount"])
 
         retry_crack = 5
         while retry_crack > 0:

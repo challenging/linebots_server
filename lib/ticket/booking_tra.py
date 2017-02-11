@@ -14,8 +14,12 @@ from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_f
 
 init_model("tra")
 
-def book_ticket(param, cropped=1):
-    web_opener = get_phantom_driver()
+def book_ticket(param, cropped=1, driver="phantom"):
+    web_opener = None
+    if driver == "chrome":
+        web_opener = get_chrome_driver()
+    else:
+        web_opener = get_phantom_driver()
 
     retry = 2
     train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time= None, None, None, None, None, None, None, None
@@ -42,7 +46,10 @@ def book_ticket(param, cropped=1):
         log("save the screenshot in {}".format(filepath_screenshot))
 
         im = Image.open(filepath_screenshot)
-        #im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
+
+        if driver == "chrome":
+            im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
+
         im = im.crop((location["x"], location["y"], location["x"]+size["width"], location["y"] + size["height"]))
 
         im_filepath = os.path.join(tra_img_dir(), "{}.jpg".format(get_digest(im)))

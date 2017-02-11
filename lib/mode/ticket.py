@@ -48,9 +48,11 @@ class TicketDB(DB):
             diff_days = 28
             booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now() - datetime.timedelta(hours=8)
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = '-1' AND creation_datetime > '{}' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
             self.table_name, now.strftime("%Y-%m-%dT00:00:00"), booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
+
+        print sql
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -106,16 +108,13 @@ class TRATicketMode(Mode):
         self.db = TicketDB()
         self.ticket_type = "tra"
 
-    def is_process(self, mode, question):
-        return self.mode.lower() == mode.lower() or question.startswith("ticket_{}=".format(self.ticket_type))
-
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
         if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
             self.new_memory(user_id)
 
-        if re.search("ticket_tra=cancel\+([\d]{6})", question):
-            m = re.match("ticket_tra=cancel\+([\d]{6})", question)
+        if re.search("ticket_tra=cancel\+([\d]{6,})", question):
+            m = re.match("ticket_tra=cancel\+([\d]{6,})", question)
             ticket_number = m.group(1)
 
             person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)

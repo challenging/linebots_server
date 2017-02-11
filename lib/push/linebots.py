@@ -28,12 +28,13 @@ def collect(db):
 
     return "<br/>".join(questions)
 
-def booking_tra_ticket():
+def booking_tra_ticket(driver="phantom"):
     requests = mode_tra_ticket.db.non_booking("tra")
+    print requests
     for user_id, creation_datetime, param in requests:
         message = None
 
-        ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param)
+        ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
         if ticket_number is not None:
             mode_tra_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, "tra")
 
@@ -54,12 +55,12 @@ def booking_tra_ticket():
 
     return "done..."
 
-def booking_thsr_ticket():
+def booking_thsr_ticket(driver="phantom"):
     requests = mode_tra_ticket.db.non_booking("thsr")
     for user_id, creation_datetime, param in requests:
         message = None
 
-        ticket_number, ticket_info = booking_thsr.book_ticket(param, driver="phantom")
+        ticket_number, ticket_info = booking_thsr.book_ticket(param, driver=driver)
         if ticket_number is not None:
             mode_thsr_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, "thsr")
 
@@ -82,5 +83,5 @@ def booking_thsr_ticket():
     return "done..."
 
 if __name__ == "__main__":
-    #booking_tra_ticket()
-    booking_thsr_ticket()
+    booking_tra_ticket("chrome")
+    booking_thsr_ticket("chrome")
