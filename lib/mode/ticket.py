@@ -19,7 +19,7 @@ from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
-from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED
+from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED
 
 class TRATicketDB(DB):
     table_name = "ticket"
@@ -38,9 +38,9 @@ class TRATicketDB(DB):
         cursor.execute(sql)
         cursor.close()
 
-    def non_booking(self):
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime < '{}' AND status = 'scheduled'".format(\
-            self.table_name, (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"))
+    def non_booking(self, status=TICKET_STATUS_SCHEDULED):
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime BETWEEN '{}' AND '{}' AND status = '{}'".format(\
+            self.table_name, datetime.datetime.now().strftime("%Y-%m-%dT00:00:00"), (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"), status)
 
         cursor = self.conn.cursor()
         cursor.execute(sql)

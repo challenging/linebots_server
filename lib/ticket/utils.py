@@ -7,6 +7,7 @@ from lib.common.utils import check_folder, data_dir
 
 TICKET_STATUS_BOOKED = "booked"
 TICKET_STATUS_CANCELED = "canceled"
+TICKET_STATUS_SCHEDULED = "scheduled"
 
 URL_TRA = "http://railway1.hinet.net/csearch.htm"
 

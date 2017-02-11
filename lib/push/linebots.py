@@ -58,7 +58,6 @@ def list_tickets():
 
 def booking():
     requests = mode_ticket.db.non_booking()
-    print requests
     for user_id, creation_datetime, param in requests:
         message = None
 
