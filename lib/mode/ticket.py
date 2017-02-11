@@ -19,19 +19,19 @@ from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
-from lib.ticket.utils import tra_train_type
+from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED
 
 class TRATicketDB(DB):
     table_name = "ticket"
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number INTEGER);".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number INTEGER, status VARCHAR(16));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx ON {table_name} (ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.close()
 
     def ask(self, user_id, ticket_type, ticket):
-        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', -1);".format(\
+        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', -1, 'scheduled');".format(\
             self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
 
         cursor = self.conn.cursor()
@@ -39,7 +39,7 @@ class TRATicketDB(DB):
         cursor.close()
 
     def non_booking(self):
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime < '{}'".format(\
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime < '{}' AND status = 'scheduled'".format(\
             self.table_name, (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"))
 
         cursor = self.conn.cursor()
@@ -53,8 +53,19 @@ class TRATicketDB(DB):
 
         return requests
 
-    def book(self, user_id, creation_datetime, ticket_number):
-        sql = "UPDATE {} SET ticket_number = {} WHERE user_id = '{}' and creation_datetime = '{}'".format(self.table_name, ticket_number, user_id, creation_datetime)
+    def book(self, user_id, creation_datetime, ticket_number, status):
+        sql = "UPDATE {} SET ticket_number = {}, status = '{}' WHERE user_id = '{}' and creation_datetime = '{}'".format(\
+            self.table_name, ticket_number, status, user_id, creation_datetime)
+
+        cursor = self.conn.cursor()
+        done = cursor.execute(sql)
+        cursor.close()
+
+        return done
+
+    def cancel(self, user_id, ticket_number):
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = {}".format(\
+            self.table_name, user_id, TICKET_STATUS_CANCELED, ticket_number)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -96,6 +107,8 @@ class TicketMode(Mode):
 
             person_id = self.db.get_person_id(user_id, ticket_number)
             requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
+
+            self.db.cancel(user_id, ticket_number)
             reply_txt = "已經取消號碼為{}的車票".format(ticket_number)
         else:
             if check_taiwan_id_number(question):

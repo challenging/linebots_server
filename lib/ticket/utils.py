@@ -5,6 +5,9 @@ import os
 
 from lib.common.utils import check_folder, data_dir
 
+TICKET_STATUS_BOOKED = "booked"
+TICKET_STATUS_CANCELED = "canceled"
+
 URL_TRA = "http://railway1.hinet.net/csearch.htm"
 
 def tra_dir(f):
