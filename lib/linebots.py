@@ -27,7 +27,7 @@ from db.mode import db_mode
 from db.lotto import db_lotto
 
 from mode.lotto import mode_lotto
-from mode.ticket import mode_tra_ticket
+from mode.ticket import mode_tra_ticket, mode_thsr_ticket
 
 from lib.common.utils import get_location, is_admin, log
 from lib.common.utils import UTF8, channel_secret, channel_access_token
@@ -158,7 +158,7 @@ def message_text(event):
             if mode_tra_ticket.is_process(mode):
                 reply_txt = mode_tra_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
             elif mode_thrs_ticket.is_process(mode):
-                reply_txt = mode_thrs_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
+                reply_txt = mode_thsr_ticket.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
             elif mode_lotto.is_process(mode):
                 reply_txt = mode_lotto.conversion(msg, profile.user_id, profile.display_name.encode(UTF8))
             else:
