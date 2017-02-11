@@ -20,12 +20,14 @@ from lib.ticket.utils import thsr_stations
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
 from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED
 
+from lib.ticket.booking_thsr import cancel_ticket
+
 class TicketDB(DB):
     table_name = "ticket"
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number INTEGER, status VARCHAR(16));".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), status VARCHAR(16));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx ON {table_name} (ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.close()
 
@@ -38,8 +40,17 @@ class TicketDB(DB):
         cursor.close()
 
     def non_booking(self, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = -1 AND creation_datetime BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, datetime.datetime.now().strftime("%Y-%m-%dT00:00:00"), (datetime.datetime.now() + datetime.timedelta(days=14)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
+        booking_date, diff_days = None, None
+        if ticket_type == "tra":
+            diff_days = 14
+            booking_date = "cast(cast(ticket::json->'getin_date' as varchar) as date)"
+        elif ticket_type == "thsr":
+            diff_days = 28
+            booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
+
+        now = datetime.datetime.now()
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = '-1' AND creation_datetime > '{}' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, now.strftime("%Y-%m-%dT00:00:00"), booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -53,7 +64,7 @@ class TicketDB(DB):
         return requests
 
     def book(self, user_id, creation_datetime, ticket_number, status, ticket_type):
-        sql = "UPDATE {} SET ticket_number = {}, status = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+        sql = "UPDATE {} SET ticket_number = '{}', status = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
             self.table_name, ticket_number, status, user_id, creation_datetime, ticket_type)
 
         cursor = self.conn.cursor()
@@ -63,7 +74,7 @@ class TicketDB(DB):
         return done
 
     def cancel(self, user_id, ticket_number, ticket_type):
-        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = {} AND ticket_type = '{}'".format(\
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
             self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number, ticket_type)
 
         cursor = self.conn.cursor()
@@ -73,8 +84,8 @@ class TicketDB(DB):
         return done
 
     def get_person_id(self, user_id, ticket_number, ticket_type):
-        sql = "SELECT ticket::json->'person_id' as uid FROM ticket WHERE user_id = '{}' and ticket_number = {} AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
-            user_id, ticket_number, ticket_type)
+        sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
+            self.table_name, user_id, ticket_number, ticket_type)
 
         person_id = None
 
@@ -93,8 +104,8 @@ class TRATicketMode(Mode):
         self.db = TicketDB()
         self.ticket_type = "tra"
 
-    def is_process(self, mode):
-        return self.mode.lower() == mode.lower()
+    def is_process(self, mode, question):
+        return self.mode.lower() == mode.lower() or question.startswith("ticket_{}=".format(self.ticket_type))
 
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
@@ -230,14 +241,17 @@ class THSRTicketMode(TRATicketMode):
             self.new_memory(user_id)
 
         if re.search("ticket_thsr=cancel\+([\d]{6})", question):
-            m = re.match("ticket_thsr=cancel\+([\d]{6})", question)
+            m = re.match("ticket_thsr=cancel\+([\d]{6,})", question)
             ticket_number = m.group(1)
 
             person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)
-            #requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
+            is_cancel = cancel_ticket(person_id, ticket_number, driver="chrome")
 
-            self.db.cancel(user_id, ticket_number, self.ticket_type)
-            reply_txt = "已經取消號碼為{}的高鐵車票".format(ticket_number)
+            if is_cancel:
+                self.db.cancel(user_id, ticket_number, self.ticket_type)
+                reply_txt = "已經取消號碼為{}的高鐵車票".format(ticket_number)
+            else:
+                reply_txt = "取消高鐵車票({})失敗，請稍後再試！或者請上高鐵網站取消".format(ticket_number)
         else:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
@@ -355,22 +369,26 @@ class THSRTicketMode(TRATicketMode):
 mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 
 if __name__ == "__main__":
-    user_id = "L122760167"
+    person_id = "L122760167"
+    user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
     '''
-    questions = ["我試試", user_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
+    questions = ["我試試", person_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
     for question in questions:
-        message = mode_tra_ticket.conversion(question, user_id)
+        message = mode_tra_ticket.conversion(question, person_id)
         if isinstance(message, str):
             print message
         else:
             print message.as_json_string()
     '''
 
-    questions = ["我試試", user_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
+    '''
+    questions = ["我試試", person_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
     for question in questions:
-        message = mode_thsr_ticket.conversion(question, user_id)
+        message = mode_thsr_ticket.conversion(question, person_id)
         if isinstance(message, str):
             print message
         elif message is not None:
             print message.as_json_string()
+    '''
+    mode_thsr_ticket.conversion("ticket_thsr=cancel+06042356", user_id)

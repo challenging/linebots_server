@@ -13,20 +13,23 @@ from lib.ocr.convert import convert_wb_1, convert_wb_2, crop_component, detect_c
 from lib.ocr.model import cnn_preprocess
 from lib.ocr.utils import latest_Y, latest_model, image_l, data_dir, cracker_dir
 
-model = None
-Y = None
+model_tra = None
+
+model_thsr = None
+model_thsr_y = None
 
 def init_model(company):
-    global model, Y
+    global model_tra
+    global model_thsr, model_thsr_y
 
-    if model is None:
-        model = latest_model(model, company)
-
-    if company == "thsr":
-        Y = latest_Y(company)
+    if company == "tra" and model_tra is None:
+        model_tra = latest_model(model_tra, company)
+    elif company == "thsr" and model_thsr is None:
+        model_thsr = latest_model(model_thsr, company)
+        model_thsr_y = latest_Y(company)
 
 def crack_tra(input, cropped, basefolder=cracker_dir("tra")):
-    global model
+    global model_tra
 
     filename = os.path.basename(input)
 
@@ -47,14 +50,14 @@ def crack_tra(input, cropped, basefolder=cracker_dir("tra")):
         _, csgraph = image_l(filepath)
         dataset, _, _ = cnn_preprocess(np.array([csgraph]))
 
-        c = str(np.argmax(model.predict(dataset), axis=1)[0])
+        c = str(np.argmax(model_tra.predict(dataset), axis=1)[0])
         if c != "10":
             answer += c
 
     return answer
 
 def crack_thsr(input, cropped, basefolder=cracker_dir("thsr")):
-    global model, Y
+    global model_thsr, model_thsr_y
 
     init_model("thsr")
 
@@ -73,7 +76,7 @@ def crack_thsr(input, cropped, basefolder=cracker_dir("thsr")):
         _, csgraph = image_l(filepath)
         dataset, _, _ = cnn_preprocess(np.array([csgraph]))
 
-        answer += Y[np.argmax(model.predict(dataset), axis=1)[0]]
+        answer += model_thsr_y[np.argmax(model_thsr.predict(dataset), axis=1)[0]]
 
     return answer
 
@@ -82,8 +85,6 @@ def crack_thsr(input, cropped, basefolder=cracker_dir("thsr")):
 @click.option("-c", "--company", type=click.Choice(["tra", "thsr"]))
 @click.option("-t", "--type", type=click.Choice(["1", "2"]))
 def process(input, company, type):
-    global model
-
     if input is None:
         print "Not found --input parameter"
 

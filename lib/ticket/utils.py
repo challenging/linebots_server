@@ -243,3 +243,6 @@ def thsr_fail_dir():
 
 def thsr_ticket_dir():
     return thsr_dir("ticket")
+
+def thsr_cancel_dir():
+    return thsr_dir("cancel")

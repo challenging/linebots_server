@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
 import os
 import time
 import random
@@ -16,7 +17,7 @@ from lib.common.utils import UTF8
 from lib.common.utils import check_folder, get_chrome_driver, get_phantom_driver, log
 from lib.ocr.utils import get_digest
 from lib.ticket.utils import get_thsr_url
-from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, thsr_fail_dir, thsr_ticket_dir
+from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, thsr_fail_dir, thsr_ticket_dir, thsr_cancel_dir
 
 init_model("thsr")
 
@@ -28,13 +29,23 @@ def book_ticket(param, cropped=2, driver="phantom"):
         opener = get_phantom_driver()
 
     retry, ticket_number = 2, None
+    train_type, train_count, train_number, start_station, end_station, date, stime, etime, money = None, None, None, None, None, None, None, None, None
     while retry >= 0:
         opener.get(get_thsr_url(param["booking_type"]))
 
         # choose started station
-        opener.find_element_by_name("selectStartStation").send_keys(unicode(param["selectStartStation"], UTF8))
+        station = param["selectStartStation"]
+        if isinstance(station, str):
+            station = unicode(param["selectStartStation"], UTF8)
+
+        opener.find_element_by_name("selectStartStation").send_keys(station)
+
         # choose destination station
-        opener.find_element_by_name("selectDestinationStation").send_keys(unicode(param["selectDestinationStation"], UTF8))
+        station = param["selectDestinationStation"]
+        if isinstance(station, str):
+            station = unicode(param["selectDestinationStation"], UTF8)
+        opener.find_element_by_name("selectDestinationStation").send_keys(station)
+
         # only show the early bird tickets
         if param["onlyQueryOffPeakCheckBox"]:
             opener.find_element_by_id("onlyQueryOffPeakCheckBox").click()
@@ -99,7 +110,7 @@ def book_ticket(param, cropped=2, driver="phantom"):
 
                     break
                 except NoSuchElementException as nee:
-                    pass
+                    opener.find_element_by_id("BookingS1Form_homeCaptcha_reCodeLink").click()
             except NoSuchElementException as nee:
                 pass
 
@@ -127,13 +138,25 @@ def book_ticket(param, cropped=2, driver="phantom"):
 
             if button:
                 break
-
         button.click()
 
         opener.find_element_by_name("SubmitButton").click()
         time.sleep(random.randint(1, 3))
 
         ticket_info = opener.find_element_by_xpath("//table[@class='table_simple']")
+        '''
+        去程 03/03 603 桃園 台中 07:15 07:51 430*2 - TWD 860
+        車廂：標準車廂 票數：全票 2 張  總票價 TWD 860
+
+        train_type, train_count, train_number, start_station, end_station, date, stime, etime, money
+        '''
+        for idx, info in enumerate(ticket_info.text.split("\n")[1:]):
+            if idx == 0:
+                _, date, train_number, start_station, end_station, stime, etime, _, _, _, money = re.split("[\s]+", info)
+            elif idx == 1:
+                t = re.split("[\s]+", info)
+                train_type = t[0]
+                train_count = " ".join(t[1:-3])
 
         opener.find_element_by_id("idNumber").send_keys(param["person_id"])
         opener.find_element_by_id("mobileInputRadio").click()
@@ -159,9 +182,62 @@ def book_ticket(param, cropped=2, driver="phantom"):
 
     opener.quit()
 
-    return ticket_number
+    return ticket_number, (train_type, train_count, train_number, start_station, end_station, date, stime, etime, money)
+
+def cancel_ticket(person_id, ticket_number, driver="chrome"):
+    is_cancelled = False
+
+    opener = None
+    if driver == "chrome":
+        opener = get_chrome_driver()
+    else:
+        opener = get_phantom_driver()
+
+    retry = 3
+    while retry > 0 and not is_cancelled:
+        opener.get("https://irs.thsrc.com.tw/IMINT/?wicket:bookmarkablePage=:tw.com.mitac.webapp.thsr.viewer.History")
+
+        # step 1
+        print person_id, ticket_number
+        opener.find_element_by_id("idInputRadio1").click()
+        opener.find_element_by_id("rocId").send_keys(person_id)
+        opener.find_element_by_name("orderId").send_keys(ticket_number)
+        opener.find_element_by_name("SubmitButton").click()
+
+        # step 2
+        opener.find_element_by_name("TicketProcessButtonPanel:CancelSeatsButton").click()
+
+        filepath_canceled_ticket = os.path.join(thsr_cancel_dir(), "person_id={};ticket_number={}.2.jpg".format(person_id, ticket_number))
+        opener.save_screenshot(filepath_canceled_ticket)
+
+        # step 3
+        opener.find_element_by_name("agree").click()
+        opener.find_element_by_name("SubmitButton").click()
+        filepath_canceled_ticket = os.path.join(thsr_cancel_dir(), "person_id={};ticket_number={}.3.jpg".format(person_id, ticket_number))
+        opener.save_screenshot(filepath_canceled_ticket)
+
+        # check successful or not
+        try:
+            title = opener.find_element_by_xpath("//td[@class='payment_title']").text
+            if title == u"取消訂位成功！":
+                filepath_canceled_ticket = os.path.join(thsr_cancel_dir(), "person_id={};ticket_number={}.4.jpg".format(person_id, ticket_number))
+                opener.save_screenshot(filepath_canceled_ticket)
+
+                is_cancelled = True
+                retry = -1
+
+                break
+        except NoSuchElementException as nee:
+            pass
+
+        retry -= 1
+
+    opener.quit()
+
+    return is_cancelled
 
 if __name__ == "__main__":
+    '''
     testing_params = {"booking_type": "general",
                       "person_id": "L122760167",
                       "cellphone": "0921747196",
@@ -175,5 +251,20 @@ if __name__ == "__main__":
                       "onlyQueryOffPeakCheckBox": True,
                       "ticketPanel:rows:0:ticketAmount": 1,
                       "ticketPanel:rows:1:ticketAmount": 0}
+    '''
+    testing_params = {"person_id": "L122760167",
+                      "ticketPanel:rows:1:ticketAmount": 0,
+                      "booking": "bookingMethod1",
+                      "onlyQueryOffPeakCheckBox": False,
+                      "booking_stime": "07:00",
+                      "booking_date": "2017/03/03",
+                      "booking_type": "general",
+                      "cellphone": "0921747196",
+                      "selectDestinationStation": "台中",
+                      "preferred_seat": "seatRadio1",
+                      "booking_etime": "12:00",
+                      "selectStartStation": "桃園",
+                      "ticketPanel:rows:0:ticketAmount": 2}
 
-    print book_ticket(testing_params, driver="chrome")
+    #print book_ticket(testing_params, driver="chrome")
+    cancel_ticket(person_id="L122760167", ticket_number="06038429")
