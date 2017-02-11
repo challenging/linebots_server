@@ -5,6 +5,8 @@ import os
 
 from lib.common.utils import check_folder, data_dir
 
+URL_TRA = "http://railway1.hinet.net/csearch.htm"
+
 def tra_dir(f):
     folder = os.path.join(data_dir("captcha"), "tra", f)
     check_folder(folder, is_folder=True)
@@ -205,6 +207,15 @@ def get_train_name(train_type):
 
 get_station_number = lambda station_name: tra_stations.get(station_name, None)
 get_train_type = lambda train_name: tra_train_type.get(train_name, None)
+
+def get_thsr_url(booking_type):
+    url = "https://irs.thsrc.com.tw/IMINT/"
+    if booking_type == "student":
+        url = "https://irs.thsrc.com.tw/IMINT/?student=university"
+    elif booking_type == "credit":
+        url = "https://irs.thsrc.com.tw/IMINT/creditcard"
+
+    return url
 
 def thsr_dir(f):
     folder = os.path.join(data_dir("captcha"), "thsr", f)

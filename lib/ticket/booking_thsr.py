@@ -11,9 +11,10 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 
 from lib.ocr.cracker import init_model, crack_thsr
-from lib.common.utils import UTF8, URL_THSR
+from lib.common.utils import UTF8
 from lib.common.utils import check_folder, get_chrome_driver, get_phantom_driver
 from lib.ocr.utils import get_digest
+from lib.ticket.utils import get_thsr_url
 from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, thsr_fail_dir, thsr_ticket_dir
 
 init_model("thsr")
@@ -24,12 +25,16 @@ def book_ticket(param, cropped=2):
 
     retry, ticket_number = 2, None
     while retry >= 0:
-        opener.get(URL_THSR)
+        opener.get(get_thsr_url(param["booking_type"]))
 
         # choose started station
         opener.find_element_by_name("selectStartStation").send_keys(unicode(param["selectStartStation"], UTF8))
         # choose destination station
         opener.find_element_by_name("selectDestinationStation").send_keys(unicode(param["selectDestinationStation"], UTF8))
+        # only show the early bird tickets
+        if param["onlyQueryOffPeakCheckBox"]:
+            opener.find_element_by_id("onlyQueryOffPeakCheckBox").click()
+
         # preferred seat
         opener.find_element_by_id(param["preferred_seat"])
         # preferred booking method
@@ -41,8 +46,9 @@ def book_ticket(param, cropped=2):
         # preferred time
         opener.find_element_by_name("toTimeTable").send_keys(param["booking_time"])
         # ticket amount
-        print param["ticketPanel:rows:0:ticketAmount"]
-        opener.find_element_by_name("ticketPanel:rows:0:ticketAmount").send_keys(param["ticketPanel:rows:0:ticketAmount"])
+        if param["ticketPanel:rows:0:ticketAmount"] != 1:
+            opener.find_element_by_name("ticketPanel:rows:0:ticketAmount").send_keys(param["ticketPanel:rows:0:ticketAmount"])
+
         opener.find_element_by_name("ticketPanel:rows:1:ticketAmount").send_keys(param["ticketPanel:rows:1:ticketAmount"])
 
         retry_crack = 5
@@ -81,12 +87,15 @@ def book_ticket(param, cropped=2):
                 submit.send_keys(answer)
 
                 opener.find_element_by_id("SubmitButton").click()
-                time.sleep(random.randint(1, 3))
 
-                if opener.current_url == "https://irs.thsrc.com.tw/IMINT/?wicket:interface=:1::":
+                try:
+                    # go to the next step
+                    opener.find_element_by_id("BookingS2Form")
                     retry_crack = -1
 
                     break
+                except NoSuchElementException as nee:
+                    pass
             except NoSuchElementException as nee:
                 pass
 
@@ -104,7 +113,7 @@ def book_ticket(param, cropped=2):
             for radio_field in field.find_elements_by_name("TrainQueryDataViewPanel:TrainGroup"):
                 trains[-1].append(radio_field)
 
-        trains[5][-1].click()
+        trains[0][-1].click()
         opener.find_element_by_name("SubmitButton").click()
         time.sleep(random.randint(1, 3))
 
@@ -135,7 +144,8 @@ def book_ticket(param, cropped=2):
     return ticket_number
 
 if __name__ == "__main__":
-    testing_params = {"person_id": "L122760167",
+    testing_params = {"booking_type": "general",
+                      "person_id": "L122760167",
                       "cellphone": "0921747196",
                       "booking_date": "2017/03/01",
                       "booking_time": "130P",
@@ -143,6 +153,7 @@ if __name__ == "__main__":
                       "selectDestinationStation": "台中",
                       "preferred_seat": "seatRadio1",
                       "booking": "bookingMethod1",
+                      "onlyQueryOffPeakCheckBox": True,
                       "ticketPanel:rows:0:ticketAmount": 1,
                       "ticketPanel:rows:1:ticketAmount": 0}
 

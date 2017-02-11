@@ -6,12 +6,13 @@ import random
 
 from PIL import Image
 
-from lib.ocr.cracker import crack_tra
-from lib.common.utils import URL_TRA
-from lib.common.utils import get_chrome_driver, get_phantom_driver, get_digest
+from lib.ocr.cracker import init_model, crack_tra
+from lib.ocr.utils import get_digest
+from lib.common.utils import get_chrome_driver, get_phantom_driver
+from lib.ticket.utils import URL_TRA
 from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_fail_dir, tra_ticket_dir
 
-crack_tra.init_model("tra")
+init_model("tra")
 
 web_opener = get_phantom_driver()
 def book_ticket(param, cropped=1):
@@ -74,7 +75,6 @@ def book_ticket(param, cropped=1):
 
                 ticket_number = web_opener.find_element_by_xpath("//span[@class='hv1 red02 text_14p bold01']").text
                 param["ticket"] = ticket_number
-                print "get ticket number - {}".format(param["ticket"])
 
                 ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(\
                     param["person_id"], param["ticket"]))
@@ -97,7 +97,7 @@ def book_ticket(param, cropped=1):
 
 if __name__ == "__main__":
     testing_params = {"person_id": "L122760167",
-                  "getin_date": "2017/02/17-00",
+                  "getin_date": "2017/02/22-00",
                   "from_station": "106",
                   "to_station": "130",
                   "order_qty_str": "1",
