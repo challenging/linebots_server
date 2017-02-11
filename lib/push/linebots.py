@@ -50,12 +50,15 @@ def fail(path):
 def push(user_id, reply_txt):
     line_bot_api.push_message(user_id, TextSendMessage(text=reply_txt))
 
+'''
 @blueprint.route("/list_tickets")
 def list_tickets():
     return collect(mode_ticket.db)
+'''
 
 def booking():
     requests = mode_ticket.db.non_booking()
+    print requests
     for user_id, creation_datetime, param in requests:
         message = None
 
