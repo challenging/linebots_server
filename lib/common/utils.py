@@ -14,7 +14,7 @@ import logging
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 from tqdm import tqdm
 from selenium import webdriver
@@ -132,7 +132,7 @@ def read_cfg(filepath):
 def log(message):
     global logging
 
-    logging.info("{}\t{}".format(inspect.getmodule(inspect.stack()[1]).__name__, message))
+    logging.info("{}\t{}\t{}".format(inspect.getmodule(inspect.stack()[1][0]), inspect.stack()[1][3], message))
 
 if __name__ == "__main__":
     g = get_location(24.58610, 120.82952)
