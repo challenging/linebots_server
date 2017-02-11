@@ -166,12 +166,15 @@ def message_text(event):
 
                     db_lotto.delete()
             elif mode_ticket.is_process(mode):
+                '''
                 if msg == "booking tra":
                     reply_txt = "開始處理訂票需求"
                     thread = threading.Thread(target=requests.get("https://lazyrc-reply.herokuapp.com/tra_booking"))
                     thread.start()
 
                     is_system_cmd = True
+                '''
+                pass
 
         if not is_system_cmd:
             if mode_ticket.is_process(mode):

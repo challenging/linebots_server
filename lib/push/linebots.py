@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import threading
-import requests
-
 from flask import Blueprint
 from flask import Flask, request, abort, send_from_directory
 
@@ -22,6 +19,8 @@ from linebot.models import (
     TextSendMessage, PostbackEvent, PostbackTemplateAction,
     MessageTemplateAction, ConfirmTemplate, TemplateSendMessage
 )
+
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 blueprint = Blueprint('LINEBOTS_PUSH', __name__)
 
@@ -87,4 +86,6 @@ def push_ticket():
     return booking()
 
 if __name__ == "__main__":
-    push_ticket()
+    sched = BlockingScheduler()
+    sched.add_job(push_ticket, 'cron', minute=2)
+    sched.start()
