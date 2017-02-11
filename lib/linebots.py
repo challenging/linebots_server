@@ -131,7 +131,7 @@ def message_text(event):
         # set lotto_opened
         is_system_cmd = False
         if is_admin(profile.user_id):
-            if mode_lotto.is_process(mode):
+            if mode_lotto.is_process(mode, msg):
                 if mode_lotto.is_open(msg):
                     mode_lotto.lotto_opened = False
                     is_system_cmd = True
