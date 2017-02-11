@@ -245,7 +245,7 @@ class THSRTicketMode(TRATicketMode):
             ticket_number = m.group(1)
 
             person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)
-            is_cancel = cancel_ticket(person_id, ticket_number, driver="chrome")
+            is_cancel = cancel_ticket(person_id, ticket_number, driver="phantom")
 
             if is_cancel:
                 self.db.cancel(user_id, ticket_number, self.ticket_type)
