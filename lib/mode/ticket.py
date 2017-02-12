@@ -124,9 +124,9 @@ class TicketMode(Mode):
 
     def cancel_ticket(self, user_id, ticket_type, ticket_number):
         mode = "未知"
-        if ticket_mode == "tra":
+        if ticket_type == "tra":
             mode = "台鐵"
-        elif ticket_mode == "thsr":
+        elif ticket_type == "thsr":
             mode = "高鐵"
 
         reply_txt = "進入取消{}訂票程序".format(mode)
