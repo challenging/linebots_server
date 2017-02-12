@@ -202,7 +202,7 @@ class TRATicketMode(TicketMode):
             if self.memory[user_id].get("person_id", None) is None:
                 reply_txt = "請輸入身份證字號(例：A123456789)"
             elif self.memory[user_id].get("getin_date", None) is None:
-                reply_txt = "請輸入欲搭車日期(例：YYYY/MM/DD, YYYYMMDD)"
+                reply_txt = "請輸入欲搭車日期(例：20170309)"
             elif self.memory[user_id].get("getin_start_dtime", None) is None:
                reply_txt = "請輸入起始時間(0-23)"
             elif self.memory[user_id].get("getin_end_dtime", None) is None:
@@ -356,7 +356,7 @@ class THSRTicketMode(TRATicketMode):
 
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
             elif self.memory[user_id].get("booking_date", None) is None:
-                reply_txt = "請輸入欲搭車日期(YYYY/MM/DD,YYYYMMDD)"
+                reply_txt = "請輸入欲搭車日期(例：20170310)"
             elif self.memory[user_id].get("booking_stime", None) is None:
                reply_txt = "請輸入起始時間(0-23)"
             elif self.memory[user_id].get("booking_etime", None) is None:
