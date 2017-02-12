@@ -20,7 +20,7 @@ from lib.ticket.utils import thsr_stations
 from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
 from lib.ticket.utils import tra_train_type, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED
 
-from lib.ticket.booking_thsr import cancel_ticket
+from lib.ticket import booking_thsr
 
 class TicketDB(DB):
     table_name = "ticket"
@@ -98,7 +98,59 @@ class TicketDB(DB):
 
         return person_id
 
-class TRATicketMode(Mode):
+class TicketMode(Mode):
+    def reset_memory(self, user_id, question):
+        if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
+            self.new_memory(user_id)
+
+    def cancel_tra_ticket(self, user_id, ticket_number):
+        person_id = self.db.get_person_id(user_id, ticket_number, "tra")
+        requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
+
+        self.db.cancel(user_id, ticket_number, "tra")
+
+        return "取消台鐵車票 - {}".format(ticket_number)
+
+    def cancel_thsr_ticket(self, user_id, ticket_number):
+        person_id = self.db.get_person_id(user_id, ticket_number, "thsr")
+        is_cancel = self.cancel_ticket(person_id, ticket_number, driver="phantom")
+
+        reply_txt = "取消高鐵車票({})失敗，請稍後再試！或者請上高鐵網站取消".format(ticket_number)
+        if is_cancel:
+            self.db.cancel(user_id, ticket_number, "thsr")
+            reply_txt = "成功取消高鐵車票 - {}".format(ticket_number)
+
+        return reply_txt
+
+    def cancel_ticket(self, user_id, ticket_type, ticket_number):
+        mode = "未知"
+        if ticket_mode == "tra":
+            mode = "台鐵"
+        elif ticket_mode == "thsr":
+            mode = "高鐵"
+
+        reply_txt = "進入取消{}訂票程序".format(mode)
+
+        if ticket_type == "tra":
+            reply_txt = self.cancel_tra_ticket(user_id, ticket_type, ticket_number)
+        elif ticket_type == "thsr":
+            reply_txt = self.cancel_thsr_ticket(user_id, ticket_type, ticket_number)
+
+        return reply_txt
+
+    def is_cancel_command(self, user_id, question):
+        is_cancel, reply_txt = False, None
+
+        if re.search("ticket_([\w]+)=cancel\+([\d]{6,})", question):
+            m = re.match("ticket_([\w]+)=cancel\+([\d]{6,})", question)
+            ticket_type, ticket_number = m.group(1), m.group(2)
+
+            is_cancel = True
+            reply_txt = self.cancel_ticket(user_id, ticket_type, ticket_number)
+
+        return is_cancel, reply_txt
+
+class TRATicketMode(TicketMode):
     def init(self):
         self.memory = {}
         self.db = TicketDB()
@@ -109,16 +161,8 @@ class TRATicketMode(Mode):
         if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
             self.new_memory(user_id)
 
-        if re.search("ticket_tra=cancel\+([\d]{6,})", question):
-            m = re.match("ticket_tra=cancel\+([\d]{6,})", question)
-            ticket_number = m.group(1)
-
-            person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)
-            requests.get("http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id, ticket_number))
-
-            self.db.cancel(user_id, ticket_number, self.ticket_type)
-            reply_txt = "已經取消號碼為{}的台鐵車票".format(ticket_number)
-        else:
+        is_cancel, reply_txt = self.is_cancel_command(user_id, question)
+        if not is_cancel:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
             elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) and self.memory[user_id].get("getin_date", None) is None:
@@ -241,19 +285,8 @@ class THSRTicketMode(TRATicketMode):
         if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
             self.new_memory(user_id)
 
-        if re.search("ticket_thsr=cancel\+([\d]{6})", question):
-            m = re.match("ticket_thsr=cancel\+([\d]{6,})", question)
-            ticket_number = m.group(1)
-
-            person_id = self.db.get_person_id(user_id, ticket_number, self.ticket_type)
-            is_cancel = cancel_ticket(person_id, ticket_number, driver="phantom")
-
-            if is_cancel:
-                self.db.cancel(user_id, ticket_number, self.ticket_type)
-                reply_txt = "已經取消號碼為{}的高鐵車票".format(ticket_number)
-            else:
-                reply_txt = "取消高鐵車票({})失敗，請稍後再試！或者請上高鐵網站取消".format(ticket_number)
-        else:
+        is_cancel, reply_txt = self.is_cancel_command(user_id, question)
+        if not is_cancel:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
             elif re.search("([\d]{10})", question) and self.memory[user_id].get("cellphone", None) is None:
@@ -399,7 +432,6 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    '''
     questions = ["我試試", person_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, person_id)
@@ -415,6 +447,5 @@ if __name__ == "__main__":
             print message
         elif message is not None:
             print message.as_json_string()
-    '''
 
-    mode_thsr_ticket.conversion("ticket_thsr=cancel+06052042", user_id)
+    #mode_thsr_ticket.conversion("ticket_thsr=cancel+06052042", user_id)
