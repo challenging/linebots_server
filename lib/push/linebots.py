@@ -30,7 +30,6 @@ def collect(db):
 
 def booking_tra_ticket(driver="phantom"):
     requests = mode_tra_ticket.db.non_booking("tra")
-    print requests
     for user_id, creation_datetime, param in requests:
         message = None
 
