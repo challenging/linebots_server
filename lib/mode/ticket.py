@@ -165,12 +165,16 @@ class TRATicketMode(TicketMode):
         if not is_cancel:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
-            elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) and self.memory[user_id].get("getin_date", None) is None:
+            elif (re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) or re.search("([\d]{8,8})", question)) and self.memory[user_id].get("getin_date", None) is None:
                 try:
-                    booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+                    booked_date = None
+                    if booked_date.replace("-", "/").find("/") > -1:
+                        booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+                    else:
+                        booked_date = datetime.datetime.strptime(question, '%Y%m%d')
 
                     if booked_date > datetime.datetime.now():
-                        self.memory[user_id]["getin_date"] = "{}-00".format(question)
+                        self.memory[user_id]["getin_date"] = booked_date.strftime("%Y/%m/%d-00")
                 except ValueError as e:
                     log("Error: {}".format(e))
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
@@ -295,12 +299,16 @@ class THSRTicketMode(TRATicketMode):
                 m = re.match("booking_type=([\w]+)", question)
 
                 self.memory[user_id]["booking_type"] = m.group(1)
-            elif re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) and self.memory[user_id].get("booking_date", None) is None:
+            elif (re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) or re.search("([\d]{8,8})", question)) and self.memory[user_id].get("booking_date", None) is None:
                 try:
-                    booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+                    booked_date = None
+                    if booked_date.replace("-", "/").find("/") > -1:
+                        booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
+                    else:
+                        booked_date = datetime.datetime.strptime(question, '%Y%m%d')
 
                     if booked_date > datetime.datetime.now():
-                        self.memory[user_id]["booking_date"] = question
+                        self.memory[user_id]["booking_date"] = booked_date.strftime("%Y/%m/%d")
                 except ValueError as e:
                     log("Error: {}".format(e))
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("booking_stime", None) is None:
