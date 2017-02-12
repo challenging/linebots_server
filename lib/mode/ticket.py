@@ -198,9 +198,9 @@ class TRATicketMode(TicketMode):
                 self.memory[user_id]["train_type"] = get_train_type(question)
 
             if self.memory[user_id].get("person_id", None) is None:
-                reply_txt = "請輸入身份證字號(A123456789)"
+                reply_txt = "請輸入身份證字號(例：A123456789)"
             elif self.memory[user_id].get("getin_date", None) is None:
-                reply_txt = "請輸入欲搭車日期(YYYY/MM/DD)"
+                reply_txt = "請輸入欲搭車日期(例：YYYY/MM/DD, YYYYMMDD)"
             elif self.memory[user_id].get("getin_start_dtime", None) is None:
                reply_txt = "請輸入起始時間(0-23)"
             elif self.memory[user_id].get("getin_end_dtime", None) is None:
@@ -343,9 +343,9 @@ class THSRTicketMode(TRATicketMode):
                     self.memory[user_id]["ticketPanel:rows:1:ticketAmount"] = question
 
             if self.memory[user_id].get("person_id", None) is None:
-                reply_txt = "請輸入身份證字號(A123456789)"
+                reply_txt = "請輸入身份證字號(例：A123456789)"
             elif self.memory[user_id].get("cellphone", None) is None:
-                reply_txt = "請輸入手機號碼(0912345678)"
+                reply_txt = "請輸入手機號碼(例：0912345678)"
             elif self.memory[user_id].get("booking_type", None) is None:
                 template = ConfirmTemplate(text="請選擇訂票身份", actions=[
                     MessageTemplateAction(label="一般訂票", text='booking_type=general'),
@@ -354,7 +354,7 @@ class THSRTicketMode(TRATicketMode):
 
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
             elif self.memory[user_id].get("booking_date", None) is None:
-                reply_txt = "請輸入欲搭車日期(YYYY/MM/DD)"
+                reply_txt = "請輸入欲搭車日期(YYYY/MM/DD,YYYYMMDD)"
             elif self.memory[user_id].get("booking_stime", None) is None:
                reply_txt = "請輸入起始時間(0-23)"
             elif self.memory[user_id].get("booking_etime", None) is None:

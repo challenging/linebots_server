@@ -43,7 +43,8 @@ def booking_tra_ticket(driver="phantom"):
             txt += "車種: {}\n".format(train_type.encode(UTF8))
             txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
             txt += "搭乘時間: {} {}\n".format(start_date, start_time)
-            txt += "抵達時間 :{} {}".format(end_date, end_time)
+            txt += "抵達時間 :{} {}\n".format(end_date, end_time)
+            txt += "訂票成功，請自行使用台鐵付款方式"
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                     MessageTemplateAction(label="取消訂票", text='ticket_tra=cancel+{}'.format(ticket_number)),
@@ -70,7 +71,8 @@ def booking_thsr_ticket(driver="phantom"):
             txt += "{}\n".format(train_count.encode(UTF8))
             txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
             txt += "搭乘時間: {} {} - {}\n".format(date, stime, etime)
-            txt += "付款金額: {} 元".format(money)
+            txt += "付款金額: {} 元\n".format(money)
+            txt += "訂票成功，請自行使用高鐵付款方式"
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                     MessageTemplateAction(label="取消訂票", text='ticket_thsr=cancel+{}'.format(ticket_number)),
