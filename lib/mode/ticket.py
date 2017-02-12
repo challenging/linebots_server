@@ -12,6 +12,7 @@ from linebot.models import PostbackTemplateAction, ButtonsTemplate
 from lib.common.mode import Mode
 from lib.common.db import DB
 
+from lib.common.utils import channel_access_token
 from lib.common.utils import MODE_TRA_TICKET, MODE_THSR_TICKET, log
 from lib.common.message import txt_not_support
 from lib.common.check_taiwan_id import check_taiwan_id_number
@@ -27,13 +28,14 @@ class TicketDB(DB):
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), status VARCHAR(16));".format(self.table_name))
-        cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx ON {table_name} (ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), retry INTEGER, status VARCHAR(16));".format(self.table_name))
+        cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_1 ON {table_name} (token, ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
+        cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_2 ON {table_name} (token, user_id, ticket_type, ticket_number);".format(table_name=self.table_name))
         cursor.close()
 
     def ask(self, user_id, ticket, ticket_type):
-        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', -1, 'scheduled');".format(\
-            self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
+        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', '{}', -1, 0, 'scheduled');".format(\
+            self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -49,8 +51,8 @@ class TicketDB(DB):
             booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
 
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE ticket_number = '-1' AND creation_datetime > '{}' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, now.strftime("%Y-%m-%dT00:00:00"), booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND creation_datetime > '{}' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, channel_access_token, now.strftime("%Y-%m-%dT00:00:00"), booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -64,8 +66,8 @@ class TicketDB(DB):
         return requests
 
     def book(self, user_id, creation_datetime, ticket_number, status, ticket_type):
-        sql = "UPDATE {} SET ticket_number = '{}', status = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, ticket_number, status, user_id, creation_datetime, ticket_type)
+        sql = "UPDATE {} SET ticket_number = '{}', status = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, ticket_number, status, channel_access_token, user_id, creation_datetime, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -74,8 +76,8 @@ class TicketDB(DB):
         return done
 
     def cancel(self, user_id, ticket_number, ticket_type):
-        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number, ticket_type)
+        sql = "UPDATE {} SET status = '{}' WHERE token = '{}' AND user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, TICKET_STATUS_CANCELED, channel_access_token, user_id, ticket_number, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -84,8 +86,8 @@ class TicketDB(DB):
         return done
 
     def get_person_id(self, user_id, ticket_number, ticket_type):
-        sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
-            self.table_name, user_id, ticket_number, ticket_type)
+        sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE token = '{}' AND user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
+            self.table_name, channel_access_token, user_id, ticket_number, ticket_type)
 
         person_id = None
 

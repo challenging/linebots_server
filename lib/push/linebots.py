@@ -5,10 +5,10 @@ from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket
 
 from lib.ticket import booking_tra
 from lib.ticket import booking_thsr
-from lib.ticket.utils import tra_ticket_dir, tra_fail_dir, get_station_name, get_train_name, TICKET_STATUS_BOOKED
+from lib.ticket.utils import TICKET_STATUS_BOOKED
 
-from lib.common.utils import UTF8, MODE_NORMAL
-from lib.common.utils import channel_secret, channel_access_token, log
+from lib.common.utils import UTF8
+from lib.common.utils import channel_access_token, log
 from lib.common.message import txt_not_support
 
 from linebot import LineBotApi
@@ -18,7 +18,6 @@ from linebot.models import (
     MessageTemplateAction, ConfirmTemplate, TemplateSendMessage
 )
 
-# get channel_secret and channel_access_token from your environment variable
 line_bot_api = LineBotApi(channel_access_token)
 
 def collect(db):
