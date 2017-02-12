@@ -47,6 +47,7 @@ def booking_tra_ticket(driver="phantom"):
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                     MessageTemplateAction(label="取消訂票", text='ticket_tra=cancel+{}'.format(ticket_number)),
+                    MessageTemplateAction(label="繼續訂票", text='ticket_tra=again'),
                     MessageTemplateAction(label="切換模式", text='切換模式')
                 ]))
 
@@ -74,6 +75,7 @@ def booking_thsr_ticket(driver="phantom"):
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                     MessageTemplateAction(label="取消訂票", text='ticket_thsr=cancel+{}'.format(ticket_number)),
+                    MessageTemplateAction(label="繼續訂票", text='ticket_thsr=again'),
                     MessageTemplateAction(label="切換模式", text='切換模式')
                 ]))
 

@@ -132,9 +132,9 @@ class TicketMode(Mode):
         reply_txt = "進入取消{}訂票程序".format(mode)
 
         if ticket_type == "tra":
-            reply_txt = self.cancel_tra_ticket(user_id, ticket_type, ticket_number)
+            reply_txt = self.cancel_tra_ticket(user_id, ticket_number)
         elif ticket_type == "thsr":
-            reply_txt = self.cancel_thsr_ticket(user_id, ticket_type, ticket_number)
+            reply_txt = self.cancel_thsr_ticket(user_id, ticket_number)
 
         return reply_txt
 
