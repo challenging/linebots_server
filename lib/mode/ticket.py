@@ -168,7 +168,7 @@ class TRATicketMode(TicketMode):
             elif (re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) or re.search("([\d]{8,8})", question)) and self.memory[user_id].get("getin_date", None) is None:
                 try:
                     booked_date = None
-                    if booked_date.replace("-", "/").find("/") > -1:
+                    if question.replace("-", "/").find("/") > -1:
                         booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
                     else:
                         booked_date = datetime.datetime.strptime(question, '%Y%m%d')
@@ -302,7 +302,7 @@ class THSRTicketMode(TRATicketMode):
             elif (re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) or re.search("([\d]{8,8})", question)) and self.memory[user_id].get("booking_date", None) is None:
                 try:
                     booked_date = None
-                    if booked_date.replace("-", "/").find("/") > -1:
+                    if question.replace("-", "/").find("/") > -1:
                         booked_date = datetime.datetime.strptime(question, '%Y/%m/%d')
                     else:
                         booked_date = datetime.datetime.strptime(question, '%Y%m%d')
