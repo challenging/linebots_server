@@ -70,7 +70,7 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
         find_answer = True
     elif msg in KEYWORD_WEATHER:
         if state:
-            log("weather mode: ", state)
+            log("weather mode: {}".format(state))
 
             reply_txt = bots[bots_name.index("weather")](state)
         else:
@@ -78,7 +78,7 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
 
         find_answer = True
     elif msg in KEYWORD_LUCKY and twelve:
-        log("lucky mode: ", twelve)
+        log("lucky mode: ".format(twelve))
 
         answer = bots[bots_name.index("lucky")](twelve)
         if anwer is not None:
