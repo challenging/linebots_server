@@ -51,7 +51,16 @@ def booking_tra_ticket(driver="phantom"):
                     MessageTemplateAction(label="切換模式", text='切換模式')
                 ]))
 
-            line_bot_api.push_message(user_id, message)
+            retry = 3
+            while retry > 0:
+                try:
+                    line_bot_api.push_message(user_id, message)
+
+                    break
+                except Exception as e:
+                    log(e)
+
+                    retry -= 1
 
     return "done..."
 
