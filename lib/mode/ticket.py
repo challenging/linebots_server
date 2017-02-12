@@ -113,7 +113,7 @@ class TicketMode(Mode):
 
     def cancel_thsr_ticket(self, user_id, ticket_number):
         person_id = self.db.get_person_id(user_id, ticket_number, "thsr")
-        is_cancel = self.cancel_ticket(person_id, ticket_number, driver="phantom")
+        is_cancel = booking_thsr.cancel_ticket(person_id, ticket_number, driver="phantom")
 
         reply_txt = "取消高鐵車票({})失敗，請稍後再試！或者請上高鐵網站取消".format(ticket_number)
         if is_cancel:
