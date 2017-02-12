@@ -34,7 +34,7 @@ class TicketDB(DB):
         cursor.close()
 
     def ask(self, user_id, ticket, ticket_type):
-        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', '{}', -1, 0, 'scheduled');".format(\
+        sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, 'scheduled');".format(\
             self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
 
         cursor = self.conn.cursor()
