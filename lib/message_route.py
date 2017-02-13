@@ -117,7 +117,7 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
                                         PostbackTemplateAction(
                                             label=txt_location(),
                                             data="t={},l1={},l2={}".format(\
-                                                row["name"],
+                                                row["name"].encode(UTF8),
                                                 #row["address"],
                                                 row["location"][0],
                                                 row["location"][1]),
