@@ -112,8 +112,17 @@ def handle_postback(event):
 
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=txt_mode(mode)))
         db_mode.ask(profile.user_id, mode)
+    elif re.search("t=(.+),a=(.+),lt=([\d\.]+),lg=([\d\.]+)", event.postback.data):
+        m = re.match("t=(.+),a=(.+),lt=([\d\.]+),lg=([\d\.]+)", event.postback.data)
+
+        line_bot_api.reply_message(
+            event.reply_token, LocationSendMessage(
+                    title=m.group(1), address=m.group(2),
+                    latitude=m.group(3), longitude=m.group(4)
+                )
+            )
     else:
-        log(event.postback.data)
+        pass
 
 @handler.add(MessageEvent, message=TextMessage)
 def message_text(event):
