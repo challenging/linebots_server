@@ -16,7 +16,7 @@ from lib.bot import fxrate, google_search, weather, lucky, bus, place
 from lib.common.utils import get_location, log
 from lib.common.utils import UTF8, MODE_NORMAL, MODE_TRA_TICKET, MODE_THSR_TICKET
 
-from lib.common.message import txt_help, txt_not_support, txt_article, txt_google, txt_hello
+from lib.common.message import txt_help, txt_not_support, txt_article, txt_google, txt_hello, txt_location
 from lib.common.message import txt_error_location, txt_error_lucky
 
 # init bots
@@ -113,6 +113,14 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
                                         URITemplateAction(
                                             label=txt_article(),
                                             uri=row["uri"]
+                                            ),
+                                        PostbackTemplateAction(
+                                            label=txt_location(),
+                                            data="t={},l1={},l2={}".format(\
+                                                row["name"],
+                                                #row["address"],
+                                                row["location"][0],
+                                                row["location"][1]),
                                             )
                                         ]
                                     ) for idx, row in enumerate(answer)

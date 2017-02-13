@@ -113,7 +113,7 @@ def handle_postback(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=txt_mode(mode)))
         db_mode.ask(profile.user_id, mode)
     else:
-        pass
+        log(event.postback.data)
 
 @handler.add(MessageEvent, message=TextMessage)
 def message_text(event):

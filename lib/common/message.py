@@ -34,6 +34,9 @@ def txt_not_support():
 def txt_article():
     return "瀏覽 Google Search 文章"
 
+def txt_location():
+    return "告訴我位置"
+
 def txt_error_location():
     return "尚無設定地理位置，請設定後，即可得到正確天氣資訊。"
 

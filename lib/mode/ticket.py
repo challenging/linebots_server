@@ -7,7 +7,7 @@ import requests
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage
-from linebot.models import PostbackTemplateAction, ButtonsTemplate
+from linebot.models import ButtonsTemplate
 
 from lib.common.mode import Mode
 from lib.common.db import DB
