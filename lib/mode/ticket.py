@@ -25,7 +25,7 @@ from lib.ticket import booking_thsr
 
 class TicketDB(DB):
     table_name = "ticket"
-    DIFF_TRA = 16
+    DIFF_TRA = 14
     DIFF_THSR = 28
 
     def create_table(self):
