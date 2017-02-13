@@ -162,11 +162,9 @@ class TicketMode(Mode):
 
         p = re.compile("ticket_((tra|thsr))=(again|confirm)")
         if p.search(question) is None:
-            ticket_type = p.match(question).group(1)
-
             template = ConfirmTemplate(text=message, actions=[
-                MessageTemplateAction(label="確認訂票", text='ticket_{}=confirm'.format(ticket_type)),
-                MessageTemplateAction(label="重新輸入", text='ticket_{}=again'.format(ticket_type)),
+                MessageTemplateAction(label="確認訂票", text='ticket_{}=confirm'.format(self.ticket_type)),
+                MessageTemplateAction(label="重新輸入", text='ticket_{}=again'.format(self.ticket_type)),
             ])
 
             reply_txt = TemplateSendMessage(
