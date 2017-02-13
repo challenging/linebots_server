@@ -161,7 +161,7 @@ class TicketMode(Mode):
         question = str(question)
 
         p = re.compile("ticket_((tra|thsr))=(again|confirm)")
-        if p.search(question):
+        if p.search(question) is None:
             ticket_type = p.match(question).group(1)
 
             template = ConfirmTemplate(text=message, actions=[
@@ -181,7 +181,7 @@ class TicketMode(Mode):
 
                reply_txt = "懶人RC開始訂票，若有消息會立即通知，請耐心等候"
             else:
-               reply_txt = "請輸入身分證號字號"
+               reply_txt = "請輸入身分證字號（例：A123456789）"
 
             del self.memory[user_id]
 
