@@ -118,7 +118,7 @@ def run_normal(profile, msg, mode, db_mode, db_location, db_question):
                                             label=txt_location(),
                                             data="t={},a={},lt={},lg={}".format(\
                                                 row["name"].encode(UTF8),
-                                                row["address"],
+                                                row["address"].encode(UTF8),
                                                 row["location"][0],
                                                 row["location"][1]),
                                             )
