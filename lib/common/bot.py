@@ -8,6 +8,7 @@ import psycopg2
 import urlparse
 import datetime
 
+from lib.common.utils import log, get_db_connection
 from lib.common.utils import UTF8
 
 class Bot(object):
@@ -18,18 +19,10 @@ class Bot(object):
         self.dataset = []
         self.info = {}
 
-        urlparse.uses_netloc.append("postgres")
-        url = urlparse.urlparse(os.environ["DATABASE_URL"])
+        self.init_table()
 
-        self.conn = psycopg2.connect(
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            host=url.hostname,
-            port=url.port
-        )
-
-        self.conn.autocommit = True
+    def init_table(self):
+        self.conn = get_db_connection()
 
         cursor = self.conn.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS {} (question VARCHAR(128), creation_datetime TIMESTAMP, answer TEXT);".format(self.repository))
@@ -61,7 +54,7 @@ class Bot(object):
             sql = "INSERT INTO {} VALUES {}".format(self.repository, ",".join(rows))
             cursor.execute(sql)
 
-            print "The {} bot finish updating answers".format(type(self).__name__)
+            log("The {} bot finish updating answers".format(type(self).__name__))
 
         cursor.close()
 
