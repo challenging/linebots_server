@@ -154,6 +154,7 @@ class TicketMode(Mode):
 
     def confirm(self, user_id, question, message):
         reply = None
+        question = str(question)
 
         p = re.compile("ticket_((tra|thsr))=(again|confirm)")
         if p.search(question):
@@ -167,8 +168,9 @@ class TicketMode(Mode):
             reply_txt = TemplateSendMessage(
                 alt_text=txt_not_support(), template=template)
         else:
-            if re.search("ticket_((tra|thsr))=confirm", question):
-               ticket_type = re.match("ticket_((tra|thsr))=confirm", question).group(1)
+            p = re.compile("ticket_((tra|thsr))=confirm")
+            if p.search(question):
+               ticket_type = p.match(question).group(1)
 
                del self.memory[user_id]["creation_datetime"]
                self.db.ask(user_id, json.dumps(self.memory[user_id]), ticket_type)
