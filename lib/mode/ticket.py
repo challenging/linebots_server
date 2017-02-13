@@ -152,6 +152,35 @@ class TicketMode(Mode):
 
         return is_cancel, reply_txt
 
+    def confirm(self, user_id, question, message):
+        reply = None
+
+        p = re.compile("ticket_((tra|thsr))=(again|confirm)")
+        if p.search(question):
+            ticket_type = p.match(question).group(1)
+
+            template = ConfirmTemplate(text=message, actions=[
+                MessageTemplateAction(label="確認訂票", text='ticket_{}=confirm'.format(ticket_type)),
+                MessageTemplateAction(label="重新輸入", text='ticket_{}=again'.format(ticket_type)),
+            ])
+
+            reply_txt = TemplateSendMessage(
+                alt_text=txt_not_support(), template=template)
+        else:
+            if re.search("ticket_((tra|thsr))=confirm", question):
+               ticket_type = re.match("ticket_((tra|thsr))=confirm", question).group(1)
+
+               del self.memory[user_id]["creation_datetime"]
+               self.db.ask(user_id, json.dumps(self.memory[user_id]), ticket_type)
+
+               reply_txt = "懶人RC開始訂票，若有消息會立即通知，請耐心等候"
+            else:
+               reply_txt = "請輸入身分證號字號"
+
+            del self.memory[user_id]
+
+        return reply_txt
+
 class TRATicketMode(TicketMode):
     def init(self):
         self.memory = {}
@@ -231,24 +260,7 @@ class TRATicketMode(TicketMode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                if question not in ["ticket_tra=confirm", "ticket_tra=again"]:
-                    template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label="確認訂票", text='ticket_tra=confirm'),
-                        MessageTemplateAction(label="重新輸入", text='ticket_tra=again'),
-                    ])
-
-                    reply_txt = TemplateSendMessage(
-                        alt_text=txt_not_support(), template=template)
-                else:
-                    if question == "ticket_tra=confirm":
-                        del self.memory[user_id]["creation_datetime"]
-                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
-
-                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
-                    else:
-                        reply_txt = "請輸入身分證號字號"
-
-                    del self.memory[user_id]
+                reply_txt = self.confirm(user_id, question, message)
             else:
                 del self.memory[user_id]
 
@@ -378,23 +390,7 @@ class THSRTicketMode(TRATicketMode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                if question not in ["ticket_thsr=confirm", "ticket_thsr=again"]:
-                    template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label="確認訂票", text='ticket_thsr=confirm'),
-                        MessageTemplateAction(label="重新輸入", text='ticket_thsr=again'),
-                    ])
-
-                    reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
-                else:
-                    if question == "ticket_thsr=confirm":
-                        del self.memory[user_id]["creation_datetime"]
-                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
-
-                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
-                    else:
-                        reply_txt = "請輸入身分證號字號"
-
-                    del self.memory[user_id]
+                self.confirm(user_id, question, message)
             else:
                 del self.memory[user_id]
 
