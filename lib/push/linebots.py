@@ -84,4 +84,4 @@ def booking_thsr_ticket(driver="phantom"):
 
 if __name__ == "__main__":
     booking_tra_ticket("chrome")
-    booking_thsr_ticket("chrome")
+    #booking_thsr_ticket("chrome")
