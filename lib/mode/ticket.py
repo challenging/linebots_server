@@ -56,8 +56,6 @@ class TicketDB(DB):
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
 
-        print sql
-
         cursor = self.conn.cursor()
         cursor.execute(sql)
 
@@ -156,35 +154,6 @@ class TicketMode(Mode):
 
         return is_cancel, reply_txt
 
-    def confirm(self, user_id, question, message):
-        reply = None
-        question = str(question)
-
-        p = re.compile("ticket_((tra|thsr))=(again|confirm)")
-        if p.search(question) is None:
-            template = ConfirmTemplate(text=message, actions=[
-                MessageTemplateAction(label="確認訂票", text='ticket_{}=confirm'.format(self.ticket_type)),
-                MessageTemplateAction(label="重新輸入", text='ticket_{}=again'.format(self.ticket_type)),
-            ])
-
-            reply_txt = TemplateSendMessage(
-                alt_text=txt_not_support(), template=template)
-        else:
-            p = re.compile("ticket_((tra|thsr))=confirm")
-            if p.search(question):
-               ticket_type = p.match(question).group(1)
-
-               del self.memory[user_id]["creation_datetime"]
-               self.db.ask(user_id, json.dumps(self.memory[user_id]), ticket_type)
-
-               reply_txt = "懶人RC開始訂票，若有消息會立即通知，請耐心等候"
-            else:
-               reply_txt = "請輸入身分證字號（例：A123456789）"
-
-            del self.memory[user_id]
-
-        return reply_txt
-
 class TRATicketMode(TicketMode):
     def init(self):
         self.memory = {}
@@ -264,7 +233,24 @@ class TRATicketMode(TicketMode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                reply_txt = self.confirm(user_id, question, message)
+                if question not in ["ticket_tra=confirm", "ticket_tra=again"]:
+                    template = ConfirmTemplate(text=message, actions=[
+                        MessageTemplateAction(label="確認訂票", text='ticket_tra=confirm'),
+                        MessageTemplateAction(label="重新輸入", text='ticket_tra=again'),
+                    ])
+
+                    reply_txt = TemplateSendMessage(
+                        alt_text=txt_not_support(), template=template)
+                else:
+                    if question == "ticket_tra=confirm":
+                        del self.memory[user_id]["creation_datetime"]
+                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
+
+                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                    else:
+                        reply_txt = "請輸入身分證字號(例：A123456789)"
+
+                    del self.memory[user_id]
             else:
                 del self.memory[user_id]
 
@@ -394,7 +380,23 @@ class THSRTicketMode(TRATicketMode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                self.confirm(user_id, question, message)
+                if question not in ["ticket_thsr=confirm", "ticket_thsr=again"]:
+                    template = ConfirmTemplate(text=message, actions=[
+                        MessageTemplateAction(label="確認訂票", text='ticket_thsr=confirm'),
+                        MessageTemplateAction(label="重新輸入", text='ticket_thsr=again'),
+                    ])
+
+                    reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
+                else:
+                    if question == "ticket_thsr=confirm":
+                        del self.memory[user_id]["creation_datetime"]
+                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
+
+                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                    else:
+                        reply_txt = "請輸入身分證字號(例：A123456789)"
+
+                    del self.memory[user_id]
             else:
                 del self.memory[user_id]
 
