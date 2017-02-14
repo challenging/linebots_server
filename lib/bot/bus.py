@@ -169,8 +169,12 @@ class BusBot(Bot):
             r = ""
 
             for direction, estimation in info:
-                adjusted_timestamp = (time.time() - crawling_timestamp)/60
-                print direction.encode(UTF8), estimation, time.time(), crawling_timestamp, adjusted_timestamp
+                adjusted_timestamp = 0
+                now = time.time()
+                if now > crawling_timestamp:
+                    adjusted_timestamp = (now - crawling_timestamp)/60
+                else:
+                    adjusted_timestamp = (crawling_timestamp - now)/60
 
                 if estimation > 0:
                     estimation -= adjusted_timestamp
@@ -184,7 +188,6 @@ class BusBot(Bot):
                     else:
                         r += "{} 預估 {} 分鐘到達\n".format(direction, estimation)
 
-            print 3333, r
             return r
 
         crawling_datetime, answer = self.ask(msg)
