@@ -83,7 +83,6 @@ class BusBot(Bot):
 
             city = filename.replace(".json", "").split("_")[1]
 
-            #print "save file in {}".format(filename)
             crawl(url, self.repository, filename, compression=False)
 
             is_pass = self.gen_sub_results(city)
@@ -190,6 +189,9 @@ class BusBot(Bot):
         crawling_datetime, answer = self.ask(msg)
         if answer:
             reply_txt = msg + "\n"
+
+            for k, v in answer.items():
+                print 22222, k, v 
 
             reply_txt += checking(answer.items(), time.mktime(crawling_datetime.timetuple()))
         else:
