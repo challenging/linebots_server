@@ -183,18 +183,43 @@ class BusBot(Bot):
                     else:
                         r += "{} 預估 {} 分鐘到達\n".format(direction, estimation)
 
-            print r
             return r
 
         crawling_datetime, answer = self.ask(msg)
         if answer:
             reply_txt = msg + "\n"
 
-            for k, v in answer.items():
-                print 22222, k.encode(UTF8), v
-
             reply_txt += checking(answer.items(), time.mktime(crawling_datetime.timetuple()))
         else:
+            '''
+            candiated, matching = [], None
+            max_similarity = -sys.maxint
+            ordered_similarity = {}
+
+            for stop_info in self.info.keys():
+                if stop_info.startswith(msg):
+                    candiated.append(stop_info)
+
+            for stop_info in (candiated if candiated else self.info.keys()):
+                similarity = difflib.SequenceMatcher(None, msg, stop_info).ratio()
+                if similarity > 0.7:
+                    ordered_similarity[stop_info] = similarity
+
+                    if similarity > max_similarity:
+                        max_similarity = similarity
+                        matching = stop_info
+
+            if matching:
+                reply_txt = matching + "\n"
+
+                reply_txt += checking(self.info[matching].items())
+            else:
+                reply_txt = "查無[{}]此公車資訊，不知是否您是要查詢\n".format(msg)
+                for idx, (stop_info, _) in sorted(ordered_similarity.items(), key=lambda e: e[1], reverse=True)[:3]:
+                    reply_txt += "{}. [{}]\n".format(idx+1, stop_info)
+
+                reply_txt = None
+            '''
             reply_txt = None
 
         if reply_txt:
