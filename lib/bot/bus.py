@@ -191,7 +191,9 @@ class BusBot(Bot):
             reply_txt = msg + "\n"
 
             for k, v in answer.items():
-                print 22222, k, v 
+                print 22222,
+                print k,
+                print v
 
             reply_txt += checking(answer.items(), time.mktime(crawling_datetime.timetuple()))
         else:
