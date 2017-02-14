@@ -177,7 +177,9 @@ class BusBot(Bot):
                     adjusted_timestamp = (crawling_timestamp - now)/60
 
                 if estimation > 0:
+                    print direction.encode(UTF8), adjusted_timestamp, estimation,
                     estimation -= adjusted_timestamp
+                    print estimation
                     estimation = round(estimation, 1)
 
                     direction = direction.encode(UTF8)
