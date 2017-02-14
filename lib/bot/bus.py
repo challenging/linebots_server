@@ -170,7 +170,7 @@ class BusBot(Bot):
 
             for direction, estimation in info:
                 adjusted_timestamp = 0
-                now = time.time() + 8*60
+                now = time.time() + 8*3600
                 #if now > crawling_timestamp:
                 adjusted_timestamp = (now - crawling_timestamp)/60
                 #else:
