@@ -10,6 +10,8 @@ import requests
 import psycopg2
 import urlparse
 
+import ConfigParser
+
 import logging
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -21,7 +23,9 @@ from selenium import webdriver
 
 UTF8 = "UTF8"
 CONN = None
+LINEBOTS = "LINEBOTS"
 
+MODES = set(["切換模式", "qoo"])
 MODE_NORMAL = "normal"
 MODE_LOTTO = "lotto"
 MODE_TRA_TICKET = "ticket_tra"
@@ -122,8 +126,6 @@ def get_location(lat, lng):
     return geocoder.google([lat, lng], method='reverse')
 
 def read_cfg(filepath):
-    import ConfigParser
-
     config = ConfigParser.RawConfigParser()
     config.read(filepath)
 

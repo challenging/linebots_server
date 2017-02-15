@@ -30,11 +30,11 @@ from mode.lotto import mode_lotto
 from mode.ticket import mode_tra_ticket, mode_thsr_ticket
 
 from lib.common.utils import get_location, is_admin, log
-from lib.common.utils import UTF8, channel_secret, channel_access_token
+from lib.common.utils import MODES, UTF8, LINEBOTS, channel_secret, channel_access_token
 from lib.common.message import txt_error, txt_hello, txt_mode
 from lib.message_route import mode_change_button, run_normal
 
-blueprint = Blueprint('LINEBOTS', __name__)
+blueprint = Blueprint(LINEBOTS, __name__)
 
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
@@ -132,7 +132,7 @@ def message_text(event):
     msg = event.message.text.encode(UTF8).lower()
 
     mode, message = None, None
-    if msg == "切換模式":
+    if msg in MODES:
         message = mode_change_button()
     else:
         mode = db_mode.query(profile.user_id)

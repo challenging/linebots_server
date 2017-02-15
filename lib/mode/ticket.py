@@ -25,8 +25,10 @@ from lib.ticket import booking_thsr
 
 class TicketDB(DB):
     table_name = "ticket"
+
+    THRESHOLD_TICKET_COUNT = 3
     DIFF_TRA = 14
-    DIFF_THSR = 27
+    DIFF_THSR = 28
 
     def create_table(self):
         cursor = self.conn.cursor()
@@ -36,12 +38,24 @@ class TicketDB(DB):
         cursor.close()
 
     def ask(self, user_id, ticket, ticket_type):
-        sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, 'scheduled');".format(\
-            self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
-
         cursor = self.conn.cursor()
+
+        count_select = 0
+        sql = "SELECT COUNT(1) FROM {} WHERE ticket_type = '{}' AND status = 'scheduled' AND user_id = '{}'".format(self.table_name, ticket_type, user_id)
         cursor.execute(sql)
+        for row in cursor.fetchall():
+            count_select = row[0]
+
+        count_insert = 0
+        if count_select < self.THRESHOLD_TICKET_COUNT:
+            sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, 'scheduled');".format(\
+                self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket)
+            cursor.execute(sql)
+            count_insert = cursor.rowcount
+
         cursor.close()
+
+        return count_select, count_insert
 
     def non_booking(self, ticket_type, status=TICKET_STATUS_SCHEDULED):
         booking_date, diff_days = None, None
@@ -240,20 +254,26 @@ class TRATicketMode(TicketMode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                if question not in ["ticket_tra=confirm", "ticket_tra=again"]:
+                if question not in ["ticket_{}=confirm".format(self.ticket_type), "ticket_{}=again".format(self.ticket_type)]:
                     template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label="確認訂票", text='ticket_tra=confirm'),
-                        MessageTemplateAction(label="重新輸入", text='ticket_tra=again'),
+                        MessageTemplateAction(label="確認訂票", text='ticket_{}=confirm'.format(self.ticket_type)),
+                        MessageTemplateAction(label="重新輸入", text='ticket_{}=again'.format(self.ticket_type)),
                     ])
 
                     reply_txt = TemplateSendMessage(
                         alt_text=txt_not_support(), template=template)
                 else:
-                    if question == "ticket_tra=confirm":
+                    if question == "ticket_{}=confirm".format(self.ticket_type):
                         del self.memory[user_id]["creation_datetime"]
-                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
 
-                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                        cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
+                        if ci > 0:
+                            reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                        else:
+                            if cs > self.db.THRESHOLD_TICKET_COUNT-1:
+                                reply_txt = "最多允許台鐵同時可預定{}票。可先取消不需要預訂票，再輸入新預訂票，謝謝".format(self.db.THRESHOLD_TICKET_COUNT)
+                            else:
+                                reply_txt = "發生不明錯誤，請聯絡懶人RC"
                     else:
                         reply_txt = "請輸入身分證字號(例：A123456789)"
 
@@ -393,19 +413,25 @@ class THSRTicketMode(TRATicketMode):
                         message += "{}: {}\n".format(name, self.memory[user_id][k])
                 message = message.strip()
 
-                if question not in ["ticket_thsr=confirm", "ticket_thsr=again"]:
+                if question not in ["ticket_{}=confirm".format(self.ticket_type), "ticket_{}=again".format(self.ticket_type)]:
                     template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label="確認訂票", text='ticket_thsr=confirm'),
-                        MessageTemplateAction(label="重新輸入", text='ticket_thsr=again'),
+                        MessageTemplateAction(label="確認訂票", text='ticket_{}=confirm'.format(self.ticket_type)),
+                        MessageTemplateAction(label="重新輸入", text='ticket_{}=again'.format(self.ticket_type)),
                     ])
 
                     reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
                 else:
-                    if question == "ticket_thsr=confirm":
+                    if question == "ticket_{}=confirm".format(self.ticket_type):
                         del self.memory[user_id]["creation_datetime"]
-                        self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
 
-                        reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                        cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
+                        if ci > 0:
+                            reply_txt = "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+                        else:
+                            if cs > self.db.THRESHOLD_TICKET_COUNT-1:
+                                reply_txt = "最多允許高鐵可預定{}張票。可先取消不需要預訂票，再輸入新預訂票，謝謝".format(self.db.THRESHOLD_TICKET_COUNT)
+                            else:
+                                reply_txt = "發生不明錯誤，請聯絡懶人RC"
                     else:
                         reply_txt = "請輸入身分證字號(例：A123456789)"
 
@@ -457,19 +483,17 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = ["我試試", person_id, "2017/02/17", "10-22", "桃園", "清水", "1", "全部車種"]
+    questions = ["我試試", person_id, "2017/05/01", "10-22", "桃園", "清水", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
-        message = mode_tra_ticket.conversion(question, person_id)
+        message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
             print message
         else:
             print message.as_json_string()
 
-        print mode_tra_ticket.memory[person_id]
-
-    questions = ["我試試", "booking_type=student", person_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
+    questions = ["我試試", "booking_type=student", person_id, "0921747196", "2017/06/17", "17", "23", "桃園", "台中", "2", "0", "ticket_thsr=confirm"]
     for question in questions:
-        message = mode_thsr_ticket.conversion(question, person_id)
+        message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
             print message
         elif message is not None:
