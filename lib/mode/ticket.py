@@ -26,7 +26,7 @@ from lib.ticket import booking_thsr
 class TicketDB(DB):
     table_name = "ticket"
     DIFF_TRA = 14
-    DIFF_THSR = 28
+    DIFF_THSR = 27
 
     def create_table(self):
         cursor = self.conn.cursor()
@@ -55,6 +55,8 @@ class TicketDB(DB):
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
+
+        print sql
 
         cursor = self.conn.cursor()
         cursor.execute(sql)

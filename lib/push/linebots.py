@@ -92,5 +92,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
     return "done..."
 
 if __name__ == "__main__":
-    booking_tra_ticket("chrome")
+    #booking_tra_ticket("chrome")
     #booking_thsr_ticket("chrome")
+
+    pass
