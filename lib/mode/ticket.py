@@ -182,12 +182,12 @@ class TRATicketMode(TicketMode):
                 except ValueError as e:
                     log("Error: {}".format(e))
             elif self.memory[user_id].get("getin_start_dtime", None) is None:
-                if re.search("([\d]{1,2})", question):
+                if re.search("^([\d]{1,2})$", question):
                     question = int(question)
 
                     if question > -1 and question < 23:
                         self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
-                elif re.search("([\d]{1,2})-([\d]{1,2})", question):
+                elif re.search("^([\d]{1,2})-([\d]{1,2})$", question):
                     m = re.match("([\d]{1,2})-([\d]{1,2})", question)
 
                     stime, etime = int(m.group(1)), int(m.group(2))
@@ -323,12 +323,12 @@ class THSRTicketMode(TRATicketMode):
                 except ValueError as e:
                     log("Error: {}".format(e))
             elif self.memory[user_id].get("booking_stime", None) is None:
-                if re.search("([\d]{1,2})", question):
+                if re.search("^([\d]{1,2})$", question):
                     question = int(question)
 
                     if question > -1 and question < 23:
                         self.memory[user_id]["booking_stime"] = "{:02d}:00".format(int(question))
-                elif re.search("([\d]{1,2})-([\d]{1,2})", question):
+                elif re.search("^([\d]{1,2})-([\d]{1,2})$", question):
                     m = re.match("([\d]{1,2})-([\d]{1,2})", question)
 
                     stime, etime = int(m.group(1)), int(m.group(2))
@@ -457,13 +457,15 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = ["我試試", person_id, "2017/02/17", "17", "23", "桃園", "清水", "1", "全部車種"]
+    questions = ["我試試", person_id, "2017/02/17", "10-22", "桃園", "清水", "1", "全部車種"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, person_id)
         if isinstance(message, str):
             print message
         else:
             print message.as_json_string()
+
+        print mode_tra_ticket.memory[person_id]
 
     questions = ["我試試", "booking_type=student", person_id, "0921747196", "2017/02/17", "17", "23", "桃園", "台中", "2", "0"]
     for question in questions:
