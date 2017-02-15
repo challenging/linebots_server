@@ -181,16 +181,23 @@ class TRATicketMode(TicketMode):
                         self.memory[user_id]["getin_date"] = booked_date.strftime("%Y/%m/%d-00")
                 except ValueError as e:
                     log("Error: {}".format(e))
-            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_start_dtime", None) is None:
-                question = int(question)
+            elif self.memory[user_id].get("getin_start_dtime", None) is None:
+                if re.search("([\d]{1,2})", question):
+                    question = int(question)
 
-                if question > -1 and question < 24:
-                    self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
+                    if question > -1 and question < 23:
+                        self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
+                elif re.search("([\d]{1,2})-([\d]{1,2})", question):
+                    m = re.match("([\d]{1,2})-([\d]{1,2})", question)
+
+                    stime, etime = int(m.group(1)), int(m.group(2))
+                    if stime > -1 and etime > 0 and stime < 23 and etime < 24 and etime > stime:
+                        self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(stime)
+                        self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(etime)
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_end_dtime", None) is None:
                 question = int(question)
-                diff_dtime = question - int(self.memory[user_id]["getin_start_dtime"].split(":")[0])
 
-                if question > -1 and question < 24 and diff_dtime > 0 and diff_dtime < 9:
+                if question > 0 and question < 24 and question > int(self.memory[user_id]["getin_start_dtime"].split(":")[0]):
                     self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(int(question))
             elif get_station_number(question) and self.memory[user_id].get("from_station", None) is None:
                 self.memory[user_id]["from_station"] = get_station_number(question)
@@ -206,9 +213,9 @@ class TRATicketMode(TicketMode):
             elif self.memory[user_id].get("getin_date", None) is None:
                 reply_txt = "請輸入欲搭車日期(例：20170309)"
             elif self.memory[user_id].get("getin_start_dtime", None) is None:
-               reply_txt = "請輸入起始時間(0-23)"
+               reply_txt = "請輸入起始時間(0-22)"
             elif self.memory[user_id].get("getin_end_dtime", None) is None:
-                reply_txt = "請輸入終止時間(0-23)"
+                reply_txt = "請輸入終止時間(1-23)"
             elif self.memory[user_id].get("from_station", None) is None:
                 reply_txt = "請輸入上車車站"
             elif self.memory[user_id].get("to_station", None) is None:
@@ -217,7 +224,7 @@ class TRATicketMode(TicketMode):
                 reply_txt = "請輸入張數(1-6)"
             elif self.memory[user_id].get("train_type", None) is None:
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
-                                title="請輸入車種",
+                                title="請選擇車種",
                                 text="What kind of train do you choose?",
                                 actions=[MessageTemplateAction(label=k, text=k) for k in tra_train_type.keys()]
                             ))
@@ -315,16 +322,22 @@ class THSRTicketMode(TRATicketMode):
                         self.memory[user_id]["booking_date"] = booked_date.strftime("%Y/%m/%d")
                 except ValueError as e:
                     log("Error: {}".format(e))
-            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("booking_stime", None) is None:
-                question = int(question)
+            elif self.memory[user_id].get("booking_stime", None) is None:
+                if re.search("([\d]{1,2})", question):
+                    question = int(question)
 
-                if question > -1 and question < 24:
-                    self.memory[user_id]["booking_stime"] = "{:02d}:00".format(int(question))
+                    if question > -1 and question < 23:
+                        self.memory[user_id]["booking_stime"] = "{:02d}:00".format(int(question))
+                elif re.search("([\d]{1,2})-([\d]{1,2})", question):
+                    m = re.match("([\d]{1,2})-([\d]{1,2})", question)
+
+                    stime, etime = int(m.group(1)), int(m.group(2))
+                    if stime > -1 and etime > 0 and stime < 23 and etime < 24 and etime > stime:
+                        self.memory[user_id]["booking_stime"] = "{:02d}:00".format(stime)
+                        self.memory[user_id]["booking_etime"] = "{:02d}:00".format(etime)
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("booking_etime", None) is None:
                 question = int(question)
-                diff_dtime = question - int(self.memory[user_id]["booking_stime"].split(":")[0])
-
-                if question > -1 and question < 24 and diff_dtime > 0:
+                if question > 0 and question < 24:
                     self.memory[user_id]["booking_etime"] = "{:02d}:00".format(int(question))
             elif question in thsr_stations and self.memory[user_id].get("selectStartStation", None) is None:
                 self.memory[user_id]["selectStartStation"] = question
@@ -360,9 +373,9 @@ class THSRTicketMode(TRATicketMode):
             elif self.memory[user_id].get("booking_date", None) is None:
                 reply_txt = "請輸入欲搭車日期(例：20170310)"
             elif self.memory[user_id].get("booking_stime", None) is None:
-               reply_txt = "請輸入起始時間(0-23)"
+               reply_txt = "請輸入起始時間(0-22)"
             elif self.memory[user_id].get("booking_etime", None) is None:
-                reply_txt = "請輸入終止時間(0-23)"
+                reply_txt = "請輸入終止時間(1-23)"
             elif self.memory[user_id].get("selectStartStation", None) is None:
                 reply_txt = "請輸入上車車站"
             elif self.memory[user_id].get("selectDestinationStation", None) is None:
