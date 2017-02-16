@@ -79,3 +79,42 @@ def txt_ticket(mode):
         t = "飛機"
 
     return "訂購 {} 票".format(t)
+
+def txt_ticket_taiwanid():
+    return "請輸入身份證字號(例：A123456789)"
+
+def txt_ticket_phone():
+    return "請輸入手機號碼(例：0912345678)"
+
+def txt_ticket_getindate():
+    return "請輸入欲搭車日期(例：20170309)"
+
+def txt_ticket_stime():
+    return "請輸入起始時間(0-22)"
+
+def txt_ticket_etime():
+    return "請輸入終止時間(1-23)"
+
+def txt_ticket_sstation():
+    return "請輸入上車車站"
+
+def txt_ticket_estation():
+    return "請輸入下車車站"
+
+def txt_ticket_scheduled():
+    return "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+
+def txt_ticket_confirm():
+    return "確認訂票"
+
+def txt_ticket_cancel():
+    return "取消訂票"
+
+def txt_ticket_inputerror():
+    return "輸入資訊有誤，請重新輸入"
+
+def txt_ticket_error():
+    return "發生不明錯誤，請聯絡懶人RC"
+
+def txt_ticket_thankletter():
+    return "最多允許同時可預定{}票。可先取消不需要預訂票，再輸入新預訂票，謝謝"

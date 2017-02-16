@@ -48,7 +48,7 @@ class Bot(object):
                 rows.append("('{}', '{}', '{}')".format(question.encode(UTF8), datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), json.dumps(answer)))
 
         if rows:
-            sql = "DELETE FROM {}".format(self.repository)
+            sql = "TRUNCATE TABLE {}".format(self.repository)
             cursor.execute(sql)
 
             sql = "INSERT INTO {} VALUES {}".format(self.repository, ",".join(rows))
