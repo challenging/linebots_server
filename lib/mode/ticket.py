@@ -271,7 +271,7 @@ class TicketMode(Mode):
 
         messages = []
         for ticket in tickets:
-            body = self.translate_ticket(ticket[1])
+            body = self.translate_ticket(ticket[1], ticket[0])
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
                 MessageTemplateAction(label="取消訂票",
