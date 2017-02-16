@@ -36,9 +36,10 @@ class TicketDB(DB):
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), retry INTEGER, status VARCHAR(16));".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), retry INTEGER, status VARCHAR(16));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_1 ON {table_name} (token, ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_2 ON {table_name} (token, user_id, ticket_type, ticket_number);".format(table_name=self.table_name))
+        cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_3 ON {table_name} (id);".format(table_name=self.table_name))
         cursor.close()
 
     def ask(self, user_id, ticket, ticket_type):
@@ -52,7 +53,7 @@ class TicketDB(DB):
 
         count_insert = 0
         if count_select < self.THRESHOLD_TICKET_COUNT:
-            sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
+            sql = "INSERT INTO {}(id, token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
                 self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket, TICKET_STATUS_SCHEDULED)
             cursor.execute(sql)
             count_insert = cursor.rowcount
@@ -95,15 +96,17 @@ class TicketDB(DB):
 
         return done
 
-    def unscheduled(self, user_id, ticket_type, creation_datetime, status=TICKET_STATUS_UNSCHEDULED):
-        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, status, user_id, creation_datetime, ticket_type)
+    def unscheduled(self, tid, status=TICKET_STATUS_UNSCHEDULED):
+        sql = "UPDATE {} SET status = '{}' WHERE id = {}".format(self.table_name, status, tid)
 
         cursor = self.conn.cursor()
-        done = cursor.execute(sql)
+        cursor.execute(sql)
+
+        count = cursor.rowcount
+
         cursor.close()
 
-        return done
+        return count
 
     def cancel(self, user_id, ticket_number, ticket_type):
         sql = "UPDATE {} SET status = '{}' WHERE token = '{}' AND user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
@@ -133,8 +136,7 @@ class TicketDB(DB):
     def list_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
         cursor = self.conn.cursor()
 
-        sql = "SELECT creation_datetime, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}'".format(self.table_name, user_id, status, ticket_type)
-        print sql
+        sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}'".format(self.table_name, user_id, status, ticket_type)
         cursor.execute(sql)
 
         results = []
@@ -208,19 +210,13 @@ class TicketMode(Mode):
         return reply_txt
 
     def is_unscheduled_command(self, user_id):
-        is_unscheduled = False
+        count = 0
 
         p = re.compile("^ticket_(thsr|tra)=unscheduled\+([\d]+)$")
         if p.search(question):
-            m = p.match(question)
-            ticket_type, ctimestamp = m.group(1), int(m.group(2))
-            cdatetime = datetime.datetime.fromtimestamp(ctimestamp)
+            count = self.db.unscheduled(int(p.match(question).group(2)))
 
-            self.db.unscheduled(user_id, ticket_type, cdatetime.strpftime("%Y-%m-%d %H:%M:%S"))
-
-            is_unscheduled = True
-
-        return is_unscheduled
+        return count
 
     def translate_ticket(self, ticket):
         message = None
@@ -262,14 +258,11 @@ class TicketMode(Mode):
 
         messages = []
         for ticket in tickets:
-            ctime = ticket[0]
-
-            title = "於{}的預訂票紀錄".format((ctime + datetime.timedelta(hours=8)).strftime("%Y%m%d %H:%M:%S"))
             body = self.translate_ticket(ticket[1])
 
-            message = TemplateSendMessage(alt_text=title, template=ConfirmTemplate(text=body, actions=[
+            message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
                 MessageTemplateAction(label="取消訂票",
-                                      text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, int(time.mktime(ctime.timetuple())))),
+                                      text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0]))),
                 MessageTemplateAction(label="繼續訂票",
                                       text='ticket_{}=continue'.format(self.ticket_type)),
             ]))
@@ -291,6 +284,10 @@ class TRATicketMode(TicketMode):
         reply_txt = self.is_list_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
+
+        count = is_unscheduled_command(user_id, question)
+        if count > 0:
+            return "成功取消預訂票{}"
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
