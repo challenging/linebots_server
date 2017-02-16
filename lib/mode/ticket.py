@@ -221,13 +221,13 @@ class TicketMode(Mode):
 
         return id
 
-    def translate_ticket(self, ticket):
+    def translate_ticket(self, ticket, id=None):
         message = None
 
         if self.ticket_type == "tra":
-            message = self.translate_tra(ticket)
+            message = self.translate_tra(ticket, id)
         elif self.ticket_type == "thsr":
-            message = self.translate_thsr(ticket)
+            message = self.translate_thsr(ticket, id)
         else:
             pass
 
