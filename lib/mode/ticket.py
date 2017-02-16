@@ -53,7 +53,7 @@ class TicketDB(DB):
 
         count_insert = 0
         if count_select < self.THRESHOLD_TICKET_COUNT:
-            sql = "INSERT INTO {}(id, token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
+            sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
                 self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket, TICKET_STATUS_SCHEDULED)
             cursor.execute(sql)
             count_insert = cursor.rowcount
@@ -209,7 +209,7 @@ class TicketMode(Mode):
 
         return reply_txt
 
-    def is_unscheduled_command(self, user_id):
+    def is_unscheduled_command(self, user_id, question):
         id = None
 
         p = re.compile("^ticket_(thsr|tra)=unscheduled\+([\d]+)$")
@@ -589,19 +589,25 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = ["query", person_id, "2017/05/01", "10-22", "桃園", "清水", "1", "全部車種", "ticket_tra=confirm"]
+    questions = ["query", "ticket_tra=unscheduled+30", person_id, "2017/05/01", "10-22", "桃園", "清水", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
             print message
+        elif isinstance(message, list):
+            for m in message:
+                print m
         else:
             print message.as_json_string()
 
-    questions = ["list", "booking_type=student", person_id, "0921747196", "2017/06/17", "17", "23", "桃園", "台中", "2", "0", "ticket_thsr=confirm"]
+    questions = ["list", "ticket_thsr=unscheduled+31", "booking_type=student", person_id, "0921747196", "2017/06/17", "17", "23", "桃園", "台中", "2", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
             print message
+        elif isinstance(message, list):
+            for m in message:
+                print m
         elif message is not None:
             print message.as_json_string()
 
