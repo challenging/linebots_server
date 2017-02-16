@@ -96,8 +96,8 @@ class TicketDB(DB):
 
         return done
 
-    def unscheduled(self, tid, status=TICKET_STATUS_UNSCHEDULED):
-        sql = "UPDATE {} SET status = '{}' WHERE id = {}".format(self.table_name, status, tid)
+    def unscheduled(self, user_id, tid, status=TICKET_STATUS_UNSCHEDULED):
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
@@ -215,11 +215,11 @@ class TicketMode(Mode):
         p = re.compile("^ticket_(thsr|tra)=unscheduled\+([\d]+)$")
         if p.search(question):
             tid = int(p.match(question).group(2))
-            count = self.db.unscheduled(tid)
+            count = self.db.unscheduled(user_id, tid)
             if count > 0:
                 id = tid
 
-        return tid
+        return id
 
     def translate_ticket(self, ticket):
         message = None
