@@ -17,7 +17,7 @@ from lib.common.utils import UTF8, MODE_TRA_TICKET, MODE_THSR_TICKET
 from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone
 from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime
 from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror
-from lib.common.message import txt_ticket_confirm, txt_ticket_cancel
+from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero
 
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
@@ -206,6 +206,9 @@ class TicketMode(Mode):
 
         if question in ["query", "查詢", "記錄", "list"]:
             reply_txt = self.list_tickets(user_id, self.ticket_type)
+
+        if reply_txt is None:
+            reply_txt = txt_ticket_zero()
 
         return reply_txt
 

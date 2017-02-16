@@ -116,5 +116,8 @@ def txt_ticket_inputerror():
 def txt_ticket_error():
     return "發生不明錯誤，請聯絡懶人RC"
 
+def txt_ticket_zero():
+    return "目前並無預定車票"
+
 def txt_ticket_thankletter():
     return "最多允許同時可預定{}票。可先取消不需要預訂票，再輸入新預訂票，謝謝"
