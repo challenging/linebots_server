@@ -202,12 +202,8 @@ class TicketMode(Mode):
     def is_list_command(self, user_id, question):
         reply_txt = None
 
-        p = re.compile("^ticket_(tra|thsr)=listing$")
-        if p.search(question):
-            m = p.match(question)
-            ticket_type = m.group(1)
-
-            reply_txt = self.list_tickets(user_id, ticket_type)
+        if question in ["qoo", "query", "查詢"]:
+            reply_txt = self.list_tickets(user_id, self.ticket_type)
 
         return reply_txt
 
