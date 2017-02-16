@@ -202,7 +202,7 @@ class TicketMode(Mode):
     def is_list_command(self, user_id, question):
         reply_txt = None
 
-        if question in ["qoo", "query", "查詢"]:
+        if question in ["query", "查詢", "記錄", "list"]:
             reply_txt = self.list_tickets(user_id, self.ticket_type)
 
         return reply_txt
@@ -289,6 +289,8 @@ class TRATicketMode(TicketMode):
 
         self.reset_memory(user_id, question)
         reply_txt = self.is_list_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
@@ -420,6 +422,8 @@ class THSRTicketMode(TRATicketMode):
 
         self.reset_memory(user_id, question)
         reply_txt = self.is_list_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
