@@ -210,13 +210,16 @@ class TicketMode(Mode):
         return reply_txt
 
     def is_unscheduled_command(self, user_id):
-        count = 0
+        id = None
 
         p = re.compile("^ticket_(thsr|tra)=unscheduled\+([\d]+)$")
         if p.search(question):
-            count = self.db.unscheduled(int(p.match(question).group(2)))
+            tid = int(p.match(question).group(2))
+            count = self.db.unscheduled(tid)
+            if count > 0:
+                id = tid
 
-        return count
+        return tid
 
     def translate_ticket(self, ticket):
         message = None
@@ -285,9 +288,9 @@ class TRATicketMode(TicketMode):
         if reply_txt is not None:
             return reply_txt
 
-        count = is_unscheduled_command(user_id, question)
-        if count > 0:
-            return "成功取消預訂票{}"
+        tid = self.is_unscheduled_command(user_id, question)
+        if tid:
+            return "成功取消預訂票 - {}".format(tid)
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
@@ -421,6 +424,10 @@ class THSRTicketMode(TRATicketMode):
         reply_txt = self.is_list_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
+
+        tid = self.is_unscheduled_command(user_id, question)
+        if tid:
+            return "成功取消預訂票 - {}".format(tid)
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
