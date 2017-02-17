@@ -11,7 +11,7 @@ from linebot.models import (
 
 from lib.mode.lotto import mode_lotto
 
-from lib.bot import fxrate, google_search, weather, lucky, bus, place
+from lib.bot import fxrate, google_search, weather, lucky, bus, place, translate
 
 from lib.common.utils import get_location, log
 from lib.common.utils import UTF8, MODE_NORMAL, MODE_TRA_TICKET, MODE_THSR_TICKET
@@ -21,13 +21,15 @@ from lib.common.message import txt_error_location, txt_error_lucky
 
 # init bots
 place.bot.init()
+translate.bot.init()
 
-bots_name = ["weather", "lucky", "rate", "bus", "place", "google"]
+bots_name = ["weather", "lucky", "rate", "bus", "place", "translate", "google"]
 bots = [lambda msg: weather.bot.bots(msg),
         lambda msg: lucky.bot.bots(msg),
         lambda msg: fxrate.bot.bots(msg),
         lambda msg: bus.bot.bots(msg),
         lambda msg: place.bot.bots(msg),
+        lambda msg: translate.bot.bots(msg),
         lambda msg: google_search.bot.bots(msg)]
 
 KEYWORD_TICKET = set(["懶人訂票"])
@@ -36,7 +38,7 @@ KEYWORD_WEATHER = set(["weather", "天氣"])
 
 def mode_change_button():
     message = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
-        title="歡迎使用懶人RC機器人", text="請選擇以下模式", actions=[
+        title="歡迎使用懶人RC", text="請選擇以下模式", actions=[
             PostbackTemplateAction(label="查詢模式", data='mode={}'.format(MODE_NORMAL)),
             PostbackTemplateAction(label="台鐵訂票模式", data='mode={}'.format(MODE_TRA_TICKET)),
             PostbackTemplateAction(label="高鐵訂票模式", data='mode={}'.format(MODE_THSR_TICKET))
@@ -155,5 +157,3 @@ if __name__ == "__main__":
         if answer:
             print bot_name
             print answer
-
-            break
