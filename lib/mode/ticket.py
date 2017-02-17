@@ -454,7 +454,7 @@ class THSRTicketMode(TRATicketMode):
         if not is_cancel:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
-            elif re.search("([\d]{10})", question) and self.memory[user_id].get("cellphone", None) is None:
+            elif re.search("^([\d]{10})$", question) and self.memory[user_id].get("cellphone", None) is None:
                 self.memory[user_id]["cellphone"] = question
             elif re.search("booking_type=([\w]+)", question):
                 m = re.match("booking_type=([\w]+)", question)
