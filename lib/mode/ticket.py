@@ -70,9 +70,9 @@ class TicketDB(DB):
             diff_days = self.DIFF_TRA
             booking_date = "cast(cast(ticket::json->'getin_date' as varchar) as date)"
 
-            if now.weekday() == 5:
+            if now.weekday() == 4:
                 diff_days += 2
-            elif now.weekday() == 6:
+            elif now.weekday() == 5:
                 diff_days += 1
         elif ticket_type == "thsr":
             diff_days = self.DIFF_THSR
@@ -80,6 +80,8 @@ class TicketDB(DB):
 
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
+
+        print sql
 
         cursor = self.conn.cursor()
         cursor.execute(sql)
