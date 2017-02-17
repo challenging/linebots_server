@@ -144,11 +144,13 @@ class BusBot(Bot):
 
                     estimation = -1
                 else:
-                    direction = "往[{}]方向".format(stop[route_id][go_back].encode(UTF8))
-                    estimation = round(((estimation_time) / 60), 1)
+                    if route_id in stop:
+                        direction = "往[{}]方向".format(stop[route_id][go_back].encode(UTF8))
+                        estimation = round(((estimation_time) / 60), 1)
 
-                self.info.setdefault(key, {})
-                self.info[key][direction] = estimation
+                if route_id in stop:
+                    self.info.setdefault(key, {})
+                    self.info[key][direction] = estimation
 
         log("rebuild the information of {} bus successfully".format(target))
 
@@ -170,7 +172,7 @@ class BusBot(Bot):
 
             for direction, estimation in info:
                 adjusted_timestamp = 0
-                now = time.time() + 8*3600
+                now = time.time()# + 8*3600
                 adjusted_timestamp = (now - crawling_timestamp)/60
 
                 if estimation > 0:
@@ -205,6 +207,8 @@ class BusBot(Bot):
 bot = BusBot()
 
 if __name__ == "__main__":
-    bot.crawl_job()
+    #bot.crawl_job()
+    bot.hourly_job()
+    bot.init()
 
     print bot.bots(sys.argv[1])

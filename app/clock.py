@@ -11,11 +11,11 @@ lucky.bot.init()
 bus.bot.init()
 bus.bot.hourly_job()
 
-@sched.scheduled_job('cron', minute="*/15")
+@sched.scheduled_job('interval', minutes=15)
 def weather_job():
     weather.bot.crawl_job()
 
-@sched.scheduled_job('cron', minute="*")
+@sched.scheduled_job('interval', minutes=1)
 def fxrate_job():
     fxrate.bot.crawl_job()
 
@@ -23,11 +23,11 @@ def fxrate_job():
 def lucky_job():
     lucky.bot.crawl_job()
 
-@sched.scheduled_job('cron', hour="*/6")
+@sched.scheduled_job('interval', hours=6)
 def bus_stop_job():
     bus.bot.hourly_job()
 
-@sched.scheduled_job('cron', second="5,35")
+@sched.scheduled_job('interval', seconds=40)
 def bus_time_job():
     bus.bot.crawl_job()
 
