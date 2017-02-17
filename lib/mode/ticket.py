@@ -160,7 +160,7 @@ class TicketMode(Mode):
 
         self.db.cancel(user_id, ticket_number, "tra")
 
-        return "取消台鐵車票 - {}".format(ticket_number)
+        return txt_ticket_cancel("台鐵", ticket_number)
 
     def cancel_thsr_ticket(self, user_id, ticket_number):
         person_id = self.db.get_person_id(user_id, ticket_number, "thsr")
@@ -169,7 +169,7 @@ class TicketMode(Mode):
         reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
         if is_cancel:
             self.db.cancel(user_id, ticket_number, "thsr")
-            reply_txt = "取消高鐵車票 - {}".format(ticket_number)
+            reply_txt = txt_ticket_cancel("高鐵", ticket_number)
 
         return reply_txt
 
@@ -207,8 +207,8 @@ class TicketMode(Mode):
         if question in ["query", "查詢", "記錄", "list"]:
             reply_txt = self.list_tickets(user_id, self.ticket_type)
 
-        if reply_txt is None:
-            reply_txt = txt_ticket_zero()
+            if reply_txt is None:
+                reply_txt = txt_ticket_zero()
 
         return reply_txt
 

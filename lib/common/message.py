@@ -107,8 +107,11 @@ def txt_ticket_scheduled():
 def txt_ticket_confirm():
     return "確認訂票"
 
-def txt_ticket_cancel():
-    return "取消訂票"
+def txt_ticket_cancel(train_type=None, ticket_number=None):
+    if train_type and ticket_number:
+        return "取消{}車票 - {}".format(train_type, ticket_number)
+    else:
+        return "取消訂票"
 
 def txt_ticket_inputerror():
     return "輸入資訊有誤，請重新輸入"
