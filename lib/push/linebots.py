@@ -85,7 +85,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
                     "搭乘時間": "{} {} - {}".format(date, stime, etime),
                     "付款金額": "{} 元".format(money)}
 
-            mode_thsr_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, info)
+            mode_thsr_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
 
             txt = "電腦代號: {}\n".format(ticket_number)
             txt += "{}\n".format("="*20)
