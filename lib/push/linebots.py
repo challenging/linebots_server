@@ -45,7 +45,7 @@ def booking_tra_ticket(driver="phantom", type="tra"):
                 info = {"票號": ticket_number,
                         "車次": train_number,
                         "車種": train_type,
-                        "起訖站": "{} - {}".format(start_station, end_station),
+                        "起訖站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
                         "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
                 mode_tra_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
@@ -79,7 +79,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
                     "車次": train_number,
                     "車廂": train_type,
                     "票數": train_count,
-                    "起訖站": "{} - {}".format(start_station, end_station),
+                    "起訖站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
                     "搭乘時間": "{} {} - {}".format(date, stime, etime),
                     "付款金額": "{} 元".format(money)}
 
