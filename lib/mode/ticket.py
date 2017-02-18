@@ -70,9 +70,9 @@ class TicketDB(DB):
             diff_days = self.DIFF_TRA
             booking_date = "cast(cast(ticket::json->'getin_date' as varchar) as date)"
 
-            if now.weekday() == 5:
+            if now.weekday() == 4:
                 diff_days += 2
-            elif now.weekday() == 6:
+            elif now.weekday() == 5:
                 diff_days += 1
         elif ticket_type == "thsr":
             diff_days = self.DIFF_THSR
@@ -452,7 +452,7 @@ class THSRTicketMode(TRATicketMode):
         if not is_cancel:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
-            elif re.search("([\d]{10})", question) and self.memory[user_id].get("cellphone", None) is None:
+            elif re.search("^([\d]{10})$", question) and self.memory[user_id].get("cellphone", None) is None:
                 self.memory[user_id]["cellphone"] = question
             elif re.search("booking_type=([\w]+)", question):
                 m = re.match("booking_type=([\w]+)", question)

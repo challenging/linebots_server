@@ -3,7 +3,7 @@
 import re
 
 def check_taiwan_id_number(id_number=None):
-    if not id_number:
+    if not id_number or id_number.upper() == "A123456789":
         return False #'no id number'
 
     if len(id_number) <> 10:
