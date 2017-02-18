@@ -143,7 +143,21 @@ class TicketDB(DB):
     def list_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
         cursor = self.conn.cursor()
 
-        sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}'".format(self.table_name, user_id, status, ticket_type)
+        sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type)
+        cursor.execute(sql)
+
+        results = []
+        for row in cursor.fetchall():
+            results.append((row[0], json.loads(row[1])))
+
+        cursor.close()
+
+        return results
+
+    def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
+        cursor = self.conn.cursor()
+
+        sql = "SELECT id, ticket_info FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type)
         cursor.execute(sql)
 
         results = []
@@ -246,9 +260,9 @@ class TicketMode(Mode):
     def translate_tra(self, ticket, id=None):
         message = None
         if id is None:
-            message = "台鐵訂票資訊\n===================\n"
+            message = "台鐵預約訂票\n===================\n"
         else:
-            message = "台鐵訂票資訊 - {}\n===================\n".format(id)
+            message = "台鐵預約訂票 - {}\n===================\n".format(id)
 
         for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str")]:
            if k == "station":
@@ -265,9 +279,9 @@ class TicketMode(Mode):
     def translate_thsr(self, ticket, id=None):
         message = None
         if id is None:
-            message = "高鐵訂票資訊\n================\n"
+            message = "高鐵預約訂票\n================\n"
         else:
-            message = "高鐵訂票資訊 - {}\n================\n".format(id)
+            message = "高鐵預約訂票 - {}\n================\n".format(id)
 
         for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount")]:
             if k == "booking_setime":
