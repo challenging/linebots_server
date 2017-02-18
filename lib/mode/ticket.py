@@ -8,6 +8,7 @@ import requests
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
+from linebot.models import CarouselTemplate, CarouselColumn
 
 from lib.common.mode import Mode
 from lib.common.db import DB
@@ -282,14 +283,27 @@ class TicketMode(Mode):
         for ticket in tickets:
             body = self.translate_ticket(ticket[1], ticket[0])
 
+            '''
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
                 MessageTemplateAction(label="取消訂票",
                                       text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
                 MessageTemplateAction(label="繼續訂票",
                                       text='ticket_{}=continue'.format(self.ticket_type)),
             ]))
+            '''
+
+            message = CarouselColumn(title="以下是您的訂票紀錄", text="", actions=[
+                MessageTemplateAction(label="取消訂票",
+                                      text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
+                MessageTemplateAction(label="繼續訂票",
+                                      text='ticket_{}=continue'.format(self.ticket_type)),
+            ])
 
             messages.append(message)
+
+        reply_txt = None
+        if messages:
+            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=CarouselTemplate(columns=messages))
 
         return messages if messages else None
 
@@ -608,7 +622,7 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = ["query", "ticket_tra=unscheduled+30", person_id, "2017/05/01", "10-22", "桃園", "清水", "1", "全部車種", "ticket_tra=confirm"]
+    questions = ["query"]# "ticket_tra=unscheduled+30", person_id, "2017/05/01", "10-22", "桃園", "清水", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -619,7 +633,7 @@ if __name__ == "__main__":
         else:
             print message.as_json_string()
 
-    questions = ["list", "ticket_thsr=unscheduled+31", "booking_type=student", person_id, "0921747196", "2017/06/17", "17", "23", "桃園", "台中", "2", "0", "ticket_thsr=confirm"]
+    questions = ["list"]#, "ticket_thsr=unscheduled+31", "booking_type=student", person_id, "0921747196", "2017/06/17", "17", "23", "桃園", "台中", "2", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
