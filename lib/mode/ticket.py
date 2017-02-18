@@ -95,7 +95,7 @@ class TicketDB(DB):
 
     def book(self, user_id, creation_datetime, ticket_number, status, ticket_type, ticket_info):
         sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, ticket_number, status, ticket_info, channel_access_token, user_id, creation_datetime, ticket_type)
+            self.table_name, ticket_number, status, ticket_info.replace("'", "\""), channel_access_token, user_id, creation_datetime, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -627,7 +627,8 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = ["query"]# "ticket_tra=unscheduled+30", person_id, "2017/05/01", "10-22", "桃園", "清水", "1", "全部車種", "ticket_tra=confirm"]
+    '''
+    questions = [person_id, "2017/03/06", "10-22", "台南", "嘉義", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -637,8 +638,9 @@ if __name__ == "__main__":
                 print m
         else:
             print message.as_json_string()
+    '''
 
-    questions = ["list"]#, "ticket_thsr=unscheduled+31", "booking_type=student", person_id, "0921747196", "2017/06/17", "17", "23", "桃園", "台中", "2", "0", "ticket_thsr=confirm"]
+    questions = ["booking_type=general", person_id, "0921747196", "2017/03/12", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -648,5 +650,3 @@ if __name__ == "__main__":
                 print m
         elif message is not None:
             print message.as_json_string()
-
-    #mode_thsr_ticket.conversion("ticket_thsr=cancel+06052042", user_id)
