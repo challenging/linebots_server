@@ -627,8 +627,7 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    '''
-    questions = [person_id, "2017/03/06", "10-22", "台南", "嘉義", "1", "全部車種", "ticket_tra=confirm"]
+    questions = [person_id, "2017/03/05", "10-22", "台南", "嘉義", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -638,8 +637,8 @@ if __name__ == "__main__":
                 print m
         else:
             print message.as_json_string()
-    '''
 
+    '''
     questions = ["booking_type=general", person_id, "0921747196", "2017/03/12", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
@@ -650,3 +649,4 @@ if __name__ == "__main__":
                 print m
         elif message is not None:
             print message.as_json_string()
+    '''

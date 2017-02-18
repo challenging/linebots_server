@@ -41,10 +41,11 @@ def booking_tra_ticket(driver="phantom", type="tra"):
             param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+8))
             ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
             if ticket_number is not None:
-                train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
+                train_number, train_type, train_count, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
                 info = {"票號": ticket_number,
                         "車次": train_number,
                         "車種": train_type,
+                        "張數": train_count,
                         "起訖站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
                         "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
@@ -54,6 +55,7 @@ def booking_tra_ticket(driver="phantom", type="tra"):
                 txt += "{}\n".format("="*20)
                 txt += "車次: {}\n".format(train_number)
                 txt += "車種: {}\n".format(train_type.encode(UTF8))
+                txt += "張數: {}\n".format(train_count)
                 txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
                 txt += "搭乘時間: {} {} - {}\n".format(start_date, start_time, end_time)
                 txt += "訂票成功，請自行使用台鐵付款方式"

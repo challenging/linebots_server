@@ -99,7 +99,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
 
     web_opener.quit()
 
-    return ticket_number, ticket_filepath, (train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time)
+    return ticket_number, ticket_filepath, (train_number, train_type, param["order_qty_str"], start_date, start_time, start_station, end_station, end_date, end_time)
 
 if __name__ == "__main__":
     testing_params = {"person_id": "L122760167",
