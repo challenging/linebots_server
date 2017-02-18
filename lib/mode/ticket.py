@@ -246,32 +246,41 @@ class TicketMode(Mode):
     def translate_tra(self, ticket, id=None):
         message = None
         if id is None:
-            message = "台鐵訂票資訊如下\n====================\n"
+            message = "台鐵訂票資訊\n===================\n"
         else:
-            message = "台鐵訂票資訊如下 - {}\n====================\n".format(id)
+            message = "台鐵訂票資訊 - {}\n===================\n".format(id)
 
-        for name, k in [("身份證字號", "person_id"), ("欲搭車日期", "getin_date"), ("起始時間", "getin_start_dtime"), ("終止時間", "getin_end_dtime"),
-                        ("上車車站", "from_station"), ("下車車站", "to_station"), ("車票張數", "order_qty_str"), ("車種", "train_type")]:
-           if k.find("station") > -1:
-                message += "{}: {}({})\n".format(name, ticket[k], get_station_name(ticket[k]))
+        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("張數", "order_qty_str"), ("車種", "train_type")]:
+           if k == "station":
+                message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
            elif k == "train_type":
-                message += "{}: {}({})\n".format(name, ticket[k], get_train_name(ticket[k]))
+                message += "{}: {}\n".format(name, get_train_name(ticket[k]))
+           elif k == "setime":
+                message += "{}: {}-{}\n".format(name, ticket["getin_start_dtime"], ticket["getin_end_dtime"])
            else:
-                message += "{}: {}\n".format(name, ticket[k])
+                message += "{}: {}\n".format(name, ticket[k].split("-")[0])
 
         return message
 
     def translate_thsr(self, ticket, id=None):
         message = None
         if id is None:
-            message = "高鐵訂票資訊如下\n====================\n"
+            message = "高鐵訂票資訊\n================\n"
         else:
-            message = "高鐵訂票資訊如下 - {}\n====================\n".format(id)
+            message = "高鐵訂票資訊 - {}\n================\n".format(id)
 
-        for name, k in [("身份證字號", "person_id"), ("手機號碼", "cellphone"), ("欲搭車日期", "booking_date"), ("起始時間", "booking_stime"), ("終止時間", "booking_etime"),
-                        ("上車車站", "selectStartStation"), ("下車車站", "selectDestinationStation"),
-                        ("成人票張數", "ticketPanel:rows:0:ticketAmount"), ("小孩票張數", "ticketPanel:rows:1:ticketAmount"), ("學生票張數", "ticketPanel:rows:4:ticketAmount")]:
-            if ticket.get(k, None) is not None:
+        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount")]:
+            if k == "booking_setime":
+                message += "{}: {} {}-{}\n".format(name, ticket["booking_date"], ticket["booking_stime"].split(":")[0], ticket["booking_etime"].split(":")[0])
+            elif k == "booking_station":
+                message += "{}: {}-{}\n".format(name, ticket["selectStartStation"].encode(UTF8), ticket["selectDestinationStation"].encode(UTF8))
+            elif k == "booking_amount":
+                message += "{}: ".format(name)
+                for amount in ["ticketPanel:rows:0:ticketAmount", "ticketPanel:rows:1:ticketAmount", "ticketPanel:rows:4:ticketAmount"]:
+                    message += "{}/".format(ticket.get(amount, 0))
+                message = message.strip("/")
+                message += "\n"
+            elif ticket.get(k, None) is not None:
                 message += "{}: {}\n".format(name, ticket[k].encode(UTF8) if isinstance(ticket[k], unicode) else ticket[k])
 
         return message
@@ -282,21 +291,11 @@ class TicketMode(Mode):
         messages = []
         for ticket in tickets:
             body = self.translate_ticket(ticket[1], ticket[0])
+            print len(body)
 
-            '''
-            message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
-                MessageTemplateAction(label="取消訂票",
-                                      text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
-                MessageTemplateAction(label="繼續訂票",
-                                      text='ticket_{}=continue'.format(self.ticket_type)),
-            ]))
-            '''
-
-            message = CarouselColumn(title="以下是您的訂票紀錄", text="", actions=[
-                MessageTemplateAction(label="取消訂票",
-                                      text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
-                MessageTemplateAction(label="繼續訂票",
-                                      text='ticket_{}=continue'.format(self.ticket_type)),
+            message = CarouselColumn(text=body, actions=[
+                MessageTemplateAction(label="取消訂票", text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
+                MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
             ])
 
             messages.append(message)
@@ -305,7 +304,7 @@ class TicketMode(Mode):
         if messages:
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=CarouselTemplate(columns=messages))
 
-        return messages if messages else None
+        return reply_txt
 
 class TRATicketMode(TicketMode):
     def init(self):
@@ -466,7 +465,7 @@ class THSRTicketMode(TRATicketMode):
         if not is_cancel:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
-            elif re.search("^([\d]{10})$", question) and self.memory[user_id].get("cellphone", None) is None:
+            elif re.search("^([\+\d]{10,})$", question) and self.memory[user_id].get("cellphone", None) is None:
                 self.memory[user_id]["cellphone"] = question
             elif re.search("booking_type=([\w]+)", question):
                 m = re.match("booking_type=([\w]+)", question)

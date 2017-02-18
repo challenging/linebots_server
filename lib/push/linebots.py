@@ -92,7 +92,14 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
     return "done..."
 
 if __name__ == "__main__":
+    user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
+    train_type = "thsr"
+
     #booking_tra_ticket("chrome")
     #booking_thsr_ticket("chrome")
 
-    pass
+    from lib.push.linebots import mode_thsr_ticket as bot
+
+    print train_type
+    messages = bot.list_tickets(user_id, train_type)
+    line_bot_api.push_message(user_id, messages)
