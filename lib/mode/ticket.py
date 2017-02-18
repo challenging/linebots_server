@@ -273,7 +273,14 @@ class TicketMode(Mode):
             if k == "booking_setime":
                 message += "{}: {} {}-{}\n".format(name, ticket["booking_date"], ticket["booking_stime"].split(":")[0], ticket["booking_etime"].split(":")[0])
             elif k == "booking_station":
-                message += "{}: {}-{}\n".format(name, ticket["selectStartStation"].encode(UTF8), ticket["selectDestinationStation"].encode(UTF8))
+                sstation = ticket["selectStartStation"]
+                estation = ticket["selectDestinationStation"]
+
+                if isinstance(sstation, str):
+                    sstation = sstation.encode(UTF8)
+                    estation = estation.encode(UTF8)
+
+                message += "{}: {}-{}\n".format(name, sstation, estation)
             elif k == "booking_amount":
                 message += "{}: ".format(name)
                 for amount in ["ticketPanel:rows:0:ticketAmount", "ticketPanel:rows:1:ticketAmount", "ticketPanel:rows:4:ticketAmount"]:
