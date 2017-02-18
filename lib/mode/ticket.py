@@ -276,7 +276,7 @@ class TicketMode(Mode):
                 sstation = ticket["selectStartStation"]
                 estation = ticket["selectDestinationStation"]
 
-                if isinstance(sstation, str):
+                if isinstance(sstation, unicode):
                     sstation = sstation.encode(UTF8)
                     estation = estation.encode(UTF8)
 
