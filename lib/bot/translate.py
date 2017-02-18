@@ -33,7 +33,7 @@ class TranslateBot(Bot):
                 for sub_v in v:
                     answer.append(sub_v["translatedText"])
 
-            answer = " ".join(answer).encode(UTF8)
+            answer = "{} - {}".format(question, " ".join(answer).encode(UTF8))
         except UnicodeDecodeError:
             pass
 
