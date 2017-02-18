@@ -37,7 +37,7 @@ class TicketDB(DB):
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), retry INTEGER, status VARCHAR(16));".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), ticket_info VARCHAR(1024), retry INTEGER, status VARCHAR(16));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_1 ON {table_name} (token, ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_2 ON {table_name} (token, user_id, ticket_type, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_3 ON {table_name} (id);".format(table_name=self.table_name))
@@ -93,9 +93,9 @@ class TicketDB(DB):
 
         return requests
 
-    def book(self, user_id, creation_datetime, ticket_number, status, ticket_type):
-        sql = "UPDATE {} SET ticket_number = '{}', status = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, ticket_number, status, channel_access_token, user_id, creation_datetime, ticket_type)
+    def book(self, user_id, creation_datetime, ticket_number, status, ticket_type, ticket_info):
+        sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, ticket_number, status, ticket_info, channel_access_token, user_id, creation_datetime, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -250,7 +250,7 @@ class TicketMode(Mode):
         else:
             message = "台鐵訂票資訊 - {}\n===================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("張數", "order_qty_str"), ("車種", "train_type")]:
+        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str")]:
            if k == "station":
                 message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
            elif k == "train_type":
@@ -298,10 +298,9 @@ class TicketMode(Mode):
         messages = []
         for ticket in tickets:
             body = self.translate_ticket(ticket[1], ticket[0])
-            print len(body)
 
             message = CarouselColumn(text=body, actions=[
-                MessageTemplateAction(label="取消訂票", text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
+                MessageTemplateAction(label="取消預訂票", text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
                 MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
             ])
 
