@@ -312,11 +312,15 @@ class TicketMode(Mode):
         return message
 
     def list_tickets(self, user_id, ticket_type, status):
-        tickets = []
+        text_cancel_label, text_cancel_text, tickets = None, None, []
         if status == TICKET_STATUS_SCHEDULED:
             tickets = self.db.list_scheduled_tickets(user_id, ticket_type)
+            text_cancel_label = "取消預訂票"
+            text_cancel_text = TICKET_STATUS_UNSCHEDULED
         elif status == TICKET_STATUS_BOOKED:
             tickets = self.db.list_booked_tickets(user_id, ticket_type)
+            text_cancel_label = "取消訂票"
+            text_cancel_text = TICKET_STATUS_CANCELED
 
         headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == "tra" else TICKET_HEADERS_BOOKED_THSR
 
@@ -339,20 +343,17 @@ class TicketMode(Mode):
                         body += "{}\n".format(v.encode(UTF8))
                 body = body.strip()
 
-            text_cancel_label = "取消預訂票" if status == TICKET_STATUS_SCHEDULED else "取消訂票"
-            text_cancel = None
+            number = None
             if status == TICKET_STATUS_SCHEDULED:
-                text_cancel = ticket[0]
+                number = ticket[0]
             elif status == TICKET_STATUS_BOOKED:
-                text_cancel = ticket[u"票號"]
+                number = ticket[u"票號"]
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
-                  MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, status, text_cancel)),
+                  MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
                   MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
             ]))
         elif len(tickets) > 1:
-            text_cancel_label = "取消預訂票" if status == TICKET_STATUS_SCHEDULED else "取消訂票"
-
             messages = []
             for ticket in tickets:
                 body = ""
@@ -371,14 +372,14 @@ class TicketMode(Mode):
 
                     body = body.strip()
 
-                text_cancel = None
+                number = None
                 if status == TICKET_STATUS_SCHEDULED:
-                    text_cancel = ticket[0]
+                    number = ticket[0]
                 elif status == TICKET_STATUS_BOOKED:
-                    text_cancel = ticket[u"票號"]
+                    number = ticket[u"票號"]
 
                 message = CarouselColumn(text=body, actions=[
-                    MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, text_cancel)),
+                    MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
                     MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
                 ])
 
