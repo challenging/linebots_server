@@ -182,6 +182,6 @@ def message_text(event):
 
     if isinstance(message, list):
         for m in message:
-            line_bot_api.reply_message(event.reply_token, m)
+            line_bot_api.push_message(profile.user_id, m)
     else:
         line_bot_api.reply_message(event.reply_token, message)
