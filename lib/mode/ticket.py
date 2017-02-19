@@ -116,10 +116,8 @@ class TicketDB(DB):
         return count
 
     def cancel(self, user_id, ticket_number, ticket_type):
-        sql = "UPDATE {} SET status = '{}' WHERE token = '{}' AND user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, TICKET_STATUS_CANCELED, channel_access_token, user_id, ticket_number, ticket_type)
-
-        print sql
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number, ticket_type)
 
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
@@ -128,8 +126,8 @@ class TicketDB(DB):
         return done
 
     def get_person_id(self, user_id, ticket_number, ticket_type):
-        sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE token = '{}' AND user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
-            self.table_name, channel_access_token, user_id, ticket_number, ticket_type)
+        sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
+            self.table_name, user_id, ticket_number, ticket_type)
 
         person_id = None
 
@@ -180,13 +178,16 @@ class TicketMode(Mode):
 
     def cancel_tra_ticket(self, user_id, ticket_number):
         person_id = self.db.get_person_id(user_id, ticket_number, "tra")
-        print 1111, user_id, ticket_number, person_id
-        requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
-        print 1111, "{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number)
+        if person_id is None:
+            return "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
+        else:
+            print 1111, user_id, ticket_number, person_id
+            requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
+            print 1111, "{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number)
 
-        self.db.cancel(user_id, ticket_number, "tra")
+            self.db.cancel(user_id, ticket_number, "tra")
 
-        return txt_ticket_cancel("台鐵", ticket_number)
+            return txt_ticket_cancel("台鐵", ticket_number)
 
     def cancel_thsr_ticket(self, user_id, ticket_number):
         person_id = self.db.get_person_id(user_id, ticket_number, "thsr")
@@ -205,8 +206,6 @@ class TicketMode(Mode):
             mode = "台鐵"
         elif ticket_type == "thsr":
             mode = "高鐵"
-
-        print 2222, ticket_type
 
         reply_txt = "進入取消{}訂票程序".format(mode)
         if ticket_type == "tra":
