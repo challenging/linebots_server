@@ -31,9 +31,9 @@ from lib.ticket import booking_thsr
 class TicketDB(DB):
     table_name = "ticket"
 
-    THRESHOLD_TICKET_COUNT = 3
+    THRESHOLD_TICKET_COUNT = 5
     DIFF_TRA = 14
-    DIFF_THSR = 28
+    DIFF_THSR = 27
 
     def create_table(self):
         cursor = self.conn.cursor()
@@ -711,13 +711,14 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    #for message in mode_tra_ticket.conversion("list", user_id):
-    #    print message
-    #    print
-
-    print mode_tra_ticket.conversion("ticket_tra=canceled+014815", user_id)
+    for row in mode_thsr_ticket.db.non_booking("tra"):
+        print row
 
     '''
+    for message in mode_tra_ticket.conversion("list", user_id):
+        print message
+        print
+
     questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
