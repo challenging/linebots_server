@@ -177,6 +177,7 @@ class TicketMode(Mode):
             self.new_memory(user_id)
 
     def cancel_tra_ticket(self, user_id, ticket_number):
+        print 1111
         person_id = self.db.get_person_id(user_id, ticket_number, "tra")
         requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
 
@@ -201,6 +202,8 @@ class TicketMode(Mode):
             mode = "台鐵"
         elif ticket_type == "thsr":
             mode = "高鐵"
+
+        print 2222, ticket_type
 
         reply_txt = "進入取消{}訂票程序".format(mode)
         if ticket_type == "tra":
@@ -704,10 +707,13 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    for message in mode_tra_ticket.conversion("list", user_id):
-        print message
-        print
+    #for message in mode_tra_ticket.conversion("list", user_id):
+    #    print message
+    #    print
 
+    print mode_tra_ticket.conversion("ticket_tra=canceled+014815", user_id)
+
+    '''
     questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
@@ -729,3 +735,4 @@ if __name__ == "__main__":
                 print m
         elif message is not None:
             print message.as_json_string()
+    '''
