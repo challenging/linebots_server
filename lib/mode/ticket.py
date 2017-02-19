@@ -213,7 +213,7 @@ class TicketMode(Mode):
     def is_cancel_command(self, user_id, question):
         is_cancel, reply_txt = False, None
 
-        p = re.compile("^ticket_(tra|thsr)=cancel\+([\d]{6,})$")
+        p = re.compile("^ticket_(tra|thsr)={}\+([\d]{6,})$".format(TICKET_STATUS_CANCELED))
         if p.search(question):
             m = p.match(question)
             ticket_type, ticket_number = m.group(1), m.group(2)
