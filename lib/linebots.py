@@ -180,4 +180,8 @@ def message_text(event):
         else:
             message = reply_txt
 
-    line_bot_api.reply_message(event.reply_token, message)
+    if isinstance(message, list):
+        for m in message:
+            line_bot_api.reply_message(event.reply_token, m)
+    else:
+        line_bot_api.reply_message(event.reply_token, message)

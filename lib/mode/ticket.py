@@ -22,9 +22,8 @@ from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket
 
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
-from lib.ticket.utils import thsr_stations
-from lib.ticket.utils import get_station_number, get_station_name, get_train_type, get_train_name
-from lib.ticket.utils import tra_train_type, TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED
+from lib.ticket.utils import thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
+from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED
 
 from lib.ticket import booking_thsr
 
@@ -140,7 +139,7 @@ class TicketDB(DB):
 
         return person_id
 
-    def list_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
+    def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
         cursor = self.conn.cursor()
 
         sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type)
@@ -155,14 +154,15 @@ class TicketDB(DB):
         return results
 
     def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
+        results = []
         cursor = self.conn.cursor()
 
-        sql = "SELECT id, ticket_info FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type)
-        cursor.execute(sql)
+        now = datetime.datetime.now().strftime("%Y-%m-%d")
+        sql = "SELECT ticket_info FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type, now)
 
-        results = []
+        cursor.execute(sql)
         for row in cursor.fetchall():
-            results.append((row[0], json.loads(row[1])))
+            results.append(json.loads(row[0]))
 
         cursor.close()
 
@@ -172,7 +172,7 @@ class TicketMode(Mode):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
 
     def reset_memory(self, user_id, question):
-        if user_id not in self.memory or question.lower() in ["reset", "重設", "清空"]:
+        if user_id not in self.memory or question.lower() in TICKET_CMD_RESET:
             self.new_memory(user_id)
 
     def cancel_tra_ticket(self, user_id, ticket_number):
@@ -225,10 +225,14 @@ class TicketMode(Mode):
     def is_list_command(self, user_id, question):
         reply_txt = None
 
-        if question in ["query", "查詢", "記錄", "list"]:
-            reply_txt = self.list_tickets(user_id, self.ticket_type)
+        if question in TICKET_CMD_QUERY:
+            reply_txt = []
+            for status in [TICKET_STATUS_SCHEDULED, TICKET_STATUS_BOOKED]:
+                message = self.list_tickets(user_id, self.ticket_type, status)
+                if message:
+                    reply_txt.append(message)
 
-            if reply_txt is None:
+            if not reply_txt:
                 reply_txt = txt_ticket_zero()
 
         return reply_txt
@@ -236,7 +240,7 @@ class TicketMode(Mode):
     def is_unscheduled_command(self, user_id, question):
         id = None
 
-        p = re.compile("^ticket_(thsr|tra)=unscheduled\+([\d]+)$")
+        p = re.compile("^ticket_(thsr|tra)={}\+([\d]+)$".format(TICKET_STATUS_UNSCHEDULED))
         if p.search(question):
             tid = int(p.match(question).group(2))
             count = self.db.unscheduled(user_id, tid)
@@ -306,22 +310,49 @@ class TicketMode(Mode):
 
         return message
 
-    def list_tickets(self, user_id, ticket_type):
-        tickets = self.db.list_tickets(user_id, ticket_type)
-
-        messages = []
-        for ticket in tickets:
-            body = self.translate_ticket(ticket[1], ticket[0])
-
-            message = CarouselColumn(text=body, actions=[
-                MessageTemplateAction(label="取消預訂票", text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
-                MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
-            ])
-
-            messages.append(message)
+    def list_tickets(self, user_id, ticket_type, status):
+        tickets = []
+        if status == TICKET_STATUS_SCHEDULED:
+            tickets = self.db.list_scheduled_tickets(user_id, ticket_type)
+        elif status == TICKET_STATUS_BOOKED:
+            tickets = self.db.list_booked_tickets(user_id, ticket_type)
 
         reply_txt = None
-        if messages:
+        if len(tickets) == 1:
+            ticket = tickets[0]
+
+            body = ""
+            if status == TICKET_STATUS_SCHEDULED:
+                body = self.translate_ticket(ticket[1], ticket[0])
+            elif status == TICKET_STATUS_BOOKED:
+                for k, v in ticket.items():
+                    body += "{}: {}\n".format(k.encode(UTF8), v.encode(UTF8))
+                body = body.strip()
+
+            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
+                  MessageTemplateAction(label="取消預訂票",
+                                        text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket)),
+                  MessageTemplateAction(label="繼續訂票",
+                                        text='ticket_{}=continue'.format(self.ticket_type)),
+              ]))
+        else:
+            messages = []
+            for ticket in tickets:
+                body = None
+                if status == TICKET_STATUS_SCHEDULED:
+                    body = self.translate_ticket(ticket[1], ticket[0])
+                elif status == TICKET_STATUS_BOOKED:
+                    for k, v in ticket.items():
+                        body += "{}: {}\n".format(k, v)
+                    body = body.strip()
+
+                message = CarouselColumn(text=body, actions=[
+                    MessageTemplateAction(label="取消預訂票", text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
+                    MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
+                ])
+
+                messages.append(message)
+
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=CarouselTemplate(columns=messages))
 
         return reply_txt
@@ -641,7 +672,12 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = [person_id, "2017/03/05", "10-22", "台南", "嘉義", "1", "全部車種", "ticket_tra=confirm"]
+    for message in mode_tra_ticket.conversion("list", user_id):
+        print message
+        print
+
+    '''
+    questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -652,8 +688,7 @@ if __name__ == "__main__":
         else:
             print message.as_json_string()
 
-    '''
-    questions = ["booking_type=general", person_id, "0921747196", "2017/03/12", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
+    questions = ["booking_type=general", person_id, "0921747196", "2017/03/18", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):

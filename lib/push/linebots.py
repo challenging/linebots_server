@@ -82,7 +82,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
                     "車廂": train_type,
                     "票數": train_count,
                     "起訖站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
-                    "搭乘時間": "{}/{} {} - {}".format(param["booking_date"][:5], date, stime, etime),
+                    "搭乘時間": "{}/{} {} - {}".format(param["booking_date"][:4], date, stime, etime),
                     "付款金額": "{} 元".format(money)}
 
             mode_thsr_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
@@ -93,7 +93,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
             txt += "{}\n".format(train_type.encode(UTF8))
             txt += "{}\n".format(train_count.encode(UTF8))
             txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
-            txt += "搭乘時間: {}/{} {} - {}\n".format(param["booking_date"][:5], date, stime, etime)
+            txt += "搭乘時間: {}/{} {} - {}\n".format(param["booking_date"][:4], date, stime, etime)
             txt += "付款金額: {} 元\n".format(money)
             txt += "訂票成功，請自行使用高鐵付款方式"
 

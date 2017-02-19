@@ -10,6 +10,9 @@ TICKET_STATUS_UNSCHEDULED = "unscheduled"
 TICKET_STATUS_CANCELED = "canceled"
 TICKET_STATUS_SCHEDULED = "scheduled"
 
+TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])
+TICKET_CMD_RESET = set(["reset", "重設", "清空"])
+
 URL_TRA = "http://railway1.hinet.net/csearch.htm"
 
 def tra_dir(f):
