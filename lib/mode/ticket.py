@@ -177,7 +177,7 @@ class TicketMode(Mode):
             self.new_memory(user_id)
 
     def cancel_tra_ticket(self, user_id, ticket_number):
-        print 1111
+        print 1111, user_id, ticket_number
         person_id = self.db.get_person_id(user_id, ticket_number, "tra")
         requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
 
@@ -210,6 +210,8 @@ class TicketMode(Mode):
             reply_txt = self.cancel_tra_ticket(user_id, ticket_number)
         elif ticket_type == "thsr":
             reply_txt = self.cancel_thsr_ticket(user_id, ticket_number)
+        else:
+            log("Not found the ticket_type - {}".format(ticket_type))
 
         return reply_txt
 
