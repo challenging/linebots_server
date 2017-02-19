@@ -119,6 +119,8 @@ class TicketDB(DB):
         sql = "UPDATE {} SET status = '{}' WHERE token = '{}' AND user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
             self.table_name, TICKET_STATUS_CANCELED, channel_access_token, user_id, ticket_number, ticket_type)
 
+        print sql
+
         cursor = self.conn.cursor()
         done = cursor.execute(sql)
         cursor.close()
@@ -177,9 +179,10 @@ class TicketMode(Mode):
             self.new_memory(user_id)
 
     def cancel_tra_ticket(self, user_id, ticket_number):
-        print 1111, user_id, ticket_number
         person_id = self.db.get_person_id(user_id, ticket_number, "tra")
+        print 1111, user_id, ticket_number, person_id
         requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
+        print 1111, "{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number)
 
         self.db.cancel(user_id, ticket_number, "tra")
 
