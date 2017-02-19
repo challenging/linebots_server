@@ -32,7 +32,7 @@ class TicketDB(DB):
     table_name = "ticket"
 
     THRESHOLD_TICKET_COUNT = 5
-    DIFF_TRA = 14
+    DIFF_TRA = 15
     DIFF_THSR = 27
 
     def create_table(self):
