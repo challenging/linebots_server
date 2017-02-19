@@ -335,7 +335,7 @@ class TicketMode(Mode):
             if status == TICKET_STATUS_SCHEDULED:
                 body = self.translate_ticket(ticket[1], ticket[0])
             elif status == TICKET_STATUS_BOOKED:
-                for k, v in headers:
+                for k in headers:
                     v = ticket.get(k, None)
                     if v is None:
                         v = ticket[u"起訖站"]
