@@ -13,6 +13,9 @@ TICKET_STATUS_SCHEDULED = "scheduled"
 TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])
 TICKET_CMD_RESET = set(["reset", "重設", "清空"])
 
+TICKET_HEADERS_BOOKED_TRA = [u"票號", u"車種", u"車次", u"搭乘時間", u"起迄站", u"張數"]
+TICKET_HEADERS_BOOKED_THSR = [u"票號", u"車廂", u"車次", u"搭乘時間", u"起迄站", u"票數", u"付款金額"]
+
 URL_TRA = "http://railway1.hinet.net/csearch.htm"
 
 def tra_dir(f):

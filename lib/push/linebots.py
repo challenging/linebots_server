@@ -46,7 +46,7 @@ def booking_tra_ticket(driver="phantom", type="tra"):
                         "車次": train_number,
                         "車種": train_type,
                         "張數": train_count,
-                        "起訖站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
+                        "起迄站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
                         "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
                 mode_tra_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
@@ -81,7 +81,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
                     "車次": train_number,
                     "車廂": train_type,
                     "票數": train_count,
-                    "起訖站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
+                    "起迄站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
                     "搭乘時間": "{}/{} {} - {}".format(param["booking_date"][:4], date, stime, etime),
                     "付款金額": "{} 元".format(money)}
 
@@ -113,6 +113,6 @@ if __name__ == "__main__":
 
     from lib.push.linebots import mode_thsr_ticket as bot
 
-    print train_type
-    messages = bot.list_tickets(user_id, train_type)
-    line_bot_api.push_message(user_id, messages)
+    messages = bot.list_tickets(user_id, train_type, "scheduled")
+    if messages:
+        line_bot_api.push_message(user_id, messages)

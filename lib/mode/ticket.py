@@ -24,6 +24,7 @@ from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
 from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED
+from lib.ticket.utils import TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
 
 from lib.ticket import booking_thsr
 
@@ -317,6 +318,8 @@ class TicketMode(Mode):
         elif status == TICKET_STATUS_BOOKED:
             tickets = self.db.list_booked_tickets(user_id, ticket_type)
 
+        headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == "tra" else TICKET_HEADERS_BOOKED_THSR
+
         reply_txt = None
         if len(tickets) == 1:
             ticket = tickets[0]
@@ -325,29 +328,57 @@ class TicketMode(Mode):
             if status == TICKET_STATUS_SCHEDULED:
                 body = self.translate_ticket(ticket[1], ticket[0])
             elif status == TICKET_STATUS_BOOKED:
-                for k, v in ticket.items():
-                    body += "{}: {}\n".format(k.encode(UTF8), v.encode(UTF8))
+                for k, v in headers:
+                    v = ticket.get(k, None)
+                    if v is None:
+                        v = ticket[u"起訖站"]
+
+                    if v.count(":") in [0, 2] and v.find(u"：") == -1:
+                        body += "{}: {}\n".format(k.encode(UTF8), v.encode(UTF8))
+                    else:
+                        body += "{}\n".format(v.encode(UTF8))
                 body = body.strip()
 
+            text_cancel_label = "取消預訂票" if status == TICKET_STATUS_SCHEDULED else "取消訂票"
+            text_cancel = None
+            if status == TICKET_STATUS_SCHEDULED:
+                text_cancel = ticket[0]
+            elif status == TICKET_STATUS_BOOKED:
+                text_cancel = ticket[u"票號"]
+
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
-                  MessageTemplateAction(label="取消預訂票",
-                                        text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket)),
-                  MessageTemplateAction(label="繼續訂票",
-                                        text='ticket_{}=continue'.format(self.ticket_type)),
-              ]))
-        else:
+                  MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, status, text_cancel)),
+                  MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
+            ]))
+        elif len(tickets) > 1:
+            text_cancel_label = "取消預訂票" if status == TICKET_STATUS_SCHEDULED else "取消訂票"
+
             messages = []
             for ticket in tickets:
-                body = None
+                body = ""
                 if status == TICKET_STATUS_SCHEDULED:
                     body = self.translate_ticket(ticket[1], ticket[0])
                 elif status == TICKET_STATUS_BOOKED:
-                    for k, v in ticket.items():
-                        body += "{}: {}\n".format(k, v)
+                    for k in headers:
+                        v = ticket.get(k, None)
+                        if v is None:
+                            v = ticket[u"起訖站"]
+
+                        if v.count(":") in [0, 2] and v.find(u"：") == -1:
+                            body += "{}: {}\n".format(k.encode(UTF8), v.encode(UTF8))
+                        else:
+                            body += "{}\n".format(v.encode(UTF8))
+
                     body = body.strip()
 
+                text_cancel = None
+                if status == TICKET_STATUS_SCHEDULED:
+                    text_cancel = ticket[0]
+                elif status == TICKET_STATUS_BOOKED:
+                    text_cancel = ticket[u"票號"]
+
                 message = CarouselColumn(text=body, actions=[
-                    MessageTemplateAction(label="取消預訂票", text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, ticket[0])),
+                    MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_UNSCHEDULED, text_cancel)),
                     MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
                 ])
 
@@ -676,7 +707,6 @@ if __name__ == "__main__":
         print message
         print
 
-    '''
     questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
@@ -698,4 +728,3 @@ if __name__ == "__main__":
                 print m
         elif message is not None:
             print message.as_json_string()
-    '''
