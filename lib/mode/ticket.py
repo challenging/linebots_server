@@ -68,7 +68,7 @@ class TicketDB(DB):
         if count_select < self.THRESHOLD_TICKET_COUNT:
             sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
                 self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket, TICKET_STATUS_SCHEDULED)
-            cursor.execute(sql)
+            #cursor.execute(sql)
             count_insert = cursor.rowcount
 
         cursor.close()
@@ -740,7 +740,7 @@ if __name__ == "__main__":
 
     #print mode_thsr_ticket.is_memory_command(user_id, question)
 
-    questions = [person_id, "2017/03/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
+    questions = [person_id, "2017/04/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -751,7 +751,7 @@ if __name__ == "__main__":
         else:
             print message.as_json_string()
 
-    questions = ["booking_type=general", person_id, "0921747196", "2017/03/18", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
+    questions = ["booking_type=general", person_id, "0921747196", "2017/04/18", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
