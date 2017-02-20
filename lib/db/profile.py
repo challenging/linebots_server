@@ -21,14 +21,14 @@ class ProfileDB(DB):
         return self.cmd(sql)
 
     def get_profile(self, user_id, ticket_type):
-        sql = ""
-
-        if ticket_type == "tra":
-            sql = "SELECT taiwan_id FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id)
-        elif ticket_type == "thsr":
-            sql = "SELECT taiwan_id, phone FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id)
+        sql = "SELECT taiwan_id, phone FROM {} WHERE user_id = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type)
 
         for row in self.select(sql):
             yield row
 
 db_profile = ProfileDB()
+
+if __name__ == "__main__":
+    user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
+    for row in db_profile.get_profile(user_id, "thsr"):
+        print row
