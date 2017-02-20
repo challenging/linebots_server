@@ -99,12 +99,10 @@ class TicketDB(DB):
     def memory(self, user_id, ticket_type, ticket_number):
         sql = "SELECT ticket::json->'person_id' as person_id, ticket::json->'cellphone' as phone, ticket::json->'booking_type' as booking_type FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
 
+        c = 0
         param = {"person_id": None, "phone": None, "booking_type": None}
         for row in self.select(sql):
             param = {"person_id": row[0], "phone": row[1], "booking_type": row[2]}
-
-        c = 0
-        if person_id:
             c = db_profile.ask(user_id, ticket_type, param)
 
         return c
@@ -738,7 +736,7 @@ if __name__ == "__main__":
 
     #print mode_thsr_ticket.is_memory_command(user_id, question)
 
-    questions = [person_id, "2017/04/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
+    questions = [person_id, "2017/03/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -749,7 +747,7 @@ if __name__ == "__main__":
         else:
             print message.as_json_string()
 
-    questions = ["booking_type=general", person_id, "0921747196", "2017/04/18", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
+    questions = ["booking_type=general", person_id, "0921747196", "2017/03/06", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
