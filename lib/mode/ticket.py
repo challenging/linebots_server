@@ -520,7 +520,7 @@ class TRATicketMode(TicketMode):
 
     def new_memory(self, user_id):
         self.memory.setdefault(user_id, {})
-        self.memory[user_id] = {"person_id": person_id,
+        self.memory[user_id] = {"person_id": None,
                                 "creation_datetime": datetime.datetime.now(),
                                 "getin_date": None,
                                 "from_station": None,
@@ -691,8 +691,8 @@ class THSRTicketMode(TRATicketMode):
         self.memory.setdefault(user_id, {})
         self.memory[user_id] = {"booking_type": None,
                                 "creation_datetime": datetime.datetime.now(),
-                                "person_id": person_id,
-                                "cellphone": cellphone,
+                                "person_id": None,
+                                "cellphone": None,
                                 "booking_date": None,
                                 "booking_stime": None,
                                 "booking_etime": None,
