@@ -15,7 +15,7 @@ class ProfileDB(DB):
         cursor.close()
 
     def ask(self, user_id, ticket_type, param):
-        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', null);".format(\
+        sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', null);".format(\
                 self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, param)
 
         return self.cmd(sql)

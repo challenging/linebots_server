@@ -100,10 +100,10 @@ class TicketDB(DB):
         sql = "SELECT ticket::json->'person_id' as person_id, ticket::json->'cellphone' as phone, ticket::json->'booking_type' as booking_type FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
 
         c = 0
-        param = {"person_id": None, "phone": None, "booking_type": None}
+        param = {"person_id": None, "cellphone": None, "booking_type": None}
         for row in self.select(sql):
-            param = {"person_id": row[0], "phone": row[1], "booking_type": row[2]}
-            c = db_profile.ask(user_id, ticket_type, param)
+            param = {"person_id": row[0], "cellphone": row[1], "booking_type": row[2]}
+            c = db_profile.ask(user_id, ticket_type, json.dumps(param))
 
         return c
 
@@ -731,11 +731,12 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
     creation_datetime = "2017-02-20 07:57:04"
-    question = "ticket_tra=memory+208433"
-    question = "ticket_thsr=memory+07040715"
+    question = "ticket_tra=memory+738148"
+    #question = "ticket_thsr=memory+07123684"
 
-    #print mode_thsr_ticket.is_memory_command(user_id, question)
+    print mode_thsr_ticket.is_memory_command(user_id, question)
 
+    '''
     questions = [person_id, "2017/03/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
@@ -757,3 +758,4 @@ if __name__ == "__main__":
                 print m
         elif message is not None:
             print message.as_json_string()
+    '''
