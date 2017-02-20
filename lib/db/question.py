@@ -25,9 +25,7 @@ class QuestionDB(DB):
             sql = "INSERT INTO {} VALUES('{}', '{}', '{}', '{}', '{}');".format(\
                     self.table_name, user_id, user_name.encode(UTF8), datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), question.replace("'", '"'), answer.replace("'", '"'))
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        cursor.close()
+        return self.cmd(sql)
 
 db_question = QuestionDB()
 

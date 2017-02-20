@@ -18,9 +18,7 @@ class LocationDB(DB):
         sql = "INSERT INTO {} VALUES('{}', '{}', {}, {});".format(\
                 self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), lat, lng)
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        cursor.close()
+        return self.cmd(sql)
 
 db_location = LocationDB()
 

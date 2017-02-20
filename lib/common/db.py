@@ -13,6 +13,22 @@ class DB(object):
     def create_table(self):
         raise NotImplementedError
 
+    def cmd(self, sql):
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        cursor.close()
+
+        return cursor.rowcount
+
+    def select(self, sql):
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+
+        for row in cursor.fetchall():
+            yield row
+
+        cursor.close()
+
     def ask(self, user_id, user_name, question, answer):
         raise NotImplementedError
 
@@ -23,22 +39,15 @@ class DB(object):
         if user_id is not None:
             sql = "SELECT * FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC;".format(self.table_name, user_id)
 
-        cursor.execute(sql)
-        for row in cursor.fetchall():
+        for row in self.select(sql):
             yield row
-
-        cursor.close()
 
     def delete(self):
         sql = "DELETE FROM {}".format(self.table_name)
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        cursor.close()
+        return self.cmd(sql)
 
     def drop(self):
         sql = "DROP TABLE {}".format(self.table_name)
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        cursor.close()
+        return self.cmd(sql)

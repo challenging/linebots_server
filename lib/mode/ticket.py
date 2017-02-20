@@ -12,6 +12,7 @@ from linebot.models import CarouselTemplate, CarouselColumn
 
 from lib.common.mode import Mode
 from lib.common.db import DB
+from lib.db.profile import db_profile
 
 from lib.common.utils import channel_access_token, log
 from lib.common.utils import UTF8, MODE_TRA_TICKET, MODE_THSR_TICKET
@@ -23,13 +24,17 @@ from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
-from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED
+from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET
+from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY
 from lib.ticket.utils import TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
 
 from lib.ticket import booking_thsr
 
 TRA = "tra"
 THSR = "thsr"
+CTRA = "台鐵"
+CTHSR = "高鐵"
+
 TYPE = [TRA, THSR]
 
 class TicketDB(DB):
@@ -91,21 +96,20 @@ class TicketDB(DB):
 
         return [(row[0], row[1], json.loads(row[2])) for row in self.select(sql)]
 
-    def cmd(self, sql):
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        cursor.close()
+    def memory(self, user_id, ticket_type, ticket_number):
+        sql = "SELECT ticket::json->'person_id', ticket::json->'cellphone' FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
 
-        return cursor.rowcount
+        print sql
 
-    def select(self, sql):
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
+        person_id, cellphone = None, None
+        for row in self.select(sql):
+            person_id, cellphone = row
 
-        for row in cursor.fetchall():
-            yield row
+        c = 0
+        if person_id:
+            c = db_profile.ask(user_id, ticket_type, person_id, cellphone)
 
-        cursor.close()
+        return c
 
     def book(self, user_id, creation_datetime, ticket_number, status, ticket_type, ticket_info):
         sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
@@ -114,7 +118,7 @@ class TicketDB(DB):
         return self.cmd(sql)
 
     def retry(self, user_id, creation_datetime, ticket_type):
-        sql = "UPDATE {} SET retry += 1 WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+        sql = "UPDATE {} SET retry = retry + 1 WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
             self.table_name, channel_access_token, user_id, creation_datetime, ticket_type)
 
         return self.cmd(sql)
@@ -169,7 +173,7 @@ class TicketMode(Mode):
             if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
                 self.db.cancel(user_id, ticket_number, TRA)
 
-                reply_txt = txt_ticket_cancel("台鐵", ticket_number)
+                reply_txt = txt_ticket_cancel(CTRA, ticket_number)
 
         return reply_txt
 
@@ -180,16 +184,16 @@ class TicketMode(Mode):
         reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
         if is_cancel:
             self.db.cancel(user_id, ticket_number, THSR)
-            reply_txt = txt_ticket_cancel("高鐵", ticket_number)
+            reply_txt = txt_ticket_cancel(CTHSR, ticket_number)
 
         return reply_txt
 
     def cancel_ticket(self, user_id, ticket_type, ticket_number):
         mode = "未知"
         if ticket_type == TRA:
-            mode = "台鐵"
+            mode = CTRA
         elif ticket_type == THSR:
-            mode = "高鐵"
+            mode = CTHSR
 
         reply_txt = "進入取消{}訂票程序".format(mode)
         if ticket_type == TRA:
@@ -205,8 +209,8 @@ class TicketMode(Mode):
         is_cancel, reply_txt = False, None
 
         p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_CANCELED))
-        if p.search(question):
-            m = p.match(question)
+        m = p.match(question)
+        if m:
             ticket_type, ticket_number = m.group(1), m.group(2)
 
             is_cancel = True
@@ -230,16 +234,33 @@ class TicketMode(Mode):
         return reply_txt
 
     def is_unscheduled_command(self, user_id, question):
-        id = None
+        reply_txt = None
 
         p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_UNSCHEDULED))
-        if p.search(question):
-            tid = int(p.match(question).group(2))
+        m = p.match(question)
+        if m:
+            tid = int(m.group(2))
             count = self.db.unscheduled(user_id, tid)
             if count > 0:
-                id = tid
+                reply_txt = "成功取消預訂票 - {}".format(tid)
 
-        return id
+        return reply_text
+
+    def is_memory_command(self, user_id, question):
+        reply_txt = None
+
+        p = re.compile("^ticket_({})={}\+([\d\w]+)$".format("|".join(TYPE), TICKET_STATUS_MEMORY))
+        m = p.match(question)
+        if m:
+            ticket_type, ticket_number = m.group(1), m.group(2)
+
+            c = self.db.memory(user_id, ticket_type, ticket_number)
+            if c > 0:
+                reply_txt = "已紀錄此張訂票資訊，可節省下次輸入時間"
+            else:
+                reply_txt = "記錄訂票人資訊失敗，請稍後再試"
+
+        return reply_txt
 
     def translate_ticket(self, ticket, id=None):
         message = None
@@ -388,15 +409,19 @@ class TRATicketMode(TicketMode):
 
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
-
         self.reset_memory(user_id, question)
+
         reply_txt = self.is_list_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
 
-        tid = self.is_unscheduled_command(user_id, question)
-        if tid:
-            return "成功取消預訂票 - {}".format(tid)
+        reply_txt = self.is_memory_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
+
+        reply_txt = self.is_unscheduled_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
@@ -525,15 +550,19 @@ class THSRTicketMode(TRATicketMode):
 
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
-
         self.reset_memory(user_id, question)
+
         reply_txt = self.is_list_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
 
-        tid = self.is_unscheduled_command(user_id, question)
-        if tid:
-            return "成功取消預訂票 - {}".format(tid)
+        reply_txt = self.is_memory_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
+
+        reply_txt = self.is_unscheduled_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
 
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
@@ -695,6 +724,11 @@ mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
+    creation_datetime = "2017-02-20 07:57:04"
+    question = "ticket_tra=memory+208433"
+    question = "ticket_thsr=memory+07040715"
+
+    print mode_thsr_ticket.is_memory_command(user_id, question)
 
     questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:

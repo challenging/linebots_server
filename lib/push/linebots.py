@@ -7,11 +7,11 @@ from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket
 
 from lib.ticket import booking_tra
 from lib.ticket import booking_thsr
-from lib.ticket.utils import TICKET_STATUS_BOOKED
+from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_MEMORY
 
 from lib.common.utils import UTF8
 from lib.common.utils import channel_access_token, log
-from lib.common.message import txt_not_support, txt_ticket_cancel, txt_ticket_continued
+from lib.common.message import txt_not_support, txt_ticket_cancel, txt_ticket_memory
 
 from linebot import LineBotApi
 
@@ -21,13 +21,6 @@ from linebot.models import (
 )
 
 line_bot_api = LineBotApi(channel_access_token)
-
-def collect(db):
-    questions = []
-    for row in db.query():
-        questions.append("\t".join(r if isinstance(r, (str, unicode)) else str(r) for r in row))
-
-    return "<br/>".join(questions)
 
 def booking_tra_ticket(driver="phantom", type="tra"):
     requests = mode_tra_ticket.db.non_booking(type)
@@ -62,7 +55,7 @@ def booking_tra_ticket(driver="phantom", type="tra"):
 
                 message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                         MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKDT_STATUS_CANCELED, ticket_number)),
-                        MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(type))
+                        MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, ticket_number))
                     ]))
 
                 line_bot_api.push_message(user_id, message)
@@ -102,7 +95,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                     MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_CANCELED, ticket_number)),
-                    MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(type))
+                    MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMRORY, ticket_number))
                 ]))
 
             line_bot_api.push_message(user_id, message)

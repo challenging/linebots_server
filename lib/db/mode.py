@@ -19,21 +19,14 @@ class ModeDB(DB):
         sql = "INSERT INTO {} VALUES('{}', '{}', '{}');".format(\
                 self.table_name, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), mode)
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        cursor.close()
+        return self.cmd(sql)
 
     def query(self, user_id):
         sql = "SELECT mode, creation_datetime FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id)
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-
         mode = MODE_NORMAL
-        for row in cursor.fetchall():
+        for row in self.select(sql):
             mode = row[0].lower()
-
-        cursor.close()
 
         return mode
 

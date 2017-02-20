@@ -127,3 +127,6 @@ def txt_ticket_thankletter():
 
 def txt_ticket_continued():
     return "繼續訂票"
+
+def txt_ticket_memory():
+    return "記住訂票身份"
