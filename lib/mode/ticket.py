@@ -244,7 +244,7 @@ class TicketMode(Mode):
             if count > 0:
                 reply_txt = "成功取消預訂票 - {}".format(tid)
 
-        return reply_text
+        return reply_txt
 
     def is_memory_command(self, user_id, question):
         reply_txt = None
