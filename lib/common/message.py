@@ -54,10 +54,10 @@ def txt_mode(mode):
         comments = ""
     elif mode == MODE_TRA_TICKET:
         mode_name = "台鐵訂票"
-        comments = "(請先輸入身份證字號)"
+        comments = "(請先輸入 help, 即可得到提示)"
     elif mode == MODE_THSR_TICKET:
         mode_name = "高鐵訂票"
-        comments = "(請先輸入身份證字號)"
+        comments = "(請先輸入 help, 即可得到提示)"
     else:
         pass
 
