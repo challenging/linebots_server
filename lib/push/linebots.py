@@ -11,7 +11,7 @@ from lib.ticket.utils import TICKET_STATUS_BOOKED
 
 from lib.common.utils import UTF8
 from lib.common.utils import channel_access_token, log
-from lib.common.message import txt_not_support
+from lib.common.message import txt_not_support, txt_ticket_cancel, txt_ticket_continued
 
 from linebot import LineBotApi
 
@@ -30,7 +30,7 @@ def collect(db):
     return "<br/>".join(questions)
 
 def booking_tra_ticket(driver="phantom", type="tra"):
-    requests = mode_tra_ticket.db.non_booking("tra")
+    requests = mode_tra_ticket.db.non_booking(type)
     for user_id, creation_datetime, param in requests:
         message = None
 
@@ -61,16 +61,19 @@ def booking_tra_ticket(driver="phantom", type="tra"):
                 txt += "訂票成功，請自行使用台鐵付款方式"
 
                 message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                        MessageTemplateAction(label="取消訂票", text='ticket_{}=cancel+{}'.format(type, ticket_number)),
-                        MessageTemplateAction(label="繼續訂票", text='ticket_{}=again'.format(type))
+                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}=cancel+{}'.format(type, ticket_number)),
+                        MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(type))
                     ]))
 
                 line_bot_api.push_message(user_id, message)
 
                 break
+            else:
+                mode_tra_ticket.db.retry(user_id, creation_datetime, type)
+                log("fail in retrying to crack the {} ticket for {}".format(type.upper(), user_id))
 
 def booking_thsr_ticket(driver="phantom", type="thsr"):
-    requests = mode_tra_ticket.db.non_booking("thsr")
+    requests = mode_tra_ticket.db.non_booking(type)
     for user_id, creation_datetime, param in requests:
         message = None
 
@@ -98,21 +101,26 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
             txt += "訂票成功，請自行使用高鐵付款方式"
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                    MessageTemplateAction(label="取消訂票", text='ticket_{}=cancel+{}'.format(type, ticket_number)),
-                    MessageTemplateAction(label="繼續訂票", text='ticket_{}=again'.format(type))
+                    MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}=cancel+{}'.format(type, ticket_number)),
+                    MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(type))
                 ]))
 
             line_bot_api.push_message(user_id, message)
+        else:
+            mode_thsr_ticket.db.retry(user_id, creation_datetime, type)
+            log("fail in retrying to crack the {} ticket for {}".format(type.upper(), user_id))
 
 if __name__ == "__main__":
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
     train_type = "thsr"
 
-    #booking_tra_ticket("chrome")
-    #booking_thsr_ticket("chrome")
+    booking_tra_ticket("chrome")
+    booking_thsr_ticket("chrome")
 
+    '''
     from lib.push.linebots import mode_thsr_ticket as bot
 
     messages = bot.list_tickets(user_id, train_type, "scheduled")
     if messages:
         line_bot_api.push_message(user_id, messages)
+    '''

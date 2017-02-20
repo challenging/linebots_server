@@ -18,7 +18,7 @@ from lib.common.utils import UTF8, MODE_TRA_TICKET, MODE_THSR_TICKET
 from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone
 from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime
 from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror
-from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero
+from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued
 
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
@@ -32,6 +32,9 @@ class TicketDB(DB):
     table_name = "ticket"
 
     THRESHOLD_TICKET_COUNT = 5
+
+    RETRY = 4
+
     DIFF_TRA = 15
     DIFF_THSR = 27
 
@@ -79,93 +82,81 @@ class TicketDB(DB):
             diff_days = self.DIFF_THSR
             booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
 
-        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type)
+        sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}' AND retry < {}".format(\
+            self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type, self.RETRY)
 
+        requests = []
+        for row in self.select(sql):
+            requests.append([row[0], row[1], json.loads(row[2])])
+
+        return requests
+
+    def cmd(self, sql):
+        cursor = self.conn.cursor()
+        cursor.execute(sql)
+        cursor.close()
+
+        return cursor.rowcount
+
+    def select(self, sql):
         cursor = self.conn.cursor()
         cursor.execute(sql)
 
-        requests = []
         for row in cursor.fetchall():
-            requests.append([row[0], row[1], json.loads(row[2])])
+            yield row
 
         cursor.close()
-
-        return requests
 
     def book(self, user_id, creation_datetime, ticket_number, status, ticket_type, ticket_info):
         sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
             self.table_name, ticket_number, status, ticket_info.replace("'", "\""), channel_access_token, user_id, creation_datetime, ticket_type)
 
-        cursor = self.conn.cursor()
-        done = cursor.execute(sql)
-        cursor.close()
+        return self.cmd(sql)
 
-        return done
+    def retry(self, user_id, creation_datetime, ticket_type):
+        sql = "UPDATE {} SET retry += 1 WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, channel_access_token, user_id, creation_datetime, ticket_type)
+
+        return self.cmd(sql)
 
     def unscheduled(self, user_id, tid, status=TICKET_STATUS_UNSCHEDULED):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
 
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-
-        count = cursor.rowcount
-
-        cursor.close()
-
-        return count
+        return self.cmd(sql)
 
     def cancel(self, user_id, ticket_number, ticket_type):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
             self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number, ticket_type)
 
-        cursor = self.conn.cursor()
-        done = cursor.execute(sql)
-        cursor.close()
-
-        return done
+        return self.cmd(sql)
 
     def get_person_id(self, user_id, ticket_number, ticket_type):
         sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
             self.table_name, user_id, ticket_number, ticket_type)
 
         person_id = None
-
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        for row in cursor.fetchall():
+        for row in self.select(sql):
             person_id = row[0]
-
-        cursor.close()
 
         return person_id
 
     def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        cursor = self.conn.cursor()
-
         sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type)
-        cursor.execute(sql)
 
         results = []
-        for row in cursor.fetchall():
+        for row in self.select(sql):
             results.append((row[0], json.loads(row[1])))
-
-        cursor.close()
 
         return results
 
     def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
-        results = []
-        cursor = self.conn.cursor()
-
         now = datetime.datetime.now().strftime("%Y-%m-%d")
+
         sql = "SELECT ticket_info FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type, now)
 
-        cursor.execute(sql)
-        for row in cursor.fetchall():
+        results = []
+        for row in self.select(sql):
             results.append(json.loads(row[0]))
-
-        cursor.close()
 
         return results
 
@@ -181,9 +172,7 @@ class TicketMode(Mode):
         if person_id is None:
             return "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
         else:
-            print 1111, user_id, ticket_number, person_id
             requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
-            print 1111, "{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number)
 
             self.db.cancel(user_id, ticket_number, "tra")
 
@@ -358,7 +347,7 @@ class TicketMode(Mode):
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
                   MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
-                  MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
+                  MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=continue'.format(self.ticket_type)),
             ]))
         elif len(tickets) > 1:
             messages = []
@@ -387,7 +376,7 @@ class TicketMode(Mode):
 
                 message = CarouselColumn(text=body, actions=[
                     MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
-                    MessageTemplateAction(label="繼續訂票", text='ticket_{}=continue'.format(self.ticket_type)),
+                    MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=continue'.format(self.ticket_type)),
                 ])
 
                 messages.append(message)

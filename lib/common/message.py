@@ -124,3 +124,6 @@ def txt_ticket_zero():
 
 def txt_ticket_thankletter():
     return "最多允許同時可預定{}票。可先取消不需要預訂票，再輸入新預訂票，謝謝"
+
+def txt_ticket_continued():
+    return "繼續訂票"
