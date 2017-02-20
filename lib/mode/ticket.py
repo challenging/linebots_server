@@ -529,7 +529,7 @@ class TRATicketMode(TicketMode):
                                 "getin_end_dtime": None}
 
         for row in db_profile.get_profile(user_id, self.ticket_type):
-            for k, v in json.loads(row[0]):
+            for k, v in json.loads(row[0]).items():
                 if k in self.memory[user_id] and v is not None and v.lower() not in ["none", "null"]:
                     self.memory[user_id][k] = v
 
@@ -703,7 +703,7 @@ class THSRTicketMode(TRATicketMode):
                                 "ticketPanel:rows:1:ticketAmount": None}
 
         for row in db_profile.get_profile(user_id, self.ticket_type):
-            for k, v in json.loads(row[0]):
+            for k, v in json.loads(row[0]).items():
                 if k in self.memory[user_id] and v is not None and v.lower() not in ["none", "null"]:
                     self.memory[user_id][k] = v
 
