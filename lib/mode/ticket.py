@@ -204,7 +204,7 @@ class TicketMode(Mode):
     def is_cancel_command(self, user_id, question):
         is_cancel, reply_txt = False, None
 
-        p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join([TYPE]), TICKET_STATUS_CANCELED))
+        p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_CANCELED))
         if p.search(question):
             m = p.match(question)
             ticket_type, ticket_number = m.group(1), m.group(2)
@@ -583,7 +583,8 @@ class THSRTicketMode(TRATicketMode):
 
                 if question >= 0 and question < 11:
                     self.memory[user_id]["ticketPanel:rows:4:ticketAmount"] = question
-            elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
+                    self.memory[user_id]["ticketPanel:rows:0:ticketAmount"] = 0
+            elif self.memory[user_id]["booking_type"] != "student" and re.search("([\d]{1,2})", question) and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
                 question = int(question)
 
                 if question >= 0 and question < 11:
@@ -617,7 +618,7 @@ class THSRTicketMode(TRATicketMode):
                 reply_txt = txt_ticket_estation()
             elif self.memory[user_id]["booking_type"] == "student" and self.memory[user_id].get("ticketPanel:rows:4:ticketAmount", None) is None:
                 reply_txt = "請輸入學生張數(1-10)"
-            elif self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
+            elif self.memory[user_id]["booking_type"] != "student" and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
                 reply_txt = "請輸入成人張數(0-10)"
             elif self.memory[user_id]["booking_type"] != "student" and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
                 reply_txt = "請輸入小孩張數(0-10)"
@@ -695,14 +696,6 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    for row in mode_thsr_ticket.db.non_booking(TRA):
-        print row
-
-    '''
-    for message in mode_tra_ticket.conversion("list", user_id):
-        print message
-        print
-
     questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
@@ -724,4 +717,3 @@ if __name__ == "__main__":
                 print m
         elif message is not None:
             print message.as_json_string()
-    '''
