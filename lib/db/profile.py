@@ -24,9 +24,9 @@ class ProfileDB(DB):
         sql = ""
 
         if ticket_type == "tra":
-            sql = "SELECT person_id FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1"
+            sql = "SELECT person_id FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id)
         elif ticket_type == "thsr":
-            sql = "SELECT person_id, cellphone FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1"
+            sql = "SELECT person_id, cellphone FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id)
 
         for row in self.select(sql):
             yield row
