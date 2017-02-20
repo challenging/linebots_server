@@ -97,17 +97,15 @@ class TicketDB(DB):
         return [(row[0], row[1], json.loads(row[2])) for row in self.select(sql)]
 
     def memory(self, user_id, ticket_type, ticket_number):
-        sql = "SELECT ticket::json->'person_id', ticket::json->'cellphone' FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
+        sql = "SELECT ticket::json->'person_id' as person_id, ticket::json->'cellphone' as phone, ticket::json->'booking_type' as booking_type FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
 
-        print sql
-
-        person_id, cellphone = None, None
+        param = {"person_id": None, "phone": None, "booking_type": None}
         for row in self.select(sql):
-            person_id, cellphone = row
+            param = {"person_id": row[0], "phone": row[1], "booking_type": row[2]}
 
         c = 0
         if person_id:
-            c = db_profile.ask(user_id, ticket_type, person_id, cellphone)
+            c = db_profile.ask(user_id, ticket_type, param)
 
         return c
 
@@ -522,11 +520,6 @@ class TRATicketMode(TicketMode):
 
     def new_memory(self, user_id):
         self.memory.setdefault(user_id, {})
-
-        person_id = None
-        for row in db_profile.get_profile(user_id, self.ticket_type):
-            person_id = row[0]
-
         self.memory[user_id] = {"person_id": person_id,
                                 "creation_datetime": datetime.datetime.now(),
                                 "getin_date": None,
@@ -536,6 +529,11 @@ class TRATicketMode(TicketMode):
                                 "train_type": None,
                                 "getin_start_dtime": None,
                                 "getin_end_dtime": None}
+
+        for row in db_profile.get_profile(user_id, self.ticket_type):
+            for k, v in json.loads(row[0]):
+                if k in self.memory[user_id] and v is not None and v.lower() not in ["none", "null"]:
+                    self.memory[user_id][k] = v
 
     def is_filled(self, user_id):
         is_pass = True
@@ -691,11 +689,6 @@ class THSRTicketMode(TRATicketMode):
 
     def new_memory(self, user_id):
         self.memory.setdefault(user_id, {})
-
-        person_id, cellphone = None, None
-        for row in db_profile.get_profile(user_id, self.ticket_type):
-            person_id, cellphone = row[0], row[1]
-
         self.memory[user_id] = {"booking_type": None,
                                 "creation_datetime": datetime.datetime.now(),
                                 "person_id": person_id,
@@ -710,6 +703,11 @@ class THSRTicketMode(TRATicketMode):
                                 "onlyQueryOffPeakCheckBox": False,
                                 "ticketPanel:rows:0:ticketAmount": None,
                                 "ticketPanel:rows:1:ticketAmount": None}
+
+        for row in db_profile.get_profile(user_id, self.ticket_type):
+            for k, v in json.loads(row[0]):
+                if k in self.memory[user_id] and v is not None and v.lower() not in ["none", "null"]:
+                    self.memory[user_id][k] = v
 
     def is_filled(self, user_id):
         is_pass, ticket_count = True, 0
