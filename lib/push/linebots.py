@@ -61,7 +61,7 @@ def booking_tra_ticket(driver="phantom", type="tra"):
                 txt += "訂票成功，請自行使用台鐵付款方式"
 
                 message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}=cancel+{}'.format(type, ticket_number)),
+                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKDT_STATUS_CANCELED, ticket_number)),
                         MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(type))
                     ]))
 
@@ -101,7 +101,7 @@ def booking_thsr_ticket(driver="phantom", type="thsr"):
             txt += "訂票成功，請自行使用高鐵付款方式"
 
             message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
-                    MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}=cancel+{}'.format(type, ticket_number)),
+                    MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_CANCELED, ticket_number)),
                     MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(type))
                 ]))
 

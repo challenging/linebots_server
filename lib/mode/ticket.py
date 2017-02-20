@@ -4,7 +4,7 @@
 import re
 import json
 import time
-import requests
+import urllib2
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
@@ -27,6 +27,10 @@ from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_STATUS_B
 from lib.ticket.utils import TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
 
 from lib.ticket import booking_thsr
+
+TRA = "tra"
+THSR = "thsr"
+TYPE = [TRA, THSR]
 
 class TicketDB(DB):
     table_name = "ticket"
@@ -70,7 +74,7 @@ class TicketDB(DB):
         now = datetime.datetime.now() - datetime.timedelta(hours=8)
 
         booking_date, diff_days = None, None
-        if ticket_type == "tra":
+        if ticket_type == TRA:
             diff_days = self.DIFF_TRA
             booking_date = "cast(cast(ticket::json->'getin_date' as varchar) as date)"
 
@@ -78,18 +82,18 @@ class TicketDB(DB):
                 diff_days += 2
             elif now.weekday() == 5:
                 diff_days += 1
-        elif ticket_type == "thsr":
+        elif ticket_type == THSR:
             diff_days = self.DIFF_THSR
             booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
 
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}' AND retry < {}".format(\
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type, self.RETRY)
 
-        requests = []
+        results = []
         for row in self.select(sql):
-            requests.append([row[0], row[1], json.loads(row[2])])
+            results.append([row[0], row[1], json.loads(row[2])])
 
-        return requests
+        return results
 
     def cmd(self, sql):
         cursor = self.conn.cursor()
@@ -168,38 +172,41 @@ class TicketMode(Mode):
             self.new_memory(user_id)
 
     def cancel_tra_ticket(self, user_id, ticket_number):
-        person_id = self.db.get_person_id(user_id, ticket_number, "tra")
+        person_id = self.db.get_person_id(user_id, ticket_number, TRA)
         if person_id is None:
             return "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
         else:
-            requests.get("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
+            f = urllib2.urlopen("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
+            content = unicode(f.read(), "BIG5")
+            if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
+                self.db.cancel(user_id, ticket_number, TRA)
 
-            self.db.cancel(user_id, ticket_number, "tra")
-
-            return txt_ticket_cancel("台鐵", ticket_number)
+                return txt_ticket_cancel("台鐵", ticket_number)
+            else:
+                return "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
 
     def cancel_thsr_ticket(self, user_id, ticket_number):
-        person_id = self.db.get_person_id(user_id, ticket_number, "thsr")
+        person_id = self.db.get_person_id(user_id, ticket_number, THSR)
         is_cancel = booking_thsr.cancel_ticket(person_id, ticket_number, driver="phantom")
 
         reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
         if is_cancel:
-            self.db.cancel(user_id, ticket_number, "thsr")
+            self.db.cancel(user_id, ticket_number, THSR)
             reply_txt = txt_ticket_cancel("高鐵", ticket_number)
 
         return reply_txt
 
     def cancel_ticket(self, user_id, ticket_type, ticket_number):
         mode = "未知"
-        if ticket_type == "tra":
+        if ticket_type == TRA:
             mode = "台鐵"
-        elif ticket_type == "thsr":
+        elif ticket_type == THSR:
             mode = "高鐵"
 
         reply_txt = "進入取消{}訂票程序".format(mode)
-        if ticket_type == "tra":
+        if ticket_type == TRA:
             reply_txt = self.cancel_tra_ticket(user_id, ticket_number)
-        elif ticket_type == "thsr":
+        elif ticket_type == THSR:
             reply_txt = self.cancel_thsr_ticket(user_id, ticket_number)
         else:
             log("Not found the ticket_type - {}".format(ticket_type))
@@ -209,7 +216,7 @@ class TicketMode(Mode):
     def is_cancel_command(self, user_id, question):
         is_cancel, reply_txt = False, None
 
-        p = re.compile("^ticket_(tra|thsr)={}\+([\d]+)$".format(TICKET_STATUS_CANCELED))
+        p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join([TYPE]), TICKET_STATUS_CANCELED))
         if p.search(question):
             m = p.match(question)
             ticket_type, ticket_number = m.group(1), m.group(2)
@@ -237,7 +244,7 @@ class TicketMode(Mode):
     def is_unscheduled_command(self, user_id, question):
         id = None
 
-        p = re.compile("^ticket_(thsr|tra)={}\+([\d]+)$".format(TICKET_STATUS_UNSCHEDULED))
+        p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_UNSCHEDULED))
         if p.search(question):
             tid = int(p.match(question).group(2))
             count = self.db.unscheduled(user_id, tid)
@@ -249,9 +256,9 @@ class TicketMode(Mode):
     def translate_ticket(self, ticket, id=None):
         message = None
 
-        if self.ticket_type == "tra":
+        if self.ticket_type == TRA:
             message = self.translate_tra(ticket, id)
-        elif self.ticket_type == "thsr":
+        elif self.ticket_type == THSR:
             message = self.translate_thsr(ticket, id)
         else:
             pass
@@ -315,10 +322,10 @@ class TicketMode(Mode):
             text_cancel_text = TICKET_STATUS_UNSCHEDULED
         elif status == TICKET_STATUS_BOOKED:
             tickets = self.db.list_booked_tickets(user_id, ticket_type)
-            text_cancel_label = "取消訂票"
+            text_cancel_label = txt_ticket_cancel()
             text_cancel_text = TICKET_STATUS_CANCELED
 
-        headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == "tra" else TICKET_HEADERS_BOOKED_THSR
+        headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == TRA else TICKET_HEADERS_BOOKED_THSR
 
         reply_txt = None
         if len(tickets) == 1:
@@ -347,7 +354,7 @@ class TicketMode(Mode):
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
                   MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
-                  MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=continue'.format(self.ticket_type)),
+                  MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(self.ticket_type)),
             ]))
         elif len(tickets) > 1:
             messages = []
@@ -376,7 +383,7 @@ class TicketMode(Mode):
 
                 message = CarouselColumn(text=body, actions=[
                     MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
-                    MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=continue'.format(self.ticket_type)),
+                    MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(self.ticket_type)),
                 ])
 
                 messages.append(message)
@@ -389,7 +396,7 @@ class TRATicketMode(TicketMode):
     def init(self):
         self.memory = {}
         self.db = TicketDB()
-        self.ticket_type = "tra"
+        self.ticket_type = TRA
 
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
@@ -526,7 +533,7 @@ class THSRTicketMode(TRATicketMode):
     def init(self):
         self.memory = {}
         self.db = TicketDB()
-        self.ticket_type = "thsr"
+        self.ticket_type = THSR
 
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
@@ -700,7 +707,7 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    for row in mode_thsr_ticket.db.non_booking("tra"):
+    for row in mode_thsr_ticket.db.non_booking(TRA):
         print row
 
     '''
