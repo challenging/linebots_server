@@ -40,7 +40,7 @@ class TicketDB(DB):
     RETRY = 4
 
     DIFF_TRA = 15
-    DIFF_THSR = 27
+    DIFF_THSR = 28
 
     def create_table(self):
         cursor = self.conn.cursor()
@@ -89,11 +89,7 @@ class TicketDB(DB):
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}' AND retry < {}".format(\
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type, self.RETRY)
 
-        results = []
-        for row in self.select(sql):
-            results.append([row[0], row[1], json.loads(row[2])])
-
-        return results
+        return [(row[0], row[1], json.loads(row[2])) for row in self.select(sql)]
 
     def cmd(self, sql):
         cursor = self.conn.cursor()
@@ -147,22 +143,14 @@ class TicketDB(DB):
     def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
         sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type)
 
-        results = []
-        for row in self.select(sql):
-            results.append((row[0], json.loads(row[1])))
-
-        return results
+        return [(row[0], json.loads(row[1])) for row in self.select(sql)]
 
     def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
         now = datetime.datetime.now().strftime("%Y-%m-%d")
 
         sql = "SELECT ticket_info FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY creation_datetime DESC".format(self.table_name, user_id, status, ticket_type, now)
 
-        results = []
-        for row in self.select(sql):
-            results.append(json.loads(row[0]))
-
-        return results
+        return [json.loads(row[0]) for row in self.select(sql)]
 
 class TicketMode(Mode):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
@@ -173,17 +161,17 @@ class TicketMode(Mode):
 
     def cancel_tra_ticket(self, user_id, ticket_number):
         person_id = self.db.get_person_id(user_id, ticket_number, TRA)
-        if person_id is None:
-            return "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
-        else:
+        reply_txt = "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
+
+        if person_id is not None:
             f = urllib2.urlopen("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
-            content = unicode(f.read(), "BIG5")
+            content = unicode(f.read(), f.headers.getparam('charset'))
             if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
                 self.db.cancel(user_id, ticket_number, TRA)
 
-                return txt_ticket_cancel("台鐵", ticket_number)
-            else:
-                return "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
+                reply_txt = txt_ticket_cancel("台鐵", ticket_number)
+
+        return reply_txt
 
     def cancel_thsr_ticket(self, user_id, ticket_number):
         person_id = self.db.get_person_id(user_id, ticket_number, THSR)
