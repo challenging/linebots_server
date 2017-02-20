@@ -522,7 +522,12 @@ class TRATicketMode(TicketMode):
 
     def new_memory(self, user_id):
         self.memory.setdefault(user_id, {})
-        self.memory[user_id] = {"person_id": None,
+
+        person_id = None
+        for row in db_profile.get_profile(user_id, self.ticket_type):
+            person_id = row[0]
+
+        self.memory[user_id] = {"person_id": person_id,
                                 "creation_datetime": datetime.datetime.now(),
                                 "getin_date": None,
                                 "from_station": None,
@@ -686,10 +691,15 @@ class THSRTicketMode(TRATicketMode):
 
     def new_memory(self, user_id):
         self.memory.setdefault(user_id, {})
+
+        person_id, cellphone = None, None
+        for row in db_profile.get_profile(user_id, self.ticket_type):
+            person_id, cellphone = row[0], row[1]
+
         self.memory[user_id] = {"booking_type": None,
                                 "creation_datetime": datetime.datetime.now(),
-                                "person_id": None,
-                                "cellphone": None,
+                                "person_id": person_id,
+                                "cellphone": cellphone,
                                 "booking_date": None,
                                 "booking_stime": None,
                                 "booking_etime": None,
@@ -728,9 +738,9 @@ if __name__ == "__main__":
     question = "ticket_tra=memory+208433"
     question = "ticket_thsr=memory+07040715"
 
-    print mode_thsr_ticket.is_memory_command(user_id, question)
+    #print mode_thsr_ticket.is_memory_command(user_id, question)
 
-    questions = [person_id, "2017/03/05", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
+    questions = [person_id, "2017/03/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):

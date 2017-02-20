@@ -20,4 +20,15 @@ class ProfileDB(DB):
 
         return self.cmd(sql)
 
+    def get_profile(self, user_id, ticket_type):
+        sql = ""
+
+        if ticket_type == "tra":
+            sql = "SELECT person_id FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1"
+        elif ticket_type == "thsr":
+            sql = "SELECT person_id, cellphone FROM {} WHERE user_id = '{}' ORDER BY creation_datetime DESC LIMIT 1"
+
+        for row in self.select(sql):
+            yield row
+
 db_profile = ProfileDB()
