@@ -44,7 +44,7 @@ class TicketDB(DB):
 
     RETRY = 4
 
-    DIFF_TRA = 15
+    DIFF_TRA = 14
     DIFF_THSR = 27
 
     def create_table(self):
@@ -76,7 +76,7 @@ class TicketDB(DB):
         return count_select, count_insert
 
     def non_booking(self, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        now = datetime.datetime.now() - datetime.timedelta(hours=8)
+        now = datetime.datetime.now()# - datetime.timedelta(hours=8)
 
         booking_date, diff_days = None, None
         if ticket_type == TRA:
@@ -92,7 +92,7 @@ class TicketDB(DB):
             booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
 
         sql = "SELECT user_id, creation_datetime, ticket FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}' AND retry < {}".format(\
-            self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT00:00:00"), status, ticket_type, self.RETRY)
+            self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT23:59:59"), status, ticket_type, self.RETRY)
 
         return [(row[0], row[1], json.loads(row[2])) for row in self.select(sql)]
 
@@ -775,6 +775,8 @@ if __name__ == "__main__":
     #question = "ticket_thsr=memory+07123684"
 
     #print mode_thsr_ticket.is_memory_command(user_id, question)
+
+    mode_thsr_ticket.db.non_booking("thsr")
 
     '''
     questions = [person_id, "2017/04/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]

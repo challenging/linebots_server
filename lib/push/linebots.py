@@ -23,6 +23,8 @@ from linebot.models import (
 line_bot_api = LineBotApi(channel_access_token)
 
 def booking_tra_ticket(driver="phantom", type="tra"):
+    batch_time = 8
+
     requests = mode_tra_ticket.db.non_booking(type)
     for user_id, creation_datetime, param in requests:
         message = None
@@ -30,8 +32,9 @@ def booking_tra_ticket(driver="phantom", type="tra"):
         stime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
         stime, etime = int(stime.split(":")[0]), int(etime.split(":")[0])
 
-        for sdtime in range(stime, etime, 8):
-            param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+8))
+        for sdtime in range(stime, etime, batch_time):
+            param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+batch_time))
+
             ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
             if ticket_number is not None:
                 train_number, train_type, train_count, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
@@ -52,6 +55,7 @@ def booking_tra_ticket(driver="phantom", type="tra"):
                 txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
                 txt += "搭乘時間: {} {} - {}\n".format(start_date, start_time, end_time)
                 txt += "訂票成功，請自行使用台鐵付款方式"
+                print txt
 
                 message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                         MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_CANCELED, ticket_number)),
@@ -108,7 +112,7 @@ if __name__ == "__main__":
     train_type = "thsr"
 
     booking_tra_ticket("chrome")
-    booking_thsr_ticket("chrome")
+    #booking_thsr_ticket("chrome")
 
     '''
     from lib.push.linebots import mode_thsr_ticket as bot
