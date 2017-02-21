@@ -96,6 +96,15 @@ class TicketDB(DB):
 
         return [(row[0], row[1], json.loads(row[2])) for row in self.select(sql)]
 
+    def ticket_status(self, user_id, ticket_type, ticket_number):
+        sql = "SELECT status FROM ticket WHERE user_id = '{}' AND ticket_type = '{}' AND ticket_number = '{}'".format(user_id, ticket_type, ticket_number)
+
+        status = None
+        for row in self.select(sql):
+            status = row[0]
+
+        return status
+
     def memory(self, user_id, ticket_type, ticket_number):
         sql = "SELECT ticket::json->'person_id' as person_id, ticket::json->'cellphone' as phone, ticket::json->'booking_type' as booking_type FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
 
@@ -160,27 +169,39 @@ class TicketMode(Mode):
             self.new_memory(user_id)
 
     def cancel_tra_ticket(self, user_id, ticket_number):
-        person_id = self.db.get_person_id(user_id, ticket_number, TRA)
-        reply_txt = "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
+        reply_txt = None
 
-        if person_id is not None:
-            f = urllib2.urlopen("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
-            content = unicode(f.read(), f.headers.getparam('charset'))
-            if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
-                self.db.cancel(user_id, ticket_number, TRA)
+        status = self.db.ticket_status(user_id, TRA, ticket_number)
+        if status != TICKET_STATUS_BOOKED:
+            reply_txt = "此台鐵票號({})已取消".format(ticket_number)
+        else:
+            person_id = self.db.get_person_id(user_id, ticket_number, TRA)
+            reply_txt = "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
 
-                reply_txt = txt_ticket_cancel(CTRA, ticket_number)
+            if person_id is not None:
+                f = urllib2.urlopen("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
+                content = unicode(f.read(), f.headers.getparam('charset'))
+                if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
+                    self.db.cancel(user_id, ticket_number, TRA)
+
+                    reply_txt = txt_ticket_cancel(CTRA, ticket_number)
 
         return reply_txt
 
     def cancel_thsr_ticket(self, user_id, ticket_number):
-        person_id = self.db.get_person_id(user_id, ticket_number, THSR)
-        is_cancel = booking_thsr.cancel_ticket(person_id, ticket_number, driver="phantom")
+        reply_txt = None
 
-        reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
-        if is_cancel:
-            self.db.cancel(user_id, ticket_number, THSR)
-            reply_txt = txt_ticket_cancel(CTHSR, ticket_number)
+        status = self.db.ticket_status(user_id, THSR, ticket_number)
+        if status != TICKET_STATUS_BOOKED:
+            reply_txt = "此高鐵票號({})已取消".format(ticket_number)
+        else:
+            person_id = self.db.get_person_id(user_id, ticket_number, THSR)
+            is_cancel = booking_thsr.cancel_ticket(person_id, ticket_number, driver="phantom")
+
+            reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
+            if is_cancel:
+                self.db.cancel(user_id, ticket_number, THSR)
+                reply_txt = txt_ticket_cancel(CTHSR, ticket_number)
 
         return reply_txt
 
