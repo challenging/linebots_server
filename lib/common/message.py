@@ -133,3 +133,9 @@ def txt_ticket_memory():
 
 def txt_ticket_failed():
     return "標示已取消"
+
+def txt_ticket_retry():
+    return "繼續嘗試購買"
+
+def txt_ticket_split():
+    return "嘗試分段購買"
