@@ -19,14 +19,14 @@ from lib.common.utils import UTF8, MODE_TRA_TICKET, MODE_THSR_TICKET
 from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone
 from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime
 from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror
-from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued
+from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed
 
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
-from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET
+from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
 from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY
-from lib.ticket.utils import TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
+from lib.ticket.utils import TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM
 
 from lib.ticket import booking_thsr
 
@@ -133,9 +133,9 @@ class TicketDB(DB):
 
         return self.cmd(sql)
 
-    def cancel(self, user_id, ticket_number, ticket_type):
+    def ticket_status(self, user_id, ticket_number, ticket_type, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, TICKET_STATUS_CANCELED, user_id, ticket_number, ticket_type)
+            self.table_name, status, user_id, ticket_number, ticket_type)
 
         return self.cmd(sql)
 
@@ -182,7 +182,7 @@ class TicketMode(Mode):
                 f = urllib2.urlopen("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
                 content = unicode(f.read(), f.headers.getparam('charset'))
                 if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
-                    self.db.cancel(user_id, ticket_number, TRA)
+                    self.db.ticket_status(user_id, ticket_number, TRA, TICKET_STATUS_CANCELED)
 
                     reply_txt = txt_ticket_cancel(CTRA, ticket_number)
 
@@ -200,7 +200,7 @@ class TicketMode(Mode):
 
             reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
             if is_cancel:
-                self.db.cancel(user_id, ticket_number, THSR)
+                self.db.ticket_status(user_id, ticket_number, THSR, TICKET_STATUS_CANCELED)
                 reply_txt = txt_ticket_cancel(CTHSR, ticket_number)
 
         return reply_txt
@@ -260,6 +260,21 @@ class TicketMode(Mode):
             count = self.db.unscheduled(user_id, tid)
             if count > 0:
                 reply_txt = "成功取消預訂票 - {}".format(tid)
+
+        return reply_txt
+
+    def is_failed_command(self, user_id, question):
+        reply_txt = None
+
+        p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_FAILED))
+        m = p.match(question)
+        if m:
+            ticket_type, ticket_number = m.group(1), m.group(2)
+            count = self.db.ticket_status(user_id, ticket_number, ticket_type, TICKET_STATUS_FAILED)
+            if count > 0:
+                reply_txt = "標示此張車票({})為已取消".format(ticket_number)
+            else:
+                reply_txt = "標示失敗，請稍後再試"
 
         return reply_txt
 
@@ -378,9 +393,14 @@ class TicketMode(Mode):
             elif status == TICKET_STATUS_BOOKED:
                 number = ticket[u"票號"]
 
+            m = None
+            if status == TICKET_STATUS_SCHEDULED:
+                m = MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(self.ticket_type, TICKET_STATUS_AGAIN))
+            elif status == TICKET_STATUS_BOOKED:
+                m = MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_FAILED, number))
+
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=[
-                  MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
-                  MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(self.ticket_type)),
+                MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)), m
             ]))
         elif len(tickets) > 1:
             messages = []
@@ -398,7 +418,6 @@ class TicketMode(Mode):
                             body += "{}: {}\n".format(k.encode(UTF8), v.encode(UTF8))
                         else:
                             body += "{}\n".format(v.encode(UTF8))
-
                     body = body.strip()
 
                 number = None
@@ -407,9 +426,14 @@ class TicketMode(Mode):
                 elif status == TICKET_STATUS_BOOKED:
                     number = ticket[u"票號"]
 
+                m = None
+                if status == TICKET_STATUS_SCHEDULED:
+                    m = MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(self.ticket_type, TICKET_STATUS_AGAIN))
+                elif status == TICKET_STATUS_BOOKED:
+                    m = MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(self.ticket_type, TICKET_STATUS_FAILED, number))
+
                 message = CarouselColumn(text=body, actions=[
-                    MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)),
-                    MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}=again'.format(self.ticket_type)),
+                    MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(self.ticket_type, text_cancel_text, number)), m
                 ])
 
                 messages.append(message)
@@ -417,12 +441,6 @@ class TicketMode(Mode):
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=CarouselTemplate(columns=messages))
 
         return reply_txt
-
-class TRATicketMode(TicketMode):
-    def init(self):
-        self.memory = {}
-        self.db = TicketDB()
-        self.ticket_type = TRA
 
     def conversion(self, question, user_id=None, user_name=None):
         reply_txt = None
@@ -436,10 +454,26 @@ class TRATicketMode(TicketMode):
         if reply_txt is not None:
             return reply_txt
 
+        reply_txt = self.is_failed_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
+
         reply_txt = self.is_unscheduled_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
 
+        return self.conversion_process(question, user_id, user_name)
+
+    def conversion_process(self, question, user_id=None, user_name=None):
+        raise NotImplementedError
+
+class TRATicketMode(TicketMode):
+    def init(self):
+        self.memory = {}
+        self.db = TicketDB()
+        self.ticket_type = TRA
+
+    def conversion_process(self, question, user_id=None, user_name=None):
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
             if check_taiwan_id_number(question):
@@ -473,7 +507,7 @@ class TRATicketMode(TicketMode):
                 question = int(question)
 
                 if question > 0 and question < 24 and question > int(self.memory[user_id]["getin_start_dtime"].split(":")[0]):
-                    self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(int(question))
+                    self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(question)
             elif get_station_number(question) and self.memory[user_id].get("from_station", None) is None:
                 self.memory[user_id]["from_station"] = get_station_number(question)
             elif get_station_number(question) and self.memory[user_id].get("to_station", None) is None:
@@ -506,16 +540,16 @@ class TRATicketMode(TicketMode):
             elif self.is_filled(user_id):
                 message = self.translate_ticket(self.memory[user_id])
 
-                if question not in ["ticket_{}=confirm".format(self.ticket_type), "ticket_{}=again".format(self.ticket_type)]:
+                if question not in ["ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM), "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_AGAIN)]:
                     template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label=txt_ticket_confirm(), text='ticket_{}=confirm'.format(self.ticket_type)),
-                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}=again'.format(self.ticket_type)),
+                        MessageTemplateAction(label=txt_ticket_confirm(), text='ticket_{}={}'.format(self.ticket_type, TICKET_STATUS_CONFIRM)),
+                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}'.format(self.ticket_type, TICKET_STATUS_AGAIN)),
                     ])
 
                     reply_txt = TemplateSendMessage(
                         alt_text=txt_not_support(), template=template)
                 else:
-                    if question == "ticket_{}=confirm".format(self.ticket_type):
+                    if question == "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM):
                         del self.memory[user_id]["creation_datetime"]
 
                         cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
@@ -570,22 +604,7 @@ class THSRTicketMode(TRATicketMode):
         self.db = TicketDB()
         self.ticket_type = THSR
 
-    def conversion(self, question, user_id=None, user_name=None):
-        reply_txt = None
-        self.reset_memory(user_id, question)
-
-        reply_txt = self.is_list_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_memory_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_unscheduled_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
+    def conversion_process(self, question, user_id=None, user_name=None):
         is_cancel, reply_txt = self.is_cancel_command(user_id, question)
         if not is_cancel:
             if check_taiwan_id_number(question):
@@ -676,15 +695,15 @@ class THSRTicketMode(TRATicketMode):
             elif self.is_filled(user_id):
                 message = self.translate_ticket(self.memory[user_id])
 
-                if question not in ["ticket_{}=confirm".format(self.ticket_type), "ticket_{}=again".format(self.ticket_type)]:
+                if question not in ["ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM), "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_AGAIN)]:
                     template = ConfirmTemplate(text=message, actions=[
-                        MessageTemplateAction(label=txt_ticket_confirm(), text='ticket_{}=confirm'.format(self.ticket_type)),
-                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}=again'.format(self.ticket_type)),
+                        MessageTemplateAction(label=txt_ticket_confirm(), text='ticket_{}={}'.format(self.ticket_type, TICKET_STATUS_CONFIRM)),
+                        MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}'.format(self.ticket_type, TICKET_STATUS_AGAIN)),
                     ])
 
                     reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
                 else:
-                    if question == "ticket_{}=confirm".format(self.ticket_type):
+                    if question == "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM):
                         del self.memory[user_id]["creation_datetime"]
 
                         cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
@@ -752,13 +771,13 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
     creation_datetime = "2017-02-20 07:57:04"
-    question = "ticket_tra=memory+738148"
+    #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
 
-    print mode_thsr_ticket.is_memory_command(user_id, question)
+    #print mode_thsr_ticket.is_memory_command(user_id, question)
 
     '''
-    questions = [person_id, "2017/03/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
+    questions = [person_id, "2017/04/06", "10-22", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -769,7 +788,7 @@ if __name__ == "__main__":
         else:
             print message.as_json_string()
 
-    questions = ["booking_type=general", person_id, "0921747196", "2017/03/06", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
+    questions = ["booking_type=general", person_id, "0921747196", "2017/04/06", "17", "23", "左營", "嘉義", "1", "0", "ticket_thsr=confirm"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):

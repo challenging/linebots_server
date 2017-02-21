@@ -11,6 +11,9 @@ TICKET_STATUS_CANCELED = "canceled"
 TICKET_STATUS_SCHEDULED = "scheduled"
 TICKET_STATUS_MEMORY = "memory"
 TICKET_STATUS_FORGET = "forget"
+TICKET_STATUS_FAILED = "failed"
+TICKET_STATUS_AGAIN = "again"
+TICKET_STATUS_CONFIRM = "confirm"
 
 TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])
 TICKET_CMD_RESET = set(["reset", "重設", "清空"])

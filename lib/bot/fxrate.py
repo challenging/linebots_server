@@ -97,6 +97,6 @@ class RateBot(Bot):
 bot = RateBot()
 
 if __name__ == "__main__":
-    bot = RateBot()
+    bot.init()
 
     print bot.bots(sys.argv[1])
