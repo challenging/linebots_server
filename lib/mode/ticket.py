@@ -105,6 +105,12 @@ class TicketDB(DB):
 
         return status
 
+    def set_status(self, user_id, ticket_number, ticket_type, status):
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, status, user_id, ticket_number, ticket_type)
+
+        return self.cmd(sql)
+
     def memory(self, user_id, ticket_type, ticket_number):
         sql = "SELECT ticket::json->'person_id' as person_id, ticket::json->'cellphone' as phone, ticket::json->'booking_type' as booking_type FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and ticket_number = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(self.table_name, user_id, ticket_type, ticket_number)
 
@@ -130,12 +136,6 @@ class TicketDB(DB):
 
     def unscheduled(self, user_id, tid, status=TICKET_STATUS_UNSCHEDULED):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
-
-        return self.cmd(sql)
-
-    def set_status(self, user_id, ticket_number, ticket_type, status):
-        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, status, user_id, ticket_number, ticket_type)
 
         return self.cmd(sql)
 
@@ -171,7 +171,7 @@ class TicketMode(Mode):
     def cancel_tra_ticket(self, user_id, ticket_number):
         reply_txt = None
 
-        status = self.db.get_status(user_id, TRA, ticket_number, TICKET_STATUS)
+        status = self.db.get_status(user_id, TRA, ticket_number)
         if status != TICKET_STATUS_BOOKED:
             reply_txt = "此台鐵票號({})已取消".format(ticket_number)
         else:
