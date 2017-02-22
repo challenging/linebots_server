@@ -125,5 +125,8 @@ if __name__ == "__main__":
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
     train_type = "thsr"
 
-    booking_tra_ticket("chrome")
-    booking_thsr_ticket("chrome")
+    #booking_tra_ticket("chrome")
+    #booking_thsr_ticket("chrome")
+
+    message = mode_tra_ticket.conversion("list", user_id)
+    line_bot_api.push_message(user_id, message)

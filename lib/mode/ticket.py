@@ -354,7 +354,7 @@ class TicketMode(Mode):
         else:
             message = "台鐵預約訂票 - {}\n===================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str"), ("嘗試訂票次數", "retry")]:
+        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str"), ("嘗試次數", "retry")]:
            if k == "station":
                 message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
            elif k == "train_type":
@@ -373,7 +373,7 @@ class TicketMode(Mode):
         else:
             message = "高鐵預約訂票 - {}\n================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試訂票次數", "retry")]:
+        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試次數", "retry")]:
             if k == "booking_setime":
                 message += "{}: {} {}-{}\n".format(name, ticket["booking_date"], ticket["booking_stime"].split(":")[0], ticket["booking_etime"].split(":")[0])
             elif k == "booking_station":
@@ -397,9 +397,11 @@ class TicketMode(Mode):
         return message
 
     def get_ticket_body(self, ticket, ticket_type, status, headers):
-        body = ""
+        body, number, m = "", None, None
         if status == TICKET_STATUS_SCHEDULED:
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
+            number = ticket[0]
+            m = MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN))
         elif status == TICKET_STATUS_BOOKED:
             for k in headers:
                 v = ticket.get(k, None)
@@ -411,18 +413,10 @@ class TicketMode(Mode):
                 else:
                     body += "{}\n".format(v.encode(UTF8))
             body = body.strip()
-
-        number = None
-        if status == TICKET_STATUS_SCHEDULED:
-            number = ticket[0]
-        elif status == TICKET_STATUS_BOOKED:
             number = ticket[u"票號"]
-
-        m = None
-        if status == TICKET_STATUS_SCHEDULED:
-            m = MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN))
-        elif status == TICKET_STATUS_BOOKED:
             m = MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number))
+        else:
+            log("Not found this ticket type - {}".format(ticket_type))
 
         return number, body, m
 
@@ -795,7 +789,7 @@ if __name__ == "__main__":
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
     question = "ticket_thsr=retry+171"
-    print mode_thsr_ticket.conversion(question, user_id)
+    #print mode_thsr_ticket.conversion(question, user_id)
 
     '''
     questions = [person_id, "2017/03/06", "10-22", "台南", "花蓮", "1", "全部車種", "ticket_tra=confirm"]
