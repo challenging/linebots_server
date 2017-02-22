@@ -160,16 +160,31 @@ class TicketDB(DB):
         return person_id
 
     def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type)
+        sql = "SELECT id, ticket, retry FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type)
 
-        return [(row[0], json.loads(row[1])) for row in self.select(sql)]
+        results = []
+        for row in self.select(sql):
+            tid = row[0]
+            ticket = json.loads(row[1])
+            ticket["retry"] = str(row[2])
+
+            results.append((tid, ticket))
+
+        return results
 
     def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
         now = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        sql = "SELECT ticket_info FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type, now)
+        sql = "SELECT ticket_info, retry FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type, now)
 
-        return [json.loads(row[0]) for row in self.select(sql)]
+        results = []
+        for row in self.select(sql):
+            ticket = json.loads(row[0])
+            ticket["retry"] = str(row[1])
+
+            results.append(ticket)
+
+        return results
 
 class TicketMode(Mode):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
@@ -320,15 +335,15 @@ class TicketMode(Mode):
 
         return reply_txt
 
-    def translate_ticket(self, ticket, id=None):
+    def translate_ticket(self, ticket_type, ticket, id=None):
         message = None
 
-        if self.ticket_type == TRA:
+        if ticket_type == TRA:
             message = self.translate_tra(ticket, id)
-        elif self.ticket_type == THSR:
+        elif ticket_type == THSR:
             message = self.translate_thsr(ticket, id)
         else:
-            pass
+            log("Not found this ticket type - {}".format(ticket_type))
 
         return message.strip()
 
@@ -339,14 +354,14 @@ class TicketMode(Mode):
         else:
             message = "台鐵預約訂票 - {}\n===================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str")]:
+        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str"), ("嘗試訂票次數", "retry")]:
            if k == "station":
                 message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
            elif k == "train_type":
                 message += "{}: {}\n".format(name, get_train_name(ticket[k]))
            elif k == "setime":
                 message += "{}: {}-{}\n".format(name, ticket["getin_start_dtime"], ticket["getin_end_dtime"])
-           else:
+           elif ticket.get(k, None) is not None:
                 message += "{}: {}\n".format(name, ticket[k].split("-")[0])
 
         return message
@@ -358,7 +373,7 @@ class TicketMode(Mode):
         else:
             message = "高鐵預約訂票 - {}\n================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount")]:
+        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試訂票次數", "retry")]:
             if k == "booking_setime":
                 message += "{}: {} {}-{}\n".format(name, ticket["booking_date"], ticket["booking_stime"].split(":")[0], ticket["booking_etime"].split(":")[0])
             elif k == "booking_station":
@@ -384,7 +399,7 @@ class TicketMode(Mode):
     def get_ticket_body(self, ticket, ticket_type, status, headers):
         body = ""
         if status == TICKET_STATUS_SCHEDULED:
-            body = self.translate_ticket(ticket[1], ticket[0])
+            body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
         elif status == TICKET_STATUS_BOOKED:
             for k in headers:
                 v = ticket.get(k, None)
@@ -544,7 +559,7 @@ class TRATicketMode(TicketMode):
                     actions=[MessageTemplateAction(label=k, text=k) for k in tra_train_type.keys()]
                 ))
             elif self.is_filled(user_id):
-                message = self.translate_ticket(self.memory[user_id])
+                message = self.translate_ticket(self.ticket_type, self.memory[user_id])
 
                 if question not in ["ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM), "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_AGAIN)]:
                     template = ConfirmTemplate(text=message, actions=[
@@ -699,7 +714,7 @@ class THSRTicketMode(TRATicketMode):
             elif self.memory[user_id]["booking_type"] != "student" and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
                 reply_txt = "請輸入小孩張數(0-10)"
             elif self.is_filled(user_id):
-                message = self.translate_ticket(self.memory[user_id])
+                message = self.translate_ticket(self.ticket_type, elf.memory[user_id])
 
                 if question not in ["ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM), "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_AGAIN)]:
                     template = ConfirmTemplate(text=message, actions=[
