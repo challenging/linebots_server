@@ -357,10 +357,8 @@ class TicketMode(Mode):
         for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str"), ("嘗試次數", "retry")]:
            if k == "station":
                 message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
-           elif k == "train_type":
-                message += "{}: {}\n".format(name, get_train_name(ticket[k]))
            elif k == "setime":
-                message += "{}: {}-{}\n".format(name, ticket["getin_start_dtime"], ticket["getin_end_dtime"])
+                message += "{}: {}-{}, {}\n".format(name, ticket["getin_start_dtime"], ticket["getin_end_dtime"],  get_train_name(ticket["train_type"]))
            elif ticket.get(k, None) is not None:
                 message += "{}: {}\n".format(name, ticket[k].split("-")[0])
 
