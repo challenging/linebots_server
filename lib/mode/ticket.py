@@ -166,7 +166,7 @@ class TicketDB(DB):
         for row in self.select(sql):
             tid = row[0]
             ticket = json.loads(row[1])
-            ticket["retry"] = row[2]
+            ticket["retry"] = str(row[2])
 
             results.append((tid, ticket))
 
@@ -400,7 +400,7 @@ class TicketMode(Mode):
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
             tid = ticket[0]
 
-            retry = ticket[1].get("retry", 0)
+            retry = int(ticket[1].get("retry", 0))
 
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, tid)))
