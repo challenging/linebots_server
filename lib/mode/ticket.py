@@ -354,7 +354,7 @@ class TicketMode(Mode):
         else:
             message = "台鐵預約訂票 - {}\n===================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("車種", "train_type"), ("張數", "order_qty_str"), ("嘗試次數", "retry")]:
+        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("張數", "order_qty_str"), ("嘗試次數", "retry")]:
            if k == "station":
                 message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
            elif k == "setime":
