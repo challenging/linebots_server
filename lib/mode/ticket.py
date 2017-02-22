@@ -438,7 +438,7 @@ class TicketMode(Mode):
             number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
             messages = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)), m]
 
-            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=messages))
+            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonTemplate(text=body, actions=messages))
         elif len(tickets) > 1:
             messages = []
             for ticket in tickets:
