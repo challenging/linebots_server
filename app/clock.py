@@ -27,7 +27,7 @@ def lucky_job():
 def bus_stop_job():
     bus.bot.hourly_job()
 
-@sched.scheduled_job('interval', seconds=40)
+@sched.scheduled_job('interval', seconds=55)
 def bus_time_job():
     bus.bot.crawl_job()
 
