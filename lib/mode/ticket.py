@@ -404,7 +404,7 @@ class TicketMode(Mode):
 
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, tid)))
-                print tid, retry, TICKET_RETRY, retry >= TICKET_RETRY, type(retry).__name.__, type(TICKET_RETRY).__name__, int(retry) >= int(TICKET_RETRY)
+                print tid, retry, TICKET_RETRY, retry >= TICKET_RETRY, int(retry) >= int(TICKET_RETRY)
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
