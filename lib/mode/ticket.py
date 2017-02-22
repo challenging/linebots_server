@@ -400,7 +400,7 @@ class TicketMode(Mode):
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
             tid = ticket[0]
 
-            retry = ticket.get("retry", 0)
+            retry = ticket[1].get("retry", 0)
 
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, tid)))
