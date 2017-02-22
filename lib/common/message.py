@@ -139,3 +139,6 @@ def txt_ticket_retry():
 
 def txt_ticket_split():
     return "嘗試分段購買"
+
+def txt_ticket_forget():
+    return "忘記此儲存訂票資料"

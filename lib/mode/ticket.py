@@ -17,7 +17,7 @@ from lib.db.profile import db_profile
 from lib.common.utils import channel_access_token, log
 from lib.common.utils import UTF8, MODE_TRA_TICKET, MODE_THSR_TICKET
 from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone, txt_ticket_retry
-from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime
+from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget
 from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror
 from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed
 
@@ -247,18 +247,36 @@ class TicketMode(Mode):
 
         return reply_txt
 
+    def is_help_command(self, user_id, question):
+        reply_txt = None
+        if re.search("^(help|幫助|指引)$", question.lower()):
+            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
+                    title="請選擇下列選單",
+                    text="Please click one of the following services",
+                    actions=[MessageTemplateAction(label=txt_ticket_forget(), text="ticket_{}={}".format(self.ticket_type, TICKET_STATUS_FORGET))]
+                ))
+        elif re.search("^ticket_({})={}$".format("|".join(TYPE), TICKET_STATUS_FORGET), question):
+            m = re.match("^ticket_({})={}$".format("|".join(TYPE), TICKET_STATUS_FORGET), question)
+            ticket_type = m.group(1)
+
+            c = db_profile.ask(user_id, ticket_type, {})
+            if c > 0:
+                reply_txt = "成功忘記個人訂票資訊，下次訂票時會需要再輸入一次。"
+            else:
+                reply_txt = "忘記個人訂票資訊失敗，請稍後再試！"
+
+        return reply_txt
+
     def is_cancel_command(self, user_id, question):
-        is_cancel, reply_txt = False, None
+        reply_txt = None
 
         p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_CANCELED))
         m = p.match(question)
         if m:
             ticket_type, ticket_number = m.group(1), m.group(2)
-
-            is_cancel = True
             reply_txt = self.cancel_ticket(user_id, ticket_type, ticket_number)
 
-        return is_cancel, reply_txt
+        return reply_txt
 
     def is_list_command(self, user_id, question):
         reply_txt = None
@@ -460,7 +478,10 @@ class TicketMode(Mode):
         return reply_txt
 
     def conversion(self, question, user_id=None, user_name=None):
-        reply_txt = None
+        reply_txt = self.is_help_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
+
         self.reset_memory(user_id, question)
 
         reply_txt = self.is_list_command(user_id, question)
@@ -495,8 +516,8 @@ class TRATicketMode(TicketMode):
         self.ticket_type = TRA
 
     def conversion_process(self, question, user_id=None, user_name=None):
-        is_cancel, reply_txt = self.is_cancel_command(user_id, question)
-        if not is_cancel:
+        reply_txt = self.is_cancel_command(user_id, question)
+        if reply_txt is None:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
             elif (re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) or re.search("([\d]{8,8})", question)) and self.memory[user_id].get("getin_date", None) is None:
@@ -626,8 +647,8 @@ class THSRTicketMode(TRATicketMode):
         self.ticket_type = THSR
 
     def conversion_process(self, question, user_id=None, user_name=None):
-        is_cancel, reply_txt = self.is_cancel_command(user_id, question)
-        if not is_cancel:
+        reply_txt = self.is_cancel_command(user_id, question)
+        if reply_txt is None:
             if check_taiwan_id_number(question):
                 self.memory[user_id]["person_id"] = question.upper()
             elif re.search("^([\+\d]{10,})$", question) and self.memory[user_id].get("cellphone", None) is None:
