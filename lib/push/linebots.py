@@ -14,7 +14,7 @@ from lib.common.utils import UTF8, channel_access_token, log
 from lib.common.message import txt_not_support, txt_ticket_cancel, txt_ticket_memory, txt_ticket_retry, txt_ticket_split
 
 from linebot import LineBotApi
-from linebot.models import MessageTemplateAction, ConfirmTemplate, TemplateSendMessage
+from linebot.models import MessageTemplateAction, ButtonTemplate, ConfirmTemplate, TemplateSendMessage
 
 line_bot_api = LineBotApi(channel_access_token)
 
@@ -30,8 +30,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
             messages = [MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, number)),
                         MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_SPLIT, number))]
 
-            message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=messages))
-            line_bot_api.push_message(user_id, message)
+            line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonTemplate(text=body, actions=messages)))
         else:
             message = None
 
@@ -84,9 +83,7 @@ def booking_thsr_ticket(driver="phantom", type=THSR):
             messages = [MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, number)),
                         MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_SPLIT, number))]
 
-            message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=body, actions=messages))
-
-            line_bot_api.push_message(user_id, message)
+            line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonTemplate(text=body, actions=messages)))
         else:
             ticket_number, ticket_info = booking_thsr.book_ticket(param, driver=driver)
             if ticket_number is not None:

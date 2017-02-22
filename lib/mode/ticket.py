@@ -395,11 +395,17 @@ class TicketMode(Mode):
         return message
 
     def get_ticket_body(self, ticket, ticket_type, status, headers):
-        body, number, m = "", None, None
+        body, number, messages = "", None, []
         if status == TICKET_STATUS_SCHEDULED:
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
-            number = ticket[0]
-            m = MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN))
+            tid = ticket[0]
+
+            retry = ticket.get("retry", 0)
+
+            if retry >= TICKET_RETRY:
+                messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, tid)))
+            else:
+                messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
             for k in headers:
                 v = ticket.get(k, None)
@@ -411,12 +417,12 @@ class TicketMode(Mode):
                 else:
                     body += "{}\n".format(v.encode(UTF8))
             body = body.strip()
-            number = ticket[u"票號"]
-            m = MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number))
+            ticket_number = ticket[u"票號"]
+            messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, ticket_number)))
         else:
             log("Not found this ticket type - {}".format(ticket_type))
 
-        return number, body, m
+        return number, body, messages
 
     def list_tickets(self, user_id, ticket_type, status):
         text_cancel_label, text_cancel_text, tickets = None, None, []
@@ -436,16 +442,18 @@ class TicketMode(Mode):
             ticket = tickets[0]
 
             number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
-            messages = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)), m]
+            messages = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+            messages.extend(m)
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonTemplate(text=body, actions=messages))
         elif len(tickets) > 1:
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
-                message = CarouselColumn(text=body, actions=[MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)), m])
+                message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+                message.extend(m)
 
-                messages.append(message)
+                messages.append(CarouselColumn(text=body, actions=message))
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=CarouselTemplate(columns=messages))
 
