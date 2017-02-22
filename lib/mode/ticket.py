@@ -445,6 +445,7 @@ class TicketMode(Mode):
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
+                print body
                 message = CarouselColumn(text=body, actions=[MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)), m])
 
                 messages.append(message)
