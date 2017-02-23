@@ -22,8 +22,8 @@ TICKET_STATUS_SPLIT = "split"
 TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])
 TICKET_CMD_RESET = set(["reset", "重設", "清空", "重來", "again", "clear", "清除"])
 
-TICKET_HEADERS_BOOKED_TRA = [u"票號", u"車種", u"車次", u"搭乘時間", u"起迄站", u"張數"]
-TICKET_HEADERS_BOOKED_THSR = [u"票號", u"車廂", u"車次", u"搭乘時間", u"起迄站", u"票數", u"付款金額"]
+TICKET_HEADERS_BOOKED_TRA = [u"懶人ID", u"票號", u"車種", u"車次", u"搭乘時間", u"起迄站", u"張數"]
+TICKET_HEADERS_BOOKED_THSR = [u"懶人ID", u"票號", u"車廂", u"車次", u"搭乘時間", u"起迄站", u"票數", u"付款金額"]
 
 URL_TRA = "http://railway1.hinet.net/csearch.htm"
 

@@ -142,8 +142,6 @@ class TicketDB(DB):
         sql = "UPDATE {} SET retry = 0, status = '{}' WHERE user_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
             self.table_name, TICKET_STATUS_SCHEDULED, user_id, ticket_type, tid)
 
-        print sql
-
         return self.cmd(sql)
 
     def unscheduled(self, user_id, tid, status=TICKET_STATUS_UNSCHEDULED):
@@ -178,12 +176,13 @@ class TicketDB(DB):
     def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
         now = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        sql = "SELECT ticket_info, retry FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type, now)
+        sql = "SELECT id, ticket_info, retry FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type, now)
 
         results = []
         for row in self.select(sql):
-            ticket = json.loads(row[0])
-            ticket["retry"] = str(row[1])
+            ticket = json.loads(row[1])
+            ticket[u"懶人ID"] = row[0]
+            ticket["retry"] = str(row[2])
 
             results.append(ticket)
 
