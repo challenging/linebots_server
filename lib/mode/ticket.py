@@ -160,7 +160,8 @@ class TicketDB(DB):
         return person_id
 
     def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        sql = "SELECT id, ticket, retry FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type)
+        sql = "SELECT id, ticket, retry FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' ORDER BY id DESC".format(\
+            self.table_name, user_id, ",".join(status), ticket_type)
 
         results = []
         for row in self.select(sql):
@@ -445,7 +446,7 @@ class TicketMode(Mode):
     def list_tickets(self, user_id, ticket_type, status):
         text_cancel_label, text_cancel_text, tickets = None, None, []
         if status == TICKET_STATUS_SCHEDULED:
-            tickets = self.db.list_scheduled_tickets(user_id, ticket_type)
+            tickets = self.db.list_scheduled_tickets(user_id, ticket_type, [TICKET_STATUS_SCHEDULED, TICKET_STATUS_RETRY])
             text_cancel_label = "取消預訂票"
             text_cancel_text = TICKET_STATUS_UNSCHEDULED
         elif status == TICKET_STATUS_BOOKED:
