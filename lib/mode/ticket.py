@@ -139,7 +139,7 @@ class TicketDB(DB):
         return self.cmd(sql)
 
     def reset(self, user_id, ticket_type, tid):
-        sql = "UPDATE {} SET retry = 0, status = '{}' WHERE ser_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
+        sql = "UPDATE {} SET retry = 0, status = '{}' WHERE user_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
             self.table_name, TICKET_STATUS_SCHEDULED, user_id, ticket_type, tid)
 
         print sql
