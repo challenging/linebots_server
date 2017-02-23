@@ -181,7 +181,7 @@ class TicketDB(DB):
         results = []
         for row in self.select(sql):
             ticket = json.loads(row[1])
-            ticket[u"懶人ID"] = row[0]
+            ticket[u"懶人ID"] = str(row[0])
             ticket["retry"] = str(row[2])
 
             results.append(ticket)
@@ -818,7 +818,8 @@ if __name__ == "__main__":
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
     question = "ticket_tra=retry+164"
-    print mode_tra_ticket.conversion(question, user_id)
+    #print mode_tra_ticket.conversion(question, user_id)
+    print mode_tra_ticket.is_list_command("list", user_id)
 
     #print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 
