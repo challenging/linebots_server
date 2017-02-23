@@ -418,12 +418,12 @@ class TicketMode(Mode):
         body, number, messages = "", None, []
         if status == TICKET_STATUS_SCHEDULED:
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
-            tid = ticket[0]
+            number = ticket[0]
 
             retry = int(ticket[1].get("retry", 0))
 
-            if retry >= TICKET_RETRY:
-                messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, tid)))
+            if retary >= TICKET_RETRY:
+                messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
@@ -437,8 +437,8 @@ class TicketMode(Mode):
                 else:
                     body += "{}\n".format(v.encode(UTF8))
             body = body.strip()
-            ticket_number = ticket[u"票號"]
-            messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, ticket_number)))
+            number = ticket[u"票號"]
+            messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number)))
         else:
             log("Not found this ticket type - {}".format(ticket_type))
 
