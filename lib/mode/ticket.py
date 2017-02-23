@@ -439,6 +439,7 @@ class TicketMode(Mode):
             body = body.strip()
             number = ticket[u"票號"]
             messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number)))
+            messages.append(MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, number)))
         else:
             log("Not found this ticket type - {}".format(ticket_type))
 
@@ -470,8 +471,7 @@ class TicketMode(Mode):
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
-                message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)),
-                           MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, number))]
+                message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
                 message.extend(m)
 
                 messages.append(CarouselColumn(text=body, actions=message))
