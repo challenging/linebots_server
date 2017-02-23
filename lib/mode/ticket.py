@@ -161,7 +161,7 @@ class TicketDB(DB):
 
     def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
         sql = "SELECT id, ticket, retry FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' ORDER BY id DESC".format(\
-            self.table_name, user_id, ",".join(status), ticket_type)
+            self.table_name, user_id, "','".join(status), ticket_type)
 
         results = []
         for row in self.select(sql):
@@ -818,6 +818,8 @@ if __name__ == "__main__":
     #question = "ticket_thsr=memory+07123684"
     question = "ticket_thsr=retry+171"
     #print mode_thsr_ticket.conversion(question, user_id)
+
+    print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 
     '''
     questions = [person_id, "2017/03/06", "10-22", "台南", "花蓮", "1", "全部車種", "ticket_tra=confirm"]
