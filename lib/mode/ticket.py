@@ -127,20 +127,22 @@ class TicketDB(DB):
         return c
 
     def book(self, user_id, creation_datetime, ticket_number, status, ticket_type, ticket_info):
-        sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, ticket_number, status, ticket_info.replace("'", "\""), channel_access_token, user_id, creation_datetime, ticket_type)
+        sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, ticket_number, status, ticket_info.replace("'", "\""), user_id, creation_datetime, ticket_type)
 
         return self.cmd(sql)
 
     def retry(self, user_id, creation_datetime, ticket_type):
-        sql = "UPDATE {} SET retry = retry + 1 WHERE token = '{}' AND user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, channel_access_token, user_id, creation_datetime, ticket_type)
+        sql = "UPDATE {} SET retry = retry + 1 WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, user_id, creation_datetime, ticket_type)
 
         return self.cmd(sql)
 
     def reset(self, user_id, ticket_type, tid):
-        sql = "UPDATE {} SET retry = 0, status = '{}' WHERE token = '{}' AND user_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
-            self.table_name, TICKET_STATUS_SCHEDULED, channel_access_token, user_id, ticket_type, tid)
+        sql = "UPDATE {} SET retry = 0, status = '{}' WHERE ser_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
+            self.table_name, TICKET_STATUS_SCHEDULED, user_id, ticket_type, tid)
+
+        print sql
 
         return self.cmd(sql)
 
@@ -816,10 +818,10 @@ if __name__ == "__main__":
     creation_datetime = "2017-02-20 07:57:04"
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
-    question = "ticket_thsr=retry+171"
-    #print mode_thsr_ticket.conversion(question, user_id)
+    question = "ticket_tra=retry+164"
+    print mode_tra_ticket.conversion(question, user_id)
 
-    print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
+    #print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 
     '''
     questions = [person_id, "2017/03/06", "10-22", "台南", "花蓮", "1", "全部車種", "ticket_tra=confirm"]
