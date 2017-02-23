@@ -129,7 +129,7 @@ def txt_ticket_continued():
     return "繼續訂票"
 
 def txt_ticket_memory():
-    return "記住訂票身份"
+    return "記住訂票身份，下次可以不用輸入"
 
 def txt_ticket_failed():
     return "標示已取消"
