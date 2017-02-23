@@ -470,9 +470,9 @@ class TicketMode(Mode):
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
-                message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+                message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)),
+                           MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, number))]
                 message.extend(m)
-                message.extend(MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, number)))
 
                 messages.append(CarouselColumn(text=body, actions=message))
 
