@@ -25,6 +25,7 @@ class BotThread(threading.Thread):
         self.bot.init()
         if self.bot == "bus":
             self.bot.hourly_job()
+            self.hourly_crawling = True
 
     def set_sleeping(self, sleeping):
         self.sleeping = sleeping
@@ -33,6 +34,12 @@ class BotThread(threading.Thread):
         while True:
             try:
                 self.bot.crawl_job()
+
+                if self.bot_name == "bus" and self.hourly_crawling and datetime.datetime.now().hour%6 == 1:
+                    self.bot.hourly_job()
+                    self.hourly_crawling = False
+                else:
+                    self.hourly_crawling = True
             except Exception as e:
                 self.init_bot(self.bot_name)
 
