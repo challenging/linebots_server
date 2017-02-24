@@ -1,36 +1,65 @@
 #!/usr/bin/env python
 
-from apscheduler.schedulers.blocking import BlockingScheduler
+import time
+import click
+import threading
+
+from lib.common.utils import log
 from lib.bot import fxrate, weather, lucky, bus
 
-sched = BlockingScheduler()
+class BotThread(threading.Thread):
+    def init_bot(self, bot):
+        self.bot_name = bot
+        if self.bot_name == "weahter":
+            self.bot = weather.bot
+        elif self.bot_name == "fxrate":
+            self.bot = fxrate.bot
+        elif self.bot_name == "lucky":
+            self.bot = lucky.bot
+        elif self.bot_name == "bus":
+            self.bot = bus.bot
+        else:
+            log("Not found this bot name - {}".format(self.bot_name))
+            raise NotImplementedError
 
-fxrate.bot.init()
-weather.bot.init()
-lucky.bot.init()
-bus.bot.init()
-bus.bot.hourly_job()
+        self.bot.init()
+        if self.bot == "bus":
+            self.bot.hourly_job()
 
-@sched.scheduled_job('interval', minutes=15)
-def weather_job():
-    weather.bot.crawl_job()
+    def set_sleeping(self, sleeping):
+        self.sleeping = sleeping
 
-@sched.scheduled_job('interval', minutes=1)
-def fxrate_job():
-    fxrate.bot.crawl_job()
+    def run(self):
+        while True:
+            try:
+                self.bot.crawl_job()
+            except Exception as e:
+                self.init_bot(self.bot_name)
 
-@sched.scheduled_job('cron', hour="7,8,9")
-def lucky_job():
-    lucky.bot.crawl_job()
+                log(e)
 
-@sched.scheduled_job('interval', hours=6)
-def bus_stop_job():
+            time.sleep(self.sleeping)
+
+@click.command()
+def main():
+    fxrate.bot.init()
+    weather.bot.init()
+    lucky.bot.init()
+    bus.bot.init()
     bus.bot.hourly_job()
 
-@sched.scheduled_job('interval', seconds=55)
-def bus_time_job():
-    bus.bot.crawl_job()
+    threads = []
+    for bot_name, sleeping in zip(["weather", "fxrate", "lucky", "bus"], [900, 60, 3600, 40]):
+        thread = BotThead()
+        thread.init_bot(bot_name)
+        thread.set_sleeping(sleeping)
 
-sched.start()
+        thread.start()
 
-print "the crawling server is started..."
+        threads.append(thread)
+
+    for t in threads:
+        t.join()
+
+if __name__ == "__main__":
+    main()

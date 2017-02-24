@@ -40,7 +40,12 @@ def booking_tra_ticket(driver="phantom", type=TRA):
             for sdtime in range(stime, etime, batch_time):
                 param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+batch_time))
 
-                ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
+                ticket_number, ticket_filepath, ticket_info = None, None, None
+                try:
+                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
+                except Exception as e:
+                    log(e)
+
                 if ticket_number is not None:
                     train_number, train_type, train_count, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
                     info = {"票號": ticket_number,
@@ -85,7 +90,12 @@ def booking_thsr_ticket(driver="phantom", type=THSR):
 
             line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages)))
         else:
-            ticket_number, ticket_info = booking_thsr.book_ticket(param, driver=driver)
+            ticket_number, ticket_info = None, None
+            try:
+                ticket_number, ticket_info = booking_thsr.book_ticket(param, driver=driver)
+            except Exception as e:
+                log(e)
+
             if ticket_number is not None:
                 train_type, train_count, train_number, start_station, end_station, date, stime, etime, money = ticket_info
                 info = {"票號": ticket_number,
