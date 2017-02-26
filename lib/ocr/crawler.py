@@ -3,25 +3,34 @@
 import io
 import os
 import time
-import hashlib
+import click
+import urllib
 
 from PIL import Image
 
 from lib.common.utils import get_phantom_driver, get_chrome_driver, check_folder
 from lib.ocr.utils import get_digest
 
-basepath = os.path.join(os.path.dirname(__file__), "etc", "thsr", "crack")
-basepath_screenshot = os.path.join(basepath, "screenshot")
-check_folder(basepath_screenshot)
+def crawl_tra_imint(folder="crack"):
+    basepath_img = os.path.join(os.path.dirname(__file__), "etc", "tra", folder, "source")
+    check_folder(basepath_img, is_folder=True)
+
+    retry = 512
+    while retry > 0:
+        urllib.urlretrieve("http://railway1.hinet.net/ImageOut.jsp;jsessionid=VMt6QoesgHAFxK8c4dRSb8HtC2F8O5KGem8UwEOrwe464dVyR6Ks!-170005252",\
+            os.path.join(basepath_img, "{}.jpg".format(int(1000*time.time()))))
+
+        retry -= 1
 
 def crawl_thsr_imint(folder="train"):
-    global basepath, basepath_screenshot
+    basepath = os.path.join(os.path.dirname(__file__), "etc", "thsr", "crack")
+    basepath_screenshot = os.path.join(basepath, "screenshot")
+    check_folder(basepath_screenshot)
 
     basepath_img = basepath_img = os.path.join(basepath, folder)
     check_folder(basepath_img)
 
     opener = get_phantom_driver()
-    #opener = get_chrome_driver()
     opener.get("https://irs.thsrc.com.tw/IMINT/")
 
     retry = 512
@@ -51,10 +60,23 @@ def crawl_thsr_imint(folder="train"):
     opener.quit()
     opener.close()
 
-if __name__ == "__main__":
-    while True:
+@click.command()
+@click.option("-c", "--company", type=click.Choice(["thsr", "tra"]))
+@click.option("-b", "--batch", default=1)
+def crawl(company, batch):
+    while batch > 0:
         try:
-            crawl_thsr_imint()
+            if company == "tra":
+                crawl_tra_imint()
+            elif company == "thsr":
+                crawl_thsr_imint()
+            else:
+                raise NotImplementedError
         except Exception as e:
             print e
             time.sleep(60)
+
+        batch -= 1
+
+if __name__ == "__main__":
+    crawl()
