@@ -57,7 +57,7 @@ def main():
 
     threads = []
     for bot_name, sleeping in zip(["weather", "fxrate", "lucky", "bus"], [900, 60, 3600, 40]):
-        thread = BotThead()
+        thread = BotThread()
         thread.init_bot(bot_name)
         thread.set_sleeping(sleeping)
 
