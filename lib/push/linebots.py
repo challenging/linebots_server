@@ -68,7 +68,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
                     message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                             MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_CANCELED, ticket_number)),
-                            MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, ticket_number))
+                            MessageTemplateAction(label=txt_ticket_memory()[:12], text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, ticket_number))
                         ]))
 
                     line_bot_api.push_message(user_id, message)
@@ -120,7 +120,7 @@ def booking_thsr_ticket(driver="phantom", type=THSR):
 
                 message = TemplateSendMessage(alt_text=txt_not_support(), template=ConfirmTemplate(text=txt, actions=[
                         MessageTemplateAction(label=txt_ticket_cancel(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_CANCELED, ticket_number)),
-                        MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, ticket_number))
+                        MessageTemplateAction(label=txt_ticket_memory()[:12], text='ticket_{}={}+{}'.format(type, TICKET_STATUS_MEMORY, ticket_number))
                     ]))
 
                 line_bot_api.push_message(user_id, message)

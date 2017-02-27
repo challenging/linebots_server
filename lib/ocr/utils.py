@@ -94,3 +94,25 @@ def latest_Y(company):
         y = pickle.load(in_file)
 
     return y
+
+def get_connected_components(g, results, dropped_threshold=10):
+    def DFS(x, y):
+        g[x, y] = 0
+        for dx in range(-1, 2, 1):
+            for dy in range(-1, 2, 1):
+                pos_x, pos_y = x+dx, y+dy
+                if g[pos_x, pos_y]:
+                    DFS(pos_x, pos_y)
+
+                    results[-1].append((pos_x, pos_y))
+
+    for i in range(len(g)):
+        for j in range(len(g[i])):
+            if g[i, j]:
+                DFS(i, j)
+
+                if results[-1]:
+                    if len(results[-1]) < dropped_threshold:
+                        del results[-1]
+
+                    results.append([])

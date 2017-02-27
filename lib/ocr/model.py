@@ -116,14 +116,14 @@ def tra_complex_cnn_model(shape, output_dim):
     return model
 
 def fit(model, X_train, X_validation, y_train, y_validation, nepoch=32, batch_size=16):
-    model.fit(X_train, y_train, validation_data=(X_validation, y_validation), nb_epoch=nepoch, batch_size=batch_size, verbose=0)
+    model.fit(X_train, y_train, validation_data=(X_validation, y_validation), nb_epoch=nepoch, batch_size=batch_size, verbose=1)
 
 @click.command()
 @click.option("-m", "--mode", type=click.Choice(["mlp", "simple_cnn", "complex_cnn"]))
 @click.option("-c", "--company", type=click.Choice(["tra", "thsr"]))
 @click.option("-t", "--test-size", default=0.33)
-@click.option("-e", "--epoch", default=32)
-@click.option("-b", "--batch-size", default=16)
+@click.option("-e", "--epoch", default=16)
+@click.option("-b", "--batch-size", default=32)
 def main(mode, company, test_size, epoch, batch_size):
     basepath_data_input = os.path.join(data_dir(), company, "train", "number")
 
@@ -134,7 +134,6 @@ def main(mode, company, test_size, epoch, batch_size):
             if len(folder) == 1:
                 parts.append(folder)
 
-    print parts
     dataset_x, dataset_y = load_data(os.path.join(basepath_data_input, "{}", "*.npy"), parts)
 
     model = None
@@ -144,6 +143,7 @@ def main(mode, company, test_size, epoch, batch_size):
         model = mlp_model(dataset_x.shape[1], dataset_y.shape[1])
     elif mode.find("cnn") > -1:
         dataset_x, h, w = cnn_preprocess(dataset_x)
+        print dataset_x.shape, h, w
 
         if mode == "simple_cnn":
             model = simple_cnn_model((1, h, w), dataset_y.shape[1])

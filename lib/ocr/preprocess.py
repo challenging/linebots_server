@@ -23,8 +23,8 @@ def copy_image_to_number_folder(data_input, data_output):
         check_folder(destination_folder, is_folder=True)
 
         _, csgraph = image_l(filepath)
-        with open(os.path.join(destination_folder, "{}.npy".format(key)), "wb") as in_file:
-            np.save(in_file, csgraph)
+        with open(os.path.join(destination_folder, "{}.npy".format(key)), "wb") as out_file:
+            np.save(out_file, csgraph)
 
         shutil.copy(filepath, os.path.join(destination_folder, "{}.jpg".format(key)))
 

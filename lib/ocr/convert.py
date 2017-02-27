@@ -241,6 +241,15 @@ def convert_wb_1(filepath_input, folder="convert_wb_1"):
             if pixdata[x, y][2] > 0:
                 pixdata[x, y] = (255, 255, 255, 255)
 
+    '''
+    for y in xrange(img.size[1]):
+        for x in xrange(img.size[0]):
+            if pixdata[x, y][0] < 100 or pixdata[x, y][1] < 100 or pixdata[x, y][2] < 100:
+                pixdata[x, y] = (0, 0, 0, 255)
+            else:
+                pixdata[x, y] = (255, 255, 255, 255)
+    '''
+
     csgraph = []
     for y in xrange(img.size[1]):
         for x in xrange(img.size[0]):
