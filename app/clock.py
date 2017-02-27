@@ -10,7 +10,7 @@ from lib.bot import fxrate, weather, lucky, bus
 class BotThread(threading.Thread):
     def init_bot(self, bot):
         self.bot_name = bot
-        if self.bot_name == "weahter":
+        if self.bot_name == "weather":
             self.bot = weather.bot
         elif self.bot_name == "fxrate":
             self.bot = fxrate.bot
