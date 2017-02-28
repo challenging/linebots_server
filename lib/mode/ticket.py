@@ -63,7 +63,7 @@ class TicketDB(DB):
             count_select = row[0]
 
         count_insert = 0
-        if count_select < self.TICKET_COUNT:
+        if count_select < TICKET_COUNT:
             sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
                 self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket, TICKET_STATUS_SCHEDULED)
             cursor.execute(sql)
@@ -464,7 +464,6 @@ class TicketMode(Mode):
             body = "\n".join(body)
 
             number = ticket[u"票號"]
-            #messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number)))
             messages.append(MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_MEMORY, number)))
         else:
             log("Not found this ticket type - {}".format(ticket_type))
@@ -645,7 +644,7 @@ class TRATicketMode(TicketMode):
                     if ci > 0:
                         reply_txt = txt_ticket_scheduled()
                     else:
-                        if cs > self.db.TICKET_COUNT-1:
+                        if cs > TICKET_COUNT-1:
                             reply_txt = txt_ticket_thankletter()
                         else:
                             reply_txt = txt_ticket_error()
@@ -802,8 +801,8 @@ class THSRTicketMode(TRATicketMode):
                     if ci > 0:
                         reply_txt = txt_ticket_scheduled()
                     else:
-                        if cs > self.db.TICKET_COUNT-1:
-                            reply_txt = txt_ticket_thankletter().format(self.db.TICKET_COUNT)
+                        if cs > TICKET_COUNT-1:
+                            reply_txt = txt_ticket_thankletter().format(TICKET_COUNT)
                         else:
                             reply_txt = txt_ticket_error()
 
