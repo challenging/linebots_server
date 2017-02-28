@@ -80,7 +80,6 @@ class TicketThread(threading.Thread):
 def main():
     threads = []
 
-    '''
     fxrate.bot.init()
     weather.bot.init()
     lucky.bot.init()
@@ -95,9 +94,8 @@ def main():
         thread.start()
 
         threads.append(thread)
-    '''
 
-    for mode, sleeping in zip([TRA, THSR], [60, 60]):
+    for mode, sleeping in zip([TRA], [60]):
         thread = TicketThread()
         thread.init_bot(mode)
         thread.set_sleeping(sleeping)
