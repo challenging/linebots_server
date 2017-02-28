@@ -41,7 +41,7 @@ TYPE = [TRA, THSR]
 class TicketDB(DB):
     table_name = "ticket"
 
-    THRESHOLD_TICKET_COUNT = 5
+    THRESHOLD_TICKET_COUNT = 4
 
     DIFF_TRA = 14
     DIFF_THSR = 27
