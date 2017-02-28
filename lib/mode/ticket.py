@@ -650,9 +650,9 @@ class TRATicketMode(TicketMode):
                             reply_txt = txt_ticket_thankletter().format(self.db.THRESHOLD_TICKET_COUNT)
                         else:
                             reply_txt = txt_ticket_error()
-                else:
-                    self.new_memory(user_id)
-                    self.conversion_process("", user_id)
+
+                self.new_memory(user_id)
+                self.conversion_process("", user_id)
         else:
             del self.memory[user_id]
 
@@ -807,9 +807,9 @@ class THSRTicketMode(TRATicketMode):
                             reply_txt = txt_ticket_thankletter().format(self.db.THRESHOLD_TICKET_COUNT)
                         else:
                             reply_txt = txt_ticket_error()
-                else:
-                    self.new_memory(user_id)
-                    self.conversion_process("", user_id)
+
+                self.new_memory(user_id)
+                self.conversion_process("", user_id)
         else:
             del self.memory[user_id]
 
