@@ -49,20 +49,16 @@ def booking_tra_ticket(driver="phantom", type=TRA):
                 if ticket_number is not None:
                     train_number, train_type, train_count, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
                     info = {"票號": ticket_number,
-                            "車次": train_number,
-                            "車種": train_type,
-                            "張數": train_count,
-                            "起迄站": "{} - {}".format(start_station.encode(UTF8), end_station.encode(UTF8)),
+                            "車次/車種": "{}, {}".format(train_number, train_type),
+                            "起迄站": "{} - {}, {}張".format(start_station.encode(UTF8), end_station.encode(UTF8), train_count),
                             "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
                     mode_tra_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
 
                     txt = "電腦代號: {}\n".format(ticket_number)
                     txt += "{}\n".format("="*20)
-                    txt += "車次: {}\n".format(train_number)
-                    txt += "車種: {}\n".format(train_type.encode(UTF8))
-                    txt += "張數: {}\n".format(train_count)
-                    txt += "起迄站: {} - {}\n".format(start_station.encode(UTF8), end_station.encode(UTF8))
+                    txt += "車次/車種: {}\n".format(train_number, train_type.encode(UTF8))
+                    txt += "起迄站: {} - {}, {}張\n".format(start_station.encode(UTF8), end_station.encode(UTF8), train_count)
                     txt += "搭乘時間: {} {} - {}\n".format(start_date, start_time, end_time)
                     txt += "訂票成功，請自行使用台鐵付款方式"
 
