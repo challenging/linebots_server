@@ -505,10 +505,11 @@ class TicketMode(Mode):
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
 
+                message = []
                 if status == TICKET_STATUS_BOOKED and ticket["status"] == TICKET_STATUS_PAY:
-                    pass
+                    message.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
                 else:
-                    message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+                    message.append(MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number)))
 
                 message.extend(m)
                 messages.append(CarouselColumn(text=body, actions=message))
