@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from lib.common.utils import get_db_connection
+from lib.common.utils import get_db_connection, log
 
 class DB(object):
     table_name = NotImplementedError
@@ -17,6 +17,8 @@ class DB(object):
         cursor = self.conn.cursor()
         cursor.execute(sql)
         cursor.close()
+
+        log(sql)
 
         return cursor.rowcount
 

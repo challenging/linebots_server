@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import requests
+import urllib
+import urllib2
 
 from lib.common.utils import check_folder, data_dir
 
@@ -18,6 +21,7 @@ TICKET_STATUS_AGAIN = "again"
 TICKET_STATUS_CONFIRM = "confirm"
 TICKET_STATUS_RETRY = "retry"
 TICKET_STATUS_SPLIT = "split"
+TICKET_STATUS_PAY = "pay"
 
 TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])
 TICKET_CMD_RESET = set(["reset", "重設", "清空", "重來", "again", "clear", "清除"])
@@ -265,3 +269,38 @@ def thsr_ticket_dir():
 
 def thsr_cancel_dir():
     return thsr_dir("cancel")
+
+class TRAUtils(object):
+    TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
+    TRA_QUERY_URL = "http://railway.hinet.net/coquery.jsp"
+
+    @staticmethod
+    def is_canceled(person_id, ticket_number):
+        f = urllib2.urlopen("{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number))
+        content = unicode(f.read(), f.headers.getparam('charset'))
+        if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def get_status(person_id, ticket_number):
+        status = None
+
+        req = urllib2.Request("{}?personId={}&orderCode={}".format(TRAUtils.TRA_QUERY_URL, person_id, ticket_number))
+        req.add_header("Referer", "http://railway.hinet.net/coquery.htm")
+        req.add_header("Uesr-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8")
+
+        f = urllib2.urlopen(req)
+        content = unicode(f.read(), f.headers.getparam('charset'))
+
+        if content.find("&#24744;&#35330;&#30340;&#36554;&#31080;&#24050;&#32147;&#30001;") > -1 and content.find("&#20184;&#27454;") > -1:
+            status = TICKET_STATUS_PAY
+        elif content.find("&#24744;&#35330;&#30340;&#36554;&#31080;&#24050;&#21462;&#28040;") > -1:
+            status = TICKET_STATUS_CANCELED
+
+        return status
+
+if __name__ == "__main__":
+    print TRAUtils.get_status("l122760167", "977287")
+    print TRAUtils.get_status("l122760167", "208433")

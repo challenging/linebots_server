@@ -23,8 +23,9 @@ from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket
 
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
+from lib.ticket.utils import TRAUtils
 from lib.ticket.utils import thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
-from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY
+from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY
 from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY
 from lib.ticket.utils import TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
 
@@ -51,6 +52,7 @@ class TicketDB(DB):
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_1 ON {table_name} (token, ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_2 ON {table_name} (token, user_id, ticket_type, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_3 ON {table_name} (id);".format(table_name=self.table_name))
+        cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_4 ON {table_name} (ticket_type, status);".format(table_name=self.table_name))
         cursor.close()
 
     def ask(self, user_id, ticket, ticket_type):
@@ -74,7 +76,7 @@ class TicketDB(DB):
         return count_select, count_insert
 
     def non_booking(self, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        now = datetime.datetime.now()# - datetime.timedelta(hours=8)
+        now = datetime.datetime.now()
 
         booking_date, diff_days = None, None
         if ticket_type == TRA:
@@ -93,6 +95,27 @@ class TicketDB(DB):
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT23:59:59"), status, ticket_type)
 
         return [(row[0], row[1], json.loads(row[2]), row[3], row[4]) for row in self.select(sql)]
+
+    def check_booking(self, ticket_type, status=TICKET_STATUS_BOOKED):
+        now = datetime.datetime.now()
+
+        booking_date, diff_days = None, None
+        if ticket_type == TRA:
+            diff_days = self.DIFF_TRA
+            booking_date = "cast(cast(ticket::json->'getin_date' as varchar) as date)"
+
+            if now.weekday() == 4:
+                diff_days += 2
+            elif now.weekday() == 5:
+                diff_days += 1
+        elif ticket_type == THSR:
+            diff_days = self.DIFF_THSR
+            booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
+
+        sql = "SELECT user_id, ticket_number, ticket::json-> 'person_id', id FROM {} WHERE {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT23:59:59"), status, ticket_type)
+
+        return [(row[0], row[1], row[2], row[3]) for row in self.select(sql)]
 
     def get_status(self, user_id, ticket_type, ticket_number):
         sql = "SELECT status FROM ticket WHERE user_id = '{}' AND ticket_type = '{}' AND ticket_number = '{}'".format(user_id, ticket_type, ticket_number)
@@ -144,7 +167,7 @@ class TicketDB(DB):
 
         return self.cmd(sql)
 
-    def unscheduled(self, user_id, tid, status=TICKET_STATUS_UNSCHEDULED):
+    def modify_status(self, user_id, tid, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
 
         return self.cmd(sql)
@@ -176,20 +199,21 @@ class TicketDB(DB):
     def list_booked_tickets(self, user_id, ticket_type, status=TICKET_STATUS_BOOKED):
         now = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        sql = "SELECT id, ticket_info, retry FROM {} WHERE user_id = '{}' AND status = '{}' AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, status, ticket_type, now)
+        sql = "SELECT id, ticket_info, retry, status FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, "','".join(status), ticket_type, now)
 
         results = []
         for row in self.select(sql):
             ticket = json.loads(row[1])
             ticket[u"懶人ID"] = str(row[0])
             ticket["retry"] = str(row[2])
+            ticket["status"] = row[3]
 
             results.append(ticket)
 
         return results
 
 class TicketMode(Mode):
-    TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
+    DELAY_HOUR = 1
 
     def reset_memory(self, user_id, question):
         if user_id not in self.memory or question.lower() in TICKET_CMD_RESET:
@@ -206,9 +230,7 @@ class TicketMode(Mode):
             reply_txt = "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
 
             if person_id is not None:
-                f = urllib2.urlopen("{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id, ticket_number))
-                content = unicode(f.read(), f.headers.getparam('charset'))
-                if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
+                if TRAUtils.is_canceled(person_id, ticket_number):
                     self.db.set_status(user_id, TRA, TICKET_STATUS_CANCELED, ticket_number)
 
                     reply_txt = txt_ticket_cancel(CTRA, ticket_number)
@@ -302,7 +324,7 @@ class TicketMode(Mode):
         m = p.match(question)
         if m:
             tid = int(m.group(2))
-            count = self.db.unscheduled(user_id, tid)
+            count = self.db.modify_status(user_id, tid, TICKET_STATUS_UNSCHEDULED)
             if count > 0:
                 reply_txt = "成功取消預訂票 - {}".format(tid)
 
@@ -374,7 +396,7 @@ class TicketMode(Mode):
         else:
             message = "台鐵預約訂票 - {}\n===================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("上下車站", "station"), ("張數", "order_qty_str"), ("嘗試訂票次數", "retry")]:
+        for name, k in [("訂票ID", "person_id"), ("搭車日期", "getin_date"), ("搭車時間", "setime"), ("起迄站", "station"), ("張數", "order_qty_str"), ("嘗試訂票次數", "retry")]:
            if k == "station":
                 message += "{}: {}-{}\n".format(name, get_station_name(ticket["from_station"]), get_station_name(ticket["to_station"]))
            elif k == "setime":
@@ -391,7 +413,7 @@ class TicketMode(Mode):
         else:
             message = "高鐵預約訂票 - {}\n================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("上下車站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試訂票次數", "retry")]:
+        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("起迄站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試訂票次數", "retry")]:
             if k == "booking_setime":
                 message += "{}: {} {}-{}\n".format(name, ticket["booking_date"], ticket["booking_stime"].split(":")[0], ticket["booking_etime"].split(":")[0])
             elif k == "booking_station":
@@ -415,7 +437,7 @@ class TicketMode(Mode):
         return message
 
     def get_ticket_body(self, ticket, ticket_type, status, headers):
-        body, number, messages = "", None, []
+        body, number, messages = [], None, []
         if status == TICKET_STATUS_SCHEDULED:
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
             number = ticket[0]
@@ -427,18 +449,24 @@ class TicketMode(Mode):
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
+            s = ticket["status"]
+
             for k in headers:
                 v = ticket.get(k, None)
                 if v is None:
                     v = ticket[u"起訖站"]
 
                 if v.count(":") in [0, 2] and v.find(u"：") == -1:
-                    body += "{}: {}\n".format(k.encode(UTF8), v.encode(UTF8))
+                    body.append("{}: {}".format(k.encode(UTF8), v.encode(UTF8)))
                 else:
-                    body += "{}\n".format(v.encode(UTF8))
-            body = body.strip()
+                    body.append(v.encode(UTF8))
+
+            if s == TICKET_STATUS_PAY:
+                body[-1] = "備註：已付款成功"
+            body = "\n".join(body)
+
             number = ticket[u"票號"]
-            messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number)))
+            #messages.append(MessageTemplateAction(label=txt_ticket_failed(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_FAILED, number)))
             messages.append(MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_MEMORY, number)))
         else:
             log("Not found this ticket type - {}".format(ticket_type))
@@ -452,7 +480,7 @@ class TicketMode(Mode):
             text_cancel_label = "取消預訂票"
             text_cancel_text = TICKET_STATUS_UNSCHEDULED
         elif status == TICKET_STATUS_BOOKED:
-            tickets = self.db.list_booked_tickets(user_id, ticket_type)
+            tickets = self.db.list_booked_tickets(user_id, ticket_type, [TICKET_STATUS_BOOKED, TICKET_STATUS_PAY])
             text_cancel_label = txt_ticket_cancel()
             text_cancel_text = TICKET_STATUS_CANCELED
 
@@ -462,8 +490,13 @@ class TicketMode(Mode):
         if len(tickets) == 1:
             ticket = tickets[0]
 
+            messages = []
             number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
-            messages = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+            if status == TICKET_STATUS_BOOKED and ticket["status"] == TICKET_STATUS_PAY:
+                pass
+            else:
+                messages = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+
             messages.extend(m)
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages))
@@ -471,9 +504,13 @@ class TicketMode(Mode):
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
-                message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
-                message.extend(m)
 
+                if status == TICKET_STATUS_BOOKED and ticket["status"] == TICKET_STATUS_PAY:
+                    pass
+                else:
+                    message = [MessageTemplateAction(label=text_cancel_label, text='ticket_{}={}+{}'.format(ticket_type, text_cancel_text, number))]
+
+                message.extend(m)
                 messages.append(CarouselColumn(text=body, actions=message))
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=CarouselTemplate(columns=messages))
@@ -535,7 +572,7 @@ class TRATicketMode(TicketMode):
                 else:
                     booked_date = datetime.datetime.strptime(question, '%Y%m%d')
 
-                if booked_date > datetime.datetime.now():
+                if booked_date > datetime.datetime.now() - datetime.timedelta(days=1):
                     self.memory[user_id]["getin_date"] = booked_date.strftime("%Y/%m/%d-00")
             except ValueError as e:
                 log("Error: {}".format(e))
@@ -544,14 +581,18 @@ class TRATicketMode(TicketMode):
                 question = int(question)
 
                 if question > -1 and question < 23:
-                    self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(int(question))
+                    booking_datetime = datetime.datetime.strptime("{} {:02d}".format(self.memory[user_id]["getin_date"].split("-")[0], question), "%Y/%m/%d %H")
+                    if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
+                        self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(question)
             elif re.search("^([\d]{1,2})-([\d]{1,2})$", question):
                 m = re.match("([\d]{1,2})-([\d]{1,2})", question)
 
                 stime, etime = int(m.group(1)), int(m.group(2))
                 if stime > -1 and etime > 0 and stime < 23 and etime < 24 and etime > stime:
-                    self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(stime)
-                    self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(etime)
+                    booking_datetime = datetime.datetime.strptime("{} {}".format(self.memory[user_id]["getin_date"].split("-")[0], stime), "%Y/%m/%d %H")
+                    if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
+                        self.memory[user_id]["getin_start_dtime"] = "{:02d}:00".format(stime)
+                        self.memory[user_id]["getin_end_dtime"] = "{:02d}:00".format(etime)
         elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_end_dtime", None) is None:
             question = int(question)
 
@@ -671,7 +712,7 @@ class THSRTicketMode(TRATicketMode):
                 else:
                     booked_date = datetime.datetime.strptime(question, '%Y%m%d')
 
-                if booked_date > datetime.datetime.now():
+                if booked_date > datetime.datetime.now() - datetime.timedelta(days=1):
                     self.memory[user_id]["booking_date"] = booked_date.strftime("%Y/%m/%d")
             except ValueError as e:
                 log("Error: {}".format(e))
@@ -680,14 +721,18 @@ class THSRTicketMode(TRATicketMode):
                 question = int(question)
 
                 if question > -1 and question < 23:
-                    self.memory[user_id]["booking_stime"] = "{:02d}:00".format(int(question))
+                    booking_datetime = datetime.datetime.strptime("{} {:02d}".format(self.memory[user_id]["booking_date"], question), "%Y/%m/%d %H")
+                    if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
+                        self.memory[user_id]["booking_stime"] = "{:02d}:00".format(question)
             elif re.search("^([\d]{1,2})-([\d]{1,2})$", question):
                 m = re.match("([\d]{1,2})-([\d]{1,2})", question)
 
                 stime, etime = int(m.group(1)), int(m.group(2))
                 if stime > -1 and etime > 0 and stime < 23 and etime < 24 and etime > stime:
-                    self.memory[user_id]["booking_stime"] = "{:02d}:00".format(stime)
-                    self.memory[user_id]["booking_etime"] = "{:02d}:00".format(etime)
+                    booking_datetime = datetime.datetime.strptime("{} {:02d}".format(self.memory[user_id]["booking_date"], stime), "%Y/%m/%d %H")
+                    if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
+                        self.memory[user_id]["booking_stime"] = "{:02d}:00".format(stime)
+                        self.memory[user_id]["booking_etime"] = "{:02d}:00".format(etime)
         elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("booking_etime", None) is None:
             question = int(question)
             if question > 0 and question < 24:
@@ -820,14 +865,14 @@ if __name__ == "__main__":
     creation_datetime = "2017-02-20 07:57:04"
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
-    question = "ticket_tra=retry+164"
+    #question = "ticket_tra=retry+164"
     #print mode_tra_ticket.conversion(question, user_id)
-    print mode_tra_ticket.is_list_command("list", user_id)
+    print mode_tra_ticket.is_list_command(user_id, "list")
 
     #print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 
     '''
-    questions = [person_id, "2017/03/06", "10-22", "台南", "花蓮", "1", "全部車種", "ticket_tra=confirm"]
+    questions = [person_id, "2017/02/28", "18-23", "台南", "高雄", "1", "全部車種"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -835,10 +880,9 @@ if __name__ == "__main__":
         elif isinstance(message, list):
             for m in message:
                 print m
-        else:
-            print message.as_json_string()
+    print mode_tra_ticket.memory[user_id]
 
-    questions = ["booking_type=general", person_id, "0921747196", "2017/03/06", "17", "23", "左營", "南港", "1", "0", "ticket_thsr=confirm"]
+    questions = ["booking_type=general", person_id, "0921747196", "2017/02/28", "18", "23", "左營", "南港", "1", "0"]
     for question in questions:
         message = mode_thsr_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -846,6 +890,6 @@ if __name__ == "__main__":
         elif isinstance(message, list):
             for m in message:
                 print m
-        elif message is not None:
-            print message.as_json_string()
+
+    print mode_thsr_ticket.memory[user_id]
     '''

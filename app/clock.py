@@ -4,6 +4,9 @@ import time
 import click
 import threading
 
+from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket, TRA, THSR
+from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_PAY, TICKET_STATUS_CANCELED, TRAUtils
+
 from lib.common.utils import log
 from lib.bot import fxrate, weather, lucky, bus
 
@@ -47,15 +50,43 @@ class BotThread(threading.Thread):
 
             time.sleep(self.sleeping)
 
+class TicketThread(threading.Thread):
+    def init_bot(self, mode):
+        if mode == TRA:
+            self.ticket = mode_tra_ticket
+        elif mode == THSR:
+            self.ticket = mode_thsr_ticket
+        else:
+            raise NotImplementedError
+
+    def set_sleeping(self, sleeping):
+        self.sleeping = sleeping
+
+    def run(self):
+        while True:
+            try:
+                for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_BOOKED):
+                    user_id, ticket_number, person_id, tid = row
+
+                    status = TRAUtils.get_status(person_id, ticket_number)
+                    if status in [TICKET_STATUS_PAY, TICKET_STATUS_CANCELED]:
+                        self.ticket.db.modify_status(user_id, tid, status)
+            except Exception as e:
+                log(e)
+
+            time.sleep(self.sleeping)
+
 @click.command()
 def main():
+    threads = []
+
+    '''
     fxrate.bot.init()
     weather.bot.init()
     lucky.bot.init()
     bus.bot.init()
     bus.bot.hourly_job()
 
-    threads = []
     for bot_name, sleeping in zip(["weather", "fxrate", "lucky", "bus"], [900, 60, 3600, 40]):
         thread = BotThread()
         thread.init_bot(bot_name)
@@ -63,6 +94,15 @@ def main():
 
         thread.start()
 
+        threads.append(thread)
+    '''
+
+    for mode, sleeping in zip([TRA, THSR], [60, 60]):
+        thread = TicketThread()
+        thread.init_bot(mode)
+        thread.set_sleeping(sleeping)
+
+        thread.start()
         threads.append(thread)
 
     for t in threads:

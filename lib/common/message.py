@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
+
 from lib.common.utils import MODE_NORMAL, MODE_LOTTO, MODE_TRA_TICKET, MODE_THSR_TICKET
 
 def txt_hello(user_name, answer):
@@ -87,7 +89,7 @@ def txt_ticket_phone():
     return "請輸入手機號碼(例：0912345678)"
 
 def txt_ticket_getindate():
-    return "請輸入欲搭車日期(例：20170309)"
+    return "請輸入欲搭車日期(例：{})".format((datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y%m%d"))
 
 def txt_ticket_stime():
     return "請輸入起始時間(0-22)"
