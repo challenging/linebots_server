@@ -796,7 +796,7 @@ class THSRTicketMode(TRATicketMode):
 
                 reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
             else:
-                if question == "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM):
+                if question == "ticket_{}={}".format(self.ticket_type, TICKET_STATUS_CONFIRM) and "creation_datetime" in self.memory[user_id]:
                     del self.memory[user_id]["creation_datetime"]
 
                     cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
