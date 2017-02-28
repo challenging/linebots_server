@@ -23,7 +23,7 @@ from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket
 
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
-from lib.ticket.utils import TRAUtils
+from lib.ticket.utils import TRAUtils, TICKET_COUNT
 from lib.ticket.utils import thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
 from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY
 from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY
@@ -40,8 +40,6 @@ TYPE = [TRA, THSR]
 
 class TicketDB(DB):
     table_name = "ticket"
-
-    THRESHOLD_TICKET_COUNT = 4
 
     DIFF_TRA = 14
     DIFF_THSR = 27
@@ -65,7 +63,7 @@ class TicketDB(DB):
             count_select = row[0]
 
         count_insert = 0
-        if count_select < self.THRESHOLD_TICKET_COUNT:
+        if count_select < self.TICKET_COUNT:
             sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}');".format(\
                 self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, ticket, TICKET_STATUS_SCHEDULED)
             cursor.execute(sql)
@@ -647,8 +645,8 @@ class TRATicketMode(TicketMode):
                     if ci > 0:
                         reply_txt = txt_ticket_scheduled()
                     else:
-                        if cs > self.db.THRESHOLD_TICKET_COUNT-1:
-                            reply_txt = txt_ticket_thankletter().format(self.db.THRESHOLD_TICKET_COUNT)
+                        if cs > self.db.TICKET_COUNT-1:
+                            reply_txt = txt_ticket_thankletter()
                         else:
                             reply_txt = txt_ticket_error()
 
@@ -804,8 +802,8 @@ class THSRTicketMode(TRATicketMode):
                     if ci > 0:
                         reply_txt = txt_ticket_scheduled()
                     else:
-                        if cs > self.db.THRESHOLD_TICKET_COUNT-1:
-                            reply_txt = txt_ticket_thankletter().format(self.db.THRESHOLD_TICKET_COUNT)
+                        if cs > self.db.TICKET_COUNT-1:
+                            reply_txt = txt_ticket_thankletter().format(self.db.TICKET_COUNT)
                         else:
                             reply_txt = txt_ticket_error()
 

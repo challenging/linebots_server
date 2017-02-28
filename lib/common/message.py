@@ -3,6 +3,7 @@
 
 import datetime
 
+from lib.ticket.utils import TICKET_COUNT
 from lib.common.utils import MODE_NORMAL, MODE_LOTTO, MODE_TRA_TICKET, MODE_THSR_TICKET
 
 def txt_hello(user_name, answer):
@@ -125,7 +126,7 @@ def txt_ticket_zero():
     return "目前並無預定車票"
 
 def txt_ticket_thankletter():
-    return "最多允許同時可預定{}票。可先取消不需要預訂票，再輸入新預訂票，謝謝"
+    return "最多允許同時可預定{}票。可先取消不需要預訂票，再輸入新預訂票，謝謝".format(TICKET_COUNT)
 
 def txt_ticket_continued():
     return "繼續訂票"

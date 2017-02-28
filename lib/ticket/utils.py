@@ -9,6 +9,7 @@ import urllib2
 from lib.common.utils import check_folder, data_dir
 
 TICKET_RETRY = 4
+TICKET_COUNT = 4
 
 TICKET_STATUS_BOOKED = "booked"
 TICKET_STATUS_UNSCHEDULED = "unscheduled"
