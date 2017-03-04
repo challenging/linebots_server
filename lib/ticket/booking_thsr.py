@@ -219,7 +219,7 @@ def cancel_ticket(person_id, ticket_number, driver="phantom"):
         try:
             opener.find_element_by_name("TicketProcessButtonPanel:CancelSeatsButton").click()
         except NoSuchElementException as e:
-            if opener.find_element_by_id("error") == u"查無此筆記錄":
+            if opener.find_element_by_id("error").text == u"查無此筆記錄":
                 is_cancelled = True
                 continue
 
