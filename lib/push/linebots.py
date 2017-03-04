@@ -131,7 +131,7 @@ if __name__ == "__main__":
     #booking_tra_ticket("chrome")
     #booking_thsr_ticket("chrome")
 
-    message = mode_tra_ticket.conversion("list", user_id)
+    message = mode_thsr_ticket.conversion("list", user_id)
     line_bot_api.push_message(user_id, message)
 
     #for row in mode_tra_ticket.db.check_booking(TRA):

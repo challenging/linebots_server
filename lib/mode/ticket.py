@@ -243,7 +243,7 @@ class TicketMode(Mode):
             reply_txt = "此高鐵票號({})已取消".format(ticket_number)
         else:
             person_id = self.db.get_person_id(user_id, ticket_number, THSR)
-            is_cancel = booking_thsr.cancel_ticket(person_id, ticket_number, driver="phantom")
+            is_cancel = booking_thsr.cancel_ticket(person_id, ticket_number)
 
             reply_txt = "取消高鐵車票({})失敗，請稍後再試或請上高鐵網站取消".format(ticket_number)
             if is_cancel:
@@ -863,9 +863,9 @@ if __name__ == "__main__":
     creation_datetime = "2017-02-20 07:57:04"
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
-    #question = "ticket_tra=retry+164"
-    #print mode_tra_ticket.conversion(question, user_id)
-    print mode_tra_ticket.is_list_command(user_id, "list")
+    question = "ticket_thsr=canceled+08033932"
+    print mode_thsr_ticket.conversion(question, user_id)
+    #print mode_thsr_ticket.is_list_command(user_id, "list")
 
     #print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 

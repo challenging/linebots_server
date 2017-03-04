@@ -210,14 +210,18 @@ def cancel_ticket(person_id, ticket_number, driver="chrome"):
         opener.get("https://irs.thsrc.com.tw/IMINT/?wicket:bookmarkablePage=:tw.com.mitac.webapp.thsr.viewer.History")
 
         # step 1
-        print person_id, ticket_number
         opener.find_element_by_id("idInputRadio1").click()
         opener.find_element_by_id("rocId").send_keys(person_id)
         opener.find_element_by_name("orderId").send_keys(ticket_number)
         opener.find_element_by_name("SubmitButton").click()
 
         # step 2
-        opener.find_element_by_name("TicketProcessButtonPanel:CancelSeatsButton").click()
+        try:
+            opener.find_element_by_name("TicketProcessButtonPanel:CancelSeatsButton").click()
+        except NoSuchElementException as e:
+            if opener.find_element_by_id("error") == u"查無此筆記錄":
+                is_cancelled = True
+                continue
 
         filepath_canceled_ticket = os.path.join(thsr_cancel_dir(), "person_id={};ticket_number={}.2.jpg".format(person_id, ticket_number))
         opener.save_screenshot(filepath_canceled_ticket)
