@@ -453,7 +453,7 @@ class TicketMode(Mode):
                 v = ticket.get(k, None)
                 print k
                 if v is None:
-                    v = ticket[u"起訖站"]
+                    v = ticket[u"起迄站"]
 
                 if v.count(":") in [0, 2] and v.find(u"：") == -1:
                     body.append("{}: {}".format(k.encode(UTF8), v.encode(UTF8)))
