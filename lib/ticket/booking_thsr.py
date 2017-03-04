@@ -196,7 +196,7 @@ def book_ticket(param, cropped=2, driver="phantom"):
 
     return ticket_number, (train_type, train_count, train_number, start_station, end_station, date, stime, etime, money)
 
-def cancel_ticket(person_id, ticket_number, driver="chrome"):
+def cancel_ticket(person_id, ticket_number, driver="phantom"):
     is_cancelled = False
 
     opener = None
