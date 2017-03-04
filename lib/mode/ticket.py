@@ -451,7 +451,6 @@ class TicketMode(Mode):
 
             for k in headers:
                 v = ticket.get(k, None)
-                print k
                 if v is None:
                     v = ticket[u"起迄站"]
 
