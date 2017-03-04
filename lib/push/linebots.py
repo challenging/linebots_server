@@ -49,7 +49,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
                 if ticket_number is not None:
                     train_number, train_type, train_count, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
                     info = {"票號": ticket_number,
-                            "車次/車種": "{}, {}".format(train_number, train_type),
+                            "車次/車種": "{}, {}".format(train_number, train_type.encode(UTF8)),
                             "起迄站": "{} - {}, {}張".format(start_station.encode(UTF8), end_station.encode(UTF8), train_count),
                             "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
