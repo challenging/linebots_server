@@ -64,16 +64,16 @@ class BusBot(Bot):
 
         self.dataset = [("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taipei?$top=30000&$format=JSON".format(self.ticket), "time_taipei.json"),
                         ("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/NewTaipei?$top=30000&$format=JSON".format(self.ticket), "time_newtaipei.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taoyuan?$top=30000&$format=JSON".format(self.ticket), "time_taoyuan.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taichung?$top=30000&$format=JSON".format(self.ticket), "time_taichung.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung?$top=30000&$format=JSON".format(self.ticket), "time_kaosiung.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Tainan?$top=30000&$format=JSON".format(self.ticket), "time_tainan.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taoyuan?$top=30000&$format=JSON".format(self.ticket), "time_taoyuan.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Taichung?$top=30000&$format=JSON".format(self.ticket), "time_taichung.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Kaohsiung?$top=30000&$format=JSON".format(self.ticket), "time_kaosiung.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/Tainan?$top=30000&$format=JSON".format(self.ticket), "time_tainan.json"),
                         ("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Taipei?$top=30000&$format=JSON".format(self.ticket), "stop_taipei.json"),
                         ("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/NewTaipei?$top=30000&$format=JSON".format(self.ticket), "stop_newtaipei.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Taoyuan?$top=30000&$format=JSON".format(self.ticket), "stop_taoyuan.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Taichung?$top=30000&$format=JSON".format(self.ticket), "stop_taichung.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Kaohsiung?$top=30000&$format=JSON".format(self.ticket), "stop_kaosiung.json"),
-                        ("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Tainan?$top=30000&$format=JSON".format(self.ticket), "stop_tainan.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Taoyuan?$top=30000&$format=JSON".format(self.ticket), "stop_taoyuan.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Taichung?$top=30000&$format=JSON".format(self.ticket), "stop_taichung.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Kaohsiung?$top=30000&$format=JSON".format(self.ticket), "stop_kaosiung.json"),
+                        #("http://ptx.transportdata.tw/MOTC/v2/Bus/Route/City/Tainan?$top=30000&$format=JSON".format(self.ticket), "stop_tainan.json"),
                        ]
 
     def crawl_job(self):
