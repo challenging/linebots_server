@@ -411,7 +411,7 @@ class TicketMode(Mode):
         else:
             message = "高鐵預約訂票 - {}\n================\n".format(id)
 
-        for name, k in [("訂票ID", "person_id"), ("聯絡方式", "cellphone"), ("搭車時間", "booking_setime"), ("起迄站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試訂票次數", "retry")]:
+        for name, k in [("訂票ID", "person_id"), ("搭車時間", "booking_setime"), ("起迄站", "booking_station"), ("成人/小孩/學生張數", "booking_amount"), ("嘗試訂票次數", "retry")]:
             if k == "booking_setime":
                 message += "{}: {} {}-{}\n".format(name, ticket["booking_date"], ticket["booking_stime"].split(":")[0], ticket["booking_etime"].split(":")[0])
             elif k == "booking_station":
@@ -429,6 +429,8 @@ class TicketMode(Mode):
                     message += "{}/".format(ticket.get(amount, 0))
                 message = message.strip("/")
                 message += "\n"
+            elif k == "person_id":
+                message += "{}: {}, {}\n".format(name, ticket[k], ticket["cellphone"])
             elif ticket.get(k, None) is not None:
                 message += "{}: {}\n".format(name, ticket[k].encode(UTF8) if isinstance(ticket[k], unicode) else ticket[k])
 
@@ -860,10 +862,11 @@ mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
+    user_id = "Uf97b5034ef9534329fba1a3dad4b09e7"
     creation_datetime = "2017-02-20 07:57:04"
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
-    question = "ticket_thsr=canceled+08033932"
+    question = "list"
     print mode_thsr_ticket.conversion(question, user_id)
     #print mode_thsr_ticket.is_list_command(user_id, "list")
 
