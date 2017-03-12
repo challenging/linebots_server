@@ -9,8 +9,10 @@ from PIL import Image
 from lib.ocr.cracker import init_model, crack_tra
 from lib.ocr.utils import get_digest
 from lib.common.utils import get_chrome_driver, get_phantom_driver, log
-from lib.ticket.utils import URL_TRA
+from lib.ticket.utils import URL_TRA, URL_TRAINNO_TRA
 from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_fail_dir, tra_ticket_dir
+
+from selenium.common.exceptions import NoSuchElementException
 
 init_model("tra")
 
@@ -21,6 +23,8 @@ def book_ticket(param, cropped=1, driver="phantom"):
     else:
         web_opener = get_phantom_driver()
 
+    is_trainno = param.get("train_no", None)
+
     retry = 2
     train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time= None, None, None, None, None, None, None, None
 
@@ -28,12 +32,18 @@ def book_ticket(param, cropped=1, driver="phantom"):
     while retry >= 0:
         tickets = []
 
-        web_opener.get(URL_TRA)
+        if is_trainno is None:
+            web_opener.get(URL_TRA)
+        else:
+            web_opener.get(URL_TRAINNO_TRA)
 
         for key, value in param.items():
             if isinstance(value, (str, unicode)):
-                element = web_opener.find_element_by_id(key)
-                element.send_keys(param[key])
+                try:
+                    element = web_opener.find_element_by_id(key)
+                    element.send_keys(param[key])
+                except NoSuchElementException as e:
+                    pass
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
 
@@ -59,11 +69,9 @@ def book_ticket(param, cropped=1, driver="phantom"):
         answer = crack_tra(im_filepath, cropped, basefolder=os.path.join(tra_img_dir(), ".."))
         web_opener.find_element_by_id("randInput").send_keys(answer)
         log("for {}, the predicted input is {}".format(im_filepath, answer))
-        time.sleep(2)
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
         web_opener.save_screenshot("/tmp/{}.jpg".format(retry))
-        time.sleep(5)
 
         for ticket in web_opener.find_elements_by_tag_name("a"):
             url = ticket.get_attribute("href")
@@ -74,7 +82,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
                     break
 
                 ticket.click()
-                time.sleep(random.randint(1, 5))
+                #time.sleep(random.randint(1, 5))
 
                 destination = os.path.join(tra_success_dir(), os.path.basename(im_filepath))
                 os.rename(im_filepath, destination)
@@ -102,13 +110,10 @@ def book_ticket(param, cropped=1, driver="phantom"):
     return ticket_number, ticket_filepath, (train_number, train_type, param["order_qty_str"], start_date, start_time, start_station, end_station, end_date, end_time)
 
 if __name__ == "__main__":
-    testing_params = {"person_id": "L122760167",
-                  "getin_date": "2017/02/22-00",
-                  "from_station": "106",
-                  "to_station": "130",
-                  "order_qty_str": "1",
-                  "train_type": "*4",
-                  "getin_start_dtime": "09:00",
-                  "getin_end_dtime": "17:00"}
+    param = {'to_station': '185', 'tra_mode': 'time', 'getin_end_dtime': '23:00', 'getin_date': '2017/03/15-00', 'order_qty_str': '1', 'getin_start_dtime': '18:00', 'train_type': '*4', 'from_station': '175', 'person_id': 'L122760167'}
 
-    print book_ticket(testing_params)
+    #print book_ticket(param, driver="chrome")
+
+    param = {'to_station': '185', 'tra_mode': 'train_no', 'train_no': '113', 'getin_date': '2017/03/15-00', 'order_qty_str': '1', 'from_station': '175', 'person_id': 'L122760167'}
+
+    print book_ticket(param, driver="chrome")

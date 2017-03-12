@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import json
 import requests
 import urllib
 import urllib2
@@ -31,6 +32,20 @@ TICKET_HEADERS_BOOKED_TRA = [u"懶人ID", u"票號", u"車次/車種", u"搭乘�
 TICKET_HEADERS_BOOKED_THSR = [u"懶人ID", u"票號", u"車廂", u"車次", u"搭乘時間", u"起迄站", u"票數", u"付款金額"]
 
 URL_TRA = "http://railway1.hinet.net/csearch.htm"
+URL_TRAINNO_TRA = "http://railway.hinet.net/ctno1.htm"
+
+TIMESHEET_TRA = "/Users/rongqichen/Documents/programs/line_bots/github/etc/captcha/tra/timesheet.json"
+
+def load_tra_trainno(filepath=os.path.join(data_dir("captcha"), "tra", "timesheet.json")):
+    timesheet = None
+    with open(filepath, "rb") as in_file:
+        timesheet = json.load(in_file)
+
+    trains = set()
+    for train in timesheet["TrainInfos"]:
+        trains.add(train["Train"])
+
+    return trains
 
 def tra_dir(f):
     folder = os.path.join(data_dir("captcha"), "tra", f)
@@ -303,5 +318,9 @@ class TRAUtils(object):
         return status
 
 if __name__ == "__main__":
-    print TRAUtils.get_status("l122760167", "977287")
-    print TRAUtils.get_status("l122760167", "208433")
+    #print TRAUtils.get_status("l122760167", "977287")
+    #print TRAUtils.get_status("l122760167", "208433")
+
+    timesheet_tra = load_tra_timesheep()
+    for k in timesheet_tra["TrainInfos"]:
+        print k["Train"]

@@ -145,3 +145,12 @@ def txt_ticket_split():
 
 def txt_ticket_forget():
     return "忘記此儲存訂票資料"
+
+def txt_ticket_trainno():
+    return "請輸入車次"
+
+def txt_ticket_tra_qty():
+    return "請輸入張數(1-6)"
+
+def txt_ticket_train_type():
+    return "請輸入車種"
