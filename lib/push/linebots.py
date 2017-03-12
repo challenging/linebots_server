@@ -36,7 +36,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
             is_time = param.get("train_no", None) is None
 
             if is_time:
-                astime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
+                stime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
                 stime, etime = int(stime.split(":")[0]), int(etime.split(":")[0])
 
             for sdtime in range(stime, etime, batch_time):

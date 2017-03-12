@@ -281,7 +281,8 @@ class TicketMode(Mode):
                     title="請選擇下列選單",
                     text="Please click one of the following services",
                     actions=[MessageTemplateAction(label=txt_ticket_forget(), text="ticket_{}={}".format(self.ticket_type, TICKET_STATUS_FORGET)),
-                             MessageTemplateAction(label="開始訂票", text="開始訂票")]
+                             MessageTemplateAction(label="開始訂票", text="開始訂票"),
+                             MessageTemplateAction(label="查詢訂票", text="查詢")]
                 ))
         elif re.search("^ticket_({})={}$".format("|".join(TYPE), TICKET_STATUS_FORGET), question):
             m = re.match("^ticket_({})={}$".format("|".join(TYPE), TICKET_STATUS_FORGET), question)
