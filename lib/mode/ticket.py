@@ -584,14 +584,6 @@ class TRATicketMode(TicketMode):
 
         if check_taiwan_id_number(question):
             is_setting = self.set_memory(user_id, "person_id", question.upper())
-        elif self.memory[user_id].get("tra_mode", None) is None:
-            if question.lower() == "ticket_tra_mode=time":
-                is_setting = self.set_memory(user_id, "tra_mode", "time")
-            elif question.lower() == "ticket_tra_mode=train_no":
-                self.memory[user_id]["tra_mode"] = "train_no"
-                is_setting = self.set_memory(user_id, "tra_mode", "train_no")
-            else:
-                pass
         elif (re.search("([\d]{4})/([\d]{2})/([\d]{2})", question) or re.search("([\d]{8,8})", question)) and self.memory[user_id].get("getin_date", None) is None:
             try:
                 booked_date = None
@@ -604,6 +596,14 @@ class TRATicketMode(TicketMode):
                     is_setting = self.set_memory(user_id, "getin_date", booked_date.strftime("%Y/%m/%d-00"))
             except ValueError as e:
                log("Error: {}".format(e))
+        elif self.memory[user_id].get("tra_mode", None) is None:
+            if question.lower() == "ticket_tra_mode=time":
+                is_setting = self.set_memory(user_id, "tra_mode", "time")
+            elif question.lower() == "ticket_tra_mode=train_no":
+                self.memory[user_id]["tra_mode"] = "train_no"
+                is_setting = self.set_memory(user_id, "tra_mode", "train_no")
+            else:
+                pass
         elif self.memory[user_id].get("tra_mode", None) == "time":
             if self.memory[user_id].get("getin_start_dtime", None) is None:
                 if re.search("^([\d]{1,2})$", question):
@@ -744,6 +744,7 @@ class TRATicketMode(TicketMode):
         for k, v in self.memory[user_id].items():
             if k not in passing_fields and v is None:
                 is_pass = False
+                print k
 
                 break
 
@@ -934,7 +935,7 @@ if __name__ == "__main__":
 
     #print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 
-    questions = [person_id, "ticket_tra_mode=time", "2017/03/15", "18-23", "台南", "高雄", "1", "全部車種"]
+    questions = [person_id, "ticket_tra_mode=time", "2017/03/15", "18-23", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
@@ -946,7 +947,7 @@ if __name__ == "__main__":
     print mode_tra_ticket.memory[user_id]
 
     mode_tra_ticket.reset_memory(user_id, "reset")
-    questions = [person_id, "ticket_tra_mode=train_no", "108", "2017/03/15", "台南", "高雄", "1"]
+    questions = [person_id, "ticket_tra_mode=train_no", "113", "2017/03/15", "台南", "高雄", "1", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
