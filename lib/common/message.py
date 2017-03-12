@@ -105,7 +105,7 @@ def txt_ticket_estation():
     return "請輸入下車車站"
 
 def txt_ticket_scheduled():
-    return "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候"
+    return "懶人RC開始為您訂票，若有消息會立即通知，請耐心等候。若要繼續訂票，請輸入任意字元。"
 
 def txt_ticket_confirm():
     return "確認訂票"
