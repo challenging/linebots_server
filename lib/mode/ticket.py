@@ -642,14 +642,14 @@ class TRATicketMode(TicketMode):
 
         if self.memory[user_id].get("person_id", None) is None:
             reply_txt = txt_ticket_taiwanid()
+        elif self.memory[user_id].get("getin_date", None) is None:
+            reply_txt = txt_ticket_getindate()
         elif self.memory[user_id].get("tra_mode", None) is None:
             template = ConfirmTemplate(text="請選擇訂票方式", actions=[
                     MessageTemplateAction(label="時間區間訂票", text='ticket_tra_mode=time'),
                     MessageTemplateAction(label="車次訂票", text='ticket_tra_mode=train_no')])
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
-        elif self.memory[user_id].get("tra_mode", None) == "time" and self.memory[user_id].get("getin_date", None) is None:
-            reply_txt = txt_ticket_getindate()
         elif self.memory[user_id].get("tra_mode", None) == "time" and self.memory[user_id].get("getin_start_dtime", None) is None:
             reply_txt = txt_ticket_stime()
         elif self.memory[user_id].get("tra_mode", None) == "time" and self.memory[user_id].get("getin_end_dtime", None) is None:
