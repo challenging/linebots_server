@@ -36,7 +36,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
             is_time = param.get("train_no", None) is None
 
             if is_time:
-                stime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
+                astime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
                 stime, etime = int(stime.split(":")[0]), int(etime.split(":")[0])
 
             for sdtime in range(stime, etime, batch_time):
@@ -52,7 +52,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
                 if ticket_number is not None:
                     train_number, train_type, train_count, start_date, start_time, start_station, end_station, end_date, end_time = ticket_info
                     info = {"票號": ticket_number,
-                            "車次/車種": "{}, {}".format(train_number, train_type.encode(UTF8)),
+                            "車次/車種": "{}/{}".format(train_number, train_type.encode(UTF8)),
                             "起迄站": "{} - {}, {}張".format(start_station.encode(UTF8), end_station.encode(UTF8), train_count),
                             "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
@@ -60,7 +60,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
                     txt = "電腦代號: {}\n".format(ticket_number)
                     txt += "{}\n".format("="*20)
-                    txt += "車次/車種: {}\n".format(train_number, train_type.encode(UTF8))
+                    txt += "車次/車種: {}/{}\n".format(train_number, train_type.encode(UTF8))
                     txt += "起迄站: {} - {}, {}張\n".format(start_station.encode(UTF8), end_station.encode(UTF8), train_count)
                     txt += "搭乘時間: {} {} - {}\n".format(start_date, start_time, end_time)
                     txt += "訂票成功，請自行使用台鐵付款方式"
