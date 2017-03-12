@@ -280,7 +280,8 @@ class TicketMode(Mode):
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                     title="請選擇下列選單",
                     text="Please click one of the following services",
-                    actions=[MessageTemplateAction(label=txt_ticket_forget(), text="ticket_{}={}".format(self.ticket_type, TICKET_STATUS_FORGET))]
+                    actions=[MessageTemplateAction(label=txt_ticket_forget(), text="ticket_{}={}".format(self.ticket_type, TICKET_STATUS_FORGET)),
+                             MessageTemplateAction(label="開始訂票", text="開始訂票")]
                 ))
         elif re.search("^ticket_({})={}$".format("|".join(TYPE), TICKET_STATUS_FORGET), question):
             m = re.match("^ticket_({})={}$".format("|".join(TYPE), TICKET_STATUS_FORGET), question)
@@ -661,7 +662,7 @@ class TRATicketMode(TicketMode):
             reply_txt = txt_ticket_estation()
         elif self.memory[user_id].get("order_qty_str", None) is None:
             reply_txt = txt_ticket_tra_qty()
-        elif self.memory[user_id].get("train_type", None) is None:
+        elif self.memory[user_id].get("tra_mode", None) == "time" and self.memory[user_id].get("train_type", None) is None:
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(
                 title=txt_ticket_train_type(),
                 text="What kind of train do you choose?",
