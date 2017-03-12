@@ -23,7 +23,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
     else:
         web_opener = get_phantom_driver()
 
-    is_trainno = param.get("train_no", None)
+    is_time = param.get("train_no", None) is None
 
     retry = 2
     train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time= None, None, None, None, None, None, None, None
@@ -32,7 +32,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
     while retry >= 0:
         tickets = []
 
-        if is_trainno is None:
+        if is_time:
             web_opener.get(URL_TRA)
         else:
             web_opener.get(URL_TRAINNO_TRA)
@@ -46,6 +46,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
                     pass
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
+        time.sleep(random.randint(2, 3))
 
         img = web_opener.find_element_by_xpath("//img[@id='idRandomPic']")
         location = img.location
@@ -73,32 +74,53 @@ def book_ticket(param, cropped=1, driver="phantom"):
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
         web_opener.save_screenshot("/tmp/{}.jpg".format(retry))
 
-        for ticket in web_opener.find_elements_by_tag_name("a"):
-            url = ticket.get_attribute("href")
-            if url.find("check_ctno1.jsp") > -1:
-                for e in web_opener.find_elements_by_xpath("//tr[@class='gray01 text_10p']"):
-                    train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = e.text.split()
+        if is_time:
+            for ticket in web_opener.find_elements_by_tag_name("a"):
+                url = ticket.get_attribute("href")
+                if url.find("check_ctno1.jsp") > -1:
+                    for e in web_opener.find_elements_by_xpath("//tr[@class='gray01 text_10p']"):
+                        info = e.text.split()
+                        train_number, train_type, start_date, start_time, start_station, end_station, end_date, end_time = info[:8]
+
+                        break
+
+                    ticket.click()
+                    time.sleep(random.randint(1, 5))
+
+                    destination = os.path.join(tra_success_dir(), os.path.basename(im_filepath))
+                    os.rename(im_filepath, destination)
+
+                    ticket_number = web_opener.find_element_by_xpath("//span[@class='hv1 red02 text_14p bold01']").text
+                    param["ticket"] = ticket_number
+
+                    ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(\
+                        param["person_id"], param["ticket"]))
+                    log("the filepath_ticket is {}".format(ticket_filepath))
+
+                    web_opener.save_screenshot(ticket_filepath)
+
+                    retry = -1
 
                     break
+        else:
+            try:
+                ticket_number = web_opener.find_element_by_id("spanOrderCode").text
 
-                ticket.click()
-                #time.sleep(random.randint(1, 5))
+                elements = web_opener.find_elements_by_xpath("//span[@class=\"hv1 blue01 bold01\"]")
 
-                destination = os.path.join(tra_success_dir(), os.path.basename(im_filepath))
-                os.rename(im_filepath, destination)
-
-                ticket_number = web_opener.find_element_by_xpath("//span[@class='hv1 red02 text_14p bold01']").text
-                param["ticket"] = ticket_number
-
-                ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(\
-                    param["person_id"], param["ticket"]))
-                log("the filepath_ticket is {}".format(ticket_filepath))
-
-                web_opener.save_screenshot(ticket_filepath)
+                train_number = elements[1].text
+                train_type = elements[2].text
+                start_date, start_time = elements[3].text.split(" ")
+                start_station = elements[4].text
+                end_station = elements[5].text
+                end_date = "-"
+                end_time = "-"
 
                 retry = -1
+            except NoSuchElementException as e:
+                log(e)
 
-                break
+                retry -= 1
 
         log("book the ticket number - {}".format(ticket_number))
 

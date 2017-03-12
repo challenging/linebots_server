@@ -32,17 +32,20 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
             line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages)))
         else:
-            message = None
+            message, stime, etime = None, 1, 2
+            is_time = param.get("train_no", None) is None
 
-            stime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
-            stime, etime = int(stime.split(":")[0]), int(etime.split(":")[0])
+            if is_time:
+                stime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
+                stime, etime = int(stime.split(":")[0]), int(etime.split(":")[0])
 
             for sdtime in range(stime, etime, batch_time):
-                param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+batch_time))
+                if is_time:
+                    param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+batch_time))
 
                 ticket_number, ticket_filepath, ticket_info = None, None, None
                 try:
-                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
+                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver="chrome")
                 except Exception as e:
                     log(e)
 
