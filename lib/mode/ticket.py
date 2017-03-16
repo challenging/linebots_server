@@ -117,12 +117,10 @@ class TicketDB(DB):
 
     def get_status(self, user_id, ticket_type, ticket_number):
         sql = "SELECT status FROM ticket WHERE user_id = '{}' AND ticket_type = '{}' AND ticket_number = '{}'".format(user_id, ticket_type, ticket_number)
-        print sql
 
         status = None
         for row in self.select(sql):
             status = row[0]
-            print status
 
         return status
 
@@ -175,10 +173,12 @@ class TicketDB(DB):
     def get_person_id(self, user_id, ticket_number, ticket_type):
         sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
             self.table_name, user_id, ticket_number, ticket_type)
+        print sql
 
         person_id = None
         for row in self.select(sql):
             person_id = row[0]
+            print 111, person_id
 
         return person_id
 
@@ -228,7 +228,6 @@ class TicketMode(Mode):
         reply_txt = None
 
         status = self.db.get_status(user_id, TRA, ticket_number)
-        print user_id, ticket_number, status, status != TICKET_STATUS_BOOKED
         if status != TICKET_STATUS_BOOKED:
             reply_txt = "此台鐵票號({})已取消".format(ticket_number)
         else:
