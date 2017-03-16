@@ -117,10 +117,12 @@ class TicketDB(DB):
 
     def get_status(self, user_id, ticket_type, ticket_number):
         sql = "SELECT status FROM ticket WHERE user_id = '{}' AND ticket_type = '{}' AND ticket_number = '{}'".format(user_id, ticket_type, ticket_number)
+        print sql
 
         status = None
         for row in self.select(sql):
             status = row[0]
+            print row
 
         return status
 
@@ -745,7 +747,6 @@ class TRATicketMode(TicketMode):
         for k, v in self.memory[user_id].items():
             if k not in passing_fields and v is None:
                 is_pass = False
-                print k
 
                 break
 
@@ -926,16 +927,17 @@ mode_thsr_ticket = THSRTicketMode(MODE_THSR_TICKET)
 if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
-    user_id = "Uf97b5034ef9534329fba1a3dad4b09e7"
     creation_datetime = "2017-02-20 07:57:04"
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
     #question = "list"
-    #print mode_thsr_ticket.conversion(question, user_id)
+    question = "ticket_tra=canceled+977632"
+    print mode_tra_ticket.conversion(question, user_id)
     #print mode_thsr_ticket.is_list_command(user_id, "list")
 
     #print mode_tra_ticket.db.list_scheduled_tickets(user_id, TRA, [TICKET_STATUS_RETRY, TICKET_STATUS_SCHEDULED])
 
+    '''
     questions = [person_id, "ticket_tra_mode=time", "2017/03/15", "18-23", "台南", "高雄", "1", "全部車種", "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
@@ -958,6 +960,7 @@ if __name__ == "__main__":
             for m in message:
                 print m
     print mode_tra_ticket.memory[user_id]
+    '''
 
     '''
     questions = ["booking_type=general", person_id, "0921747196", "2017/02/28", "18", "23", "左營", "南港", "1", "0"]
