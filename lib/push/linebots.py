@@ -45,7 +45,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
                 ticket_number, ticket_filepath, ticket_info = None, None, None
                 try:
-                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver="chrome")
+                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param)
                 except Exception as e:
                     log(e)
 
