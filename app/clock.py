@@ -3,9 +3,10 @@
 import time
 import click
 import threading
+import datetime
 
 from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket, TRA, THSR
-from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_PAY, TICKET_STATUS_CANCELED, TRAUtils
+from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_PAY, TICKET_STATUS_CANCELED, TICKET_STATUS_RETRY, TRAUtils
 
 from lib.common.utils import log
 from lib.bot import fxrate, weather, lucky, bus
@@ -65,6 +66,14 @@ class TicketThread(threading.Thread):
     def run(self):
         while True:
             try:
+                now = datetime.datetime.now()
+                if (now.hour == 22 and now.minute >= 30 and now.minute <= 55) or (now.hour == 23 and now.minute >= 0 and now.minute <= 5):
+                    for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_RETRY):
+                        user_id, ticket_number, person_id, tid = row
+
+                        self.ticket.db.reset(user_id, self.ticket.ticket_type, tid)
+                        log("reset the ticket({}) of {} for {}".format(tid, self.ticket.ticket_type, user_id))
+
                 for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_BOOKED):
                     user_id, ticket_number, person_id, tid = row
 
