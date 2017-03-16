@@ -122,7 +122,6 @@ class TicketDB(DB):
         status = None
         for row in self.select(sql):
             status = row[0]
-            print row
 
         return status
 
@@ -931,7 +930,7 @@ if __name__ == "__main__":
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
     #question = "list"
-    question = "ticket_tra=canceled+977632"
+    question = "ticket_tra=canceled+336984"
     print mode_tra_ticket.conversion(question, user_id)
     #print mode_thsr_ticket.is_list_command(user_id, "list")
 

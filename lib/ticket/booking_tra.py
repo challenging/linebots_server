@@ -73,6 +73,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
 
         web_opener.find_element_by_xpath("//button[@type='submit']").click()
         web_opener.save_screenshot("/tmp/{}.jpg".format(retry))
+        time.sleep(random.randint(1, 3))
 
         if is_time:
             for ticket in web_opener.find_elements_by_tag_name("a"):
@@ -136,6 +137,6 @@ if __name__ == "__main__":
 
     #print book_ticket(param, driver="chrome")
 
-    param = {'to_station': '185', 'tra_mode': 'train_no', 'train_no': '113', 'getin_date': '2017/03/15-00', 'order_qty_str': '1', 'from_station': '175', 'person_id': 'L122760167'}
+    param = {'to_station': '115', 'tra_mode': 'train_no', 'train_no': '653', 'getin_date': '2017/04/01-00', 'order_qty_str': '1', 'from_station': '100', 'person_id': 'L122760167'}
 
     print book_ticket(param, driver="chrome")

@@ -22,6 +22,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
     batch_time = 8
 
     requests = mode_tra_ticket.db.non_booking(type)
+    print requests
     for user_id, creation_datetime, param, retry, tid in requests:
         if retry >= TICKET_RETRY:
             mode_tra_ticket.db.set_status(user_id, type, TICKET_STATUS_RETRY, tid=tid)
@@ -45,7 +46,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
                 ticket_number, ticket_filepath, ticket_info = None, None, None
                 try:
-                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param)
+                    ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
                 except Exception as e:
                     log(e)
 
@@ -131,11 +132,8 @@ if __name__ == "__main__":
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
     train_type = "thsr"
 
-    #booking_tra_ticket("chrome")
+    booking_tra_ticket("chrome")
     #booking_thsr_ticket("chrome")
 
-    message = mode_thsr_ticket.conversion("list", user_id)
-    line_bot_api.push_message(user_id, message)
-
-    #for row in mode_tra_ticket.db.check_booking(TRA):
-    #    print row
+    #message = mode_thsr_ticket.conversion("list", user_id)
+    #line_bot_api.push_message(user_id, message)
