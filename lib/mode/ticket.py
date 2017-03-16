@@ -122,6 +122,7 @@ class TicketDB(DB):
         status = None
         for row in self.select(sql):
             status = row[0]
+            print status
 
         return status
 
@@ -227,6 +228,7 @@ class TicketMode(Mode):
         reply_txt = None
 
         status = self.db.get_status(user_id, TRA, ticket_number)
+        print user_id, ticket_number, status, status != TICKET_STATUS_BOOKED
         if status != TICKET_STATUS_BOOKED:
             reply_txt = "此台鐵票號({})已取消".format(ticket_number)
         else:
