@@ -292,18 +292,21 @@ class TRAUtils(object):
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
-        # Referer http://railway.hinet.net/ccancel.htm
+        # Referer   http://railway.hinet.net/ccancel.jsp?personId=l122760167&orderCode=336984
         # Upgrade-Insecure-Requests   1
         # Accept  text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
         # User-Agent  Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8
-        headers = {"Referer": "http://railway.hinet.net/ccancel.htm",
-                   "Upgrade-Insecure-Requests": 1,
+        headers = {"Referer": "http://railway.hinet.net/ccancel.jsp?personId={}&orderCode={}".format(person_id.lower(), ticket_number),
+                   "Upgrade-Insecure-Requests": "1",
                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"}
 
-        url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number)
-        f = urllib2.urlopen(url, headers=headers)
+        request = urllib2.Request("{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number), headers=headers)
+        f = urllib2.urlopen(request)
+        print f.headers
+        print f.headers.getparam("charset")
         content = unicode(f.read(), f.headers.getparam('charset'))
+        print content
         print content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;")
         if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
             return True
@@ -338,4 +341,4 @@ if __name__ == "__main__":
         print k["Train"]
     '''
 
-    print TRAUtils.is_canceled("l122760167", "336984")
+    print TRAUtils.is_canceled("l122760167", "073768")

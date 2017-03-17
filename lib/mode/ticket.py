@@ -173,12 +173,10 @@ class TicketDB(DB):
     def get_person_id(self, user_id, ticket_number, ticket_type):
         sql = "SELECT ticket::json->'person_id' as uid FROM {} WHERE user_id = '{}' and ticket_number = '{}' AND ticket_type = '{}' ORDER BY creation_datetime DESC LIMIT 1".format(\
             self.table_name, user_id, ticket_number, ticket_type)
-        print sql
 
         person_id = None
         for row in self.select(sql):
             person_id = row[0]
-            print 111, person_id
 
         return person_id
 
