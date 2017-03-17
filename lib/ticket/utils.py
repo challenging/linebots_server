@@ -7,7 +7,7 @@ import requests
 import urllib
 import urllib2
 
-from lib.common.utils import check_folder, data_dir, get_phantom_driver
+from lib.common.utils import check_folder, data_dir, get_phantom_driver, get_chrome_driver
 
 TICKET_RETRY = 4
 TICKET_COUNT = 4
@@ -286,12 +286,18 @@ def thsr_ticket_dir():
 def thsr_cancel_dir():
     return thsr_dir("cancel")
 
+opener = None
+if opener is None:
+    opener = get_phantom_driver()
+
 class TRAUtils(object):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
     TRA_QUERY_URL = "http://railway.hinet.net/coquery.jsp"
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
+        global opener
+
         url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id.upper(), ticket_number)
 
         '''
@@ -300,15 +306,12 @@ class TRAUtils(object):
         content = unicode(f.read(), f.headers.getparam('charset'))
         '''
 
-        opener = get_phantom_driver()
         opener.get(url)
         content = opener.find_element_by_xpath("//p[@class='orange02']").text
 
         is_passing = False
         if content == u"您的車票取消成功":
             is_passing = True
-
-        opener.quit()
 
         return is_passing
 
@@ -330,6 +333,9 @@ class TRAUtils(object):
 
         return status
 
+if opener is None:
+    opener.quit()
+
 if __name__ == "__main__":
     #print TRAUtils.get_status("l122760167", "977287")
     #print TRAUtils.get_status("l122760167", "208433")
@@ -340,4 +346,4 @@ if __name__ == "__main__":
         print k["Train"]
     '''
 
-    print TRAUtils.is_canceled("l122760167", "577707")
+    print TRAUtils.is_canceled("l122760167", "467818")

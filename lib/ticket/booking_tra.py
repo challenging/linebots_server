@@ -14,14 +14,13 @@ from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_f
 
 from selenium.common.exceptions import NoSuchElementException
 
-init_model("tra")
+web_opener = None
+if web_opener is None:
+    web_opener = get_phantom_driver()
 
+init_model("tra")
 def book_ticket(param, cropped=1, driver="phantom"):
-    web_opener = None
-    if driver == "chrome":
-        web_opener = get_chrome_driver()
-    else:
-        web_opener = get_phantom_driver()
+    global web_opener
 
     is_time = param.get("train_no", None) is None
 
@@ -94,8 +93,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
                     ticket_number = web_opener.find_element_by_xpath("//span[@class='hv1 red02 text_14p bold01']").text
                     param["ticket"] = ticket_number
 
-                    ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(\
-                        param["person_id"], param["ticket"]))
+                    ticket_filepath = os.path.join(tra_ticket_dir(), "id={}_ticket={}.jpg".format(param["person_id"], param["ticket"]))
                     log("the filepath_ticket is {}".format(ticket_filepath))
 
                     web_opener.save_screenshot(ticket_filepath)
@@ -128,9 +126,10 @@ def book_ticket(param, cropped=1, driver="phantom"):
         time.sleep(random.randint(1, 5))
         retry -= 1
 
-    web_opener.quit()
-
     return ticket_number, ticket_filepath, (train_number, train_type, param["order_qty_str"], start_date, start_time, start_station, end_station, end_date, end_time)
+
+if web_opener is not None:
+    web_opener.quit()
 
 if __name__ == "__main__":
     param = {'to_station': '185', 'tra_mode': 'time', 'getin_end_dtime': '23:00', 'getin_date': '2017/03/15-00', 'order_qty_str': '1', 'getin_start_dtime': '18:00', 'train_type': '*4', 'from_station': '175', 'person_id': 'L122760167'}
