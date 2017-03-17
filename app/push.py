@@ -6,7 +6,9 @@ import click
 import random
 import threading
 
-from lib.common.utils import log, channel_access_token
+import psycopg2
+
+from lib.common.utils import log, channel_access_token, CONN
 from lib.common.message import txt_ticket_cancel
 
 from lib.mode.ticket import CTRA, TRA, THSR, mode_tra_ticket
@@ -50,8 +52,15 @@ def run():
     t.start()
 
     while True:
-        booking_tra_ticket(driver)
-        booking_thsr_ticket(driver)
+        try:
+            booking_tra_ticket(driver)
+            booking_thsr_ticket(driver)
+        except psycopg2.DatabaseError as e:
+            if CONN is not None:
+                CONN.close()
+                CONN = None
+
+            CONN = get_db_connect()
 
         time.sleep(random.randint(10, 20))
 

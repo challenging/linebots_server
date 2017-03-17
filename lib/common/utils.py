@@ -67,7 +67,8 @@ def get_db_connection():
                 user=url.username,
                 password=url.password,
                 host=url.hostname,
-                port=url.port
+                port=url.port,
+                connect_timeout=60
         )
 
         CONN.autocommit = True
