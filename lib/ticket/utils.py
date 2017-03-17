@@ -299,6 +299,7 @@ class TRAUtils(object):
         global opener
 
         url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id.upper(), ticket_number)
+        print url
 
         '''
         request = urllib2.Request(url, headers=headers)
