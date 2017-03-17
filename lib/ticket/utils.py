@@ -292,7 +292,7 @@ class TRAUtils(object):
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
-        url = "{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id.upper(), ticket_number)
+        url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id.upper(), ticket_number)
 
         '''
         request = urllib2.Request(url, headers=headers)
