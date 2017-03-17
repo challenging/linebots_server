@@ -66,6 +66,7 @@ class TicketThread(threading.Thread):
     def run(self):
         while True:
             try:
+                '''
                 now = datetime.datetime.now()
                 if (now.hour == 22 and now.minute >= 30 and now.minute <= 55) or (now.hour == 23 and now.minute >= 0 and now.minute <= 5):
                     for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_RETRY):
@@ -73,6 +74,7 @@ class TicketThread(threading.Thread):
 
                         self.ticket.db.reset(user_id, self.ticket.ticket_type, tid)
                         log("reset the ticket({}) of {} for {}".format(tid, self.ticket.ticket_type, user_id))
+                '''
 
                 for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_BOOKED):
                     user_id, ticket_number, person_id, tid = row
