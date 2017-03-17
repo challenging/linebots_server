@@ -294,6 +294,8 @@ class TRAUtils(object):
     def is_canceled(person_id, ticket_number):
         f = urllib2.urlopen("{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number))
         content = unicode(f.read(), f.headers.getparam('charset'))
+        print content
+        print content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;")
         if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
             return True
         else:
