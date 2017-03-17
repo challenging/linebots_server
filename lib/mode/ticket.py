@@ -116,7 +116,8 @@ class TicketDB(DB):
         return [(row[0], row[1], row[2], row[3]) for row in self.select(sql)]
 
     def get_tickets_by_status(self, status, ticket_type):
-        sql = "SELECT user_id, id, ticket_number, ticket::json->'person_id' FROM {} WHERE status = '{}' AND ticket_type = '{}'".format(self.table_name, status, ticket_type)
+        sql = "SELECT user_id, id, ticket_number, ticket::json->'person_id' FROM {} WHERE token = '{}' AND status = '{}' AND ticket_type = '{}'".format(\
+            self.table_name, channel_access_token, status, ticket_type)
 
         for row in self.select(sql):
             yield (row[0], row[1], row[2], row[3])
