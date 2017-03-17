@@ -292,9 +292,18 @@ class TRAUtils(object):
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
-        f = urllib2.urlopen("{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number))
+        # Referer http://railway.hinet.net/ccancel.htm
+        # Upgrade-Insecure-Requests   1
+        # Accept  text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+        # User-Agent  Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8
+        headers = {"Referer": "http://railway.hinet.net/ccancel.htm",
+                   "Upgrade-Insecure-Requests": 1,
+                   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"}
+
+        url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number)
+        f = urllib2.urlopen(url, headers=headers)
         content = unicode(f.read(), f.headers.getparam('charset'))
-        print content
         print content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;")
         if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
             return True
@@ -323,6 +332,10 @@ if __name__ == "__main__":
     #print TRAUtils.get_status("l122760167", "977287")
     #print TRAUtils.get_status("l122760167", "208433")
 
+    '''
     timesheet_tra = load_tra_timesheep()
     for k in timesheet_tra["TrainInfos"]:
         print k["Train"]
+    '''
+
+    print TRAUtils.is_canceled("l122760167", "336984")
