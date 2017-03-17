@@ -7,7 +7,7 @@ import requests
 import urllib
 import urllib2
 
-from lib.common.utils import check_folder, data_dir
+from lib.common.utils import check_folder, data_dir, get_phantom_driver
 
 TICKET_RETRY = 4
 TICKET_COUNT = 4
@@ -292,24 +292,19 @@ class TRAUtils(object):
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
-        # Referer   http://railway.hinet.net/ccancel.jsp?personId=l122760167&orderCode=336984
-        # Upgrade-Insecure-Requests   1
-        # Accept  text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-        # User-Agent  Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8
-        '''
-        headers = {"Referer": "http://railway.hinet.net/ccancel.jsp?personId={}&orderCode={}".format(person_id.lower(), ticket_number),
-                   "Upgrade-Insecure-Requests": "1",
-                   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                   "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8"}
-        '''
+        url = "{}?personId={}&orderCode={}".format(person_id.upper(), ticket_number)
 
-        url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id, ticket_number)
-        print url
-        request = urllib2.Request(url)
+        '''
+        request = urllib2.Request(url, headers=headers)
         f = urllib2.urlopen(request)
         content = unicode(f.read(), f.headers.getparam('charset'))
-        print content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;")
-        if content.find("&#24744;&#30340;&#36554;&#31080;&#21462;&#28040;&#25104;&#21151;") > -1:
+        '''
+
+        opener = get_phantom_driver()
+        opener.get(url)
+        content = opener.find_element_by_xpath("//p[@class='orange02']").text
+
+        if content == u"您的車票取消成功":
             return True
         else:
             return False
@@ -342,4 +337,4 @@ if __name__ == "__main__":
         print k["Train"]
     '''
 
-    print TRAUtils.is_canceled("l122760167", "073768")
+    print TRAUtils.is_canceled("l122760167", "577707")
