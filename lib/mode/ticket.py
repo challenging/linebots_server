@@ -26,7 +26,7 @@ from lib.common.check_taiwan_id import check_taiwan_id_number
 from lib.ticket.utils import TRAUtils, TICKET_COUNT
 from lib.ticket.utils import load_tra_trainno, thsr_stations, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
 from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY
-from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY
+from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL
 from lib.ticket.utils import TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
 
 from lib.ticket import booking_thsr
@@ -115,6 +115,12 @@ class TicketDB(DB):
 
         return [(row[0], row[1], row[2], row[3]) for row in self.select(sql)]
 
+    def get_tickets_by_status(self, status, ticket_type):
+        sql = "SELECT user_id, ticket_number, ticket::json->'person_id' FROM {} WHERE status = '{}' AND ticket_type = '{}'".format(self.table_name, status, ticket_type)
+
+        for row in self.select(sql):
+            yield (row[0], row[1], row[2])
+
     def get_status(self, user_id, ticket_type, ticket_number):
         sql = "SELECT status FROM ticket WHERE user_id = '{}' AND ticket_type = '{}' AND ticket_number = '{}'".format(user_id, ticket_type, ticket_number)
 
@@ -167,6 +173,11 @@ class TicketDB(DB):
 
     def modify_status(self, user_id, tid, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
+
+        return self.cmd(sql)
+
+    def prepare_cancel_ticket(self, user_id, ticket_number, ticket_type, status=TICKET_STATUS_CANCEL):
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND ticket_number = '{}' AND ticket_type = '{}'".format(self.table_name, status, user_id, ticket_number, ticket_type)
 
         return self.cmd(sql)
 
@@ -229,6 +240,7 @@ class TicketMode(Mode):
         if status != TICKET_STATUS_BOOKED:
             reply_txt = "此台鐵票號({})已取消".format(ticket_number)
         else:
+            '''
             person_id = self.db.get_person_id(user_id, ticket_number, TRA)
             reply_txt = "取消台鐵車票({})失敗，請稍後再試或請上台鐵網站取消".format(ticket_number)
 
@@ -237,6 +249,13 @@ class TicketMode(Mode):
                     self.db.set_status(user_id, TRA, TICKET_STATUS_CANCELED, ticket_number)
 
                     reply_txt = txt_ticket_cancel(CTRA, ticket_number)
+            '''
+            count = self.db.prepare_cancel_ticket(user_id, ticket_number, TRA)
+
+            if count > 0:
+                reply_txt = "懶人RC為您取消此張台鐵車票({})，成功後便立即通知".format(ticket_number)
+            else:
+                reply_txt = "懶人RC發生錯誤，請稍後再試"
 
         return reply_txt
 
@@ -929,7 +948,7 @@ if __name__ == "__main__":
     #question = "ticket_tra=memory+738148"
     #question = "ticket_thsr=memory+07123684"
     #question = "list"
-    question = "ticket_tra=canceled+336984"
+    question = "ticket_tra=canceled+721143"
     print mode_tra_ticket.conversion(question, user_id)
     #print mode_thsr_ticket.is_list_command(user_id, "list")
 

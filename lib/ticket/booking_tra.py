@@ -14,13 +14,13 @@ from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_f
 
 from selenium.common.exceptions import NoSuchElementException
 
-web_opener = None
-if web_opener is None:
-    web_opener = get_chrome_driver()
-
 init_model("tra")
 def book_ticket(param, cropped=1, driver="phantom"):
-    global web_opener
+    web_opener = None
+    if driver == "chrome":
+        web_opener = get_chrome_driver()
+    else:
+        web_opener = get_phantom_driver()
 
     is_time = param.get("train_no", None) is None
 
@@ -125,6 +125,8 @@ def book_ticket(param, cropped=1, driver="phantom"):
 
         time.sleep(random.randint(1, 5))
         retry -= 1
+
+    web_opener.quit()
 
     return ticket_number, ticket_filepath, (train_number, train_type, param["order_qty_str"], start_date, start_time, start_station, end_station, end_date, end_time)
 

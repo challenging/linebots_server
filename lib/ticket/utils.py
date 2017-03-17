@@ -7,7 +7,8 @@ import requests
 import urllib
 import urllib2
 
-from lib.common.utils import check_folder, data_dir
+from lib.common.utils import check_folder, data_dir, get_chrome_driver
+from selenium.common.exceptions import NoSuchElementException
 
 TICKET_RETRY = 4
 TICKET_COUNT = 4
@@ -15,6 +16,7 @@ TICKET_COUNT = 4
 TICKET_STATUS_BOOKED = "booked"
 TICKET_STATUS_UNSCHEDULED = "unscheduled"
 TICKET_STATUS_CANCELED = "canceled"
+TICKET_STATUS_CANCEL = "cancel"
 TICKET_STATUS_SCHEDULED = "scheduled"
 TICKET_STATUS_MEMORY = "memory"
 TICKET_STATUS_FORGET = "forget"
@@ -286,6 +288,10 @@ def thsr_ticket_dir():
 def thsr_cancel_dir():
     return thsr_dir("cancel")
 
+opener = None
+if opener is None:
+    opener = get_chrome_driver()
+
 class TRAUtils(object):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
     TRA_QUERY_URL = "http://railway.hinet.net/coquery.jsp"
@@ -295,27 +301,28 @@ class TRAUtils(object):
         global opener
 
         url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id.upper(), ticket_number)
-        print url
 
         headers = {"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                    "Accept-Encoding": "gzip, deflate, sdch",
                    "Accept-Language": "zh-TW,zh;q=0.8,en-US;q=0.6,en;q=0.4",
                    "Connection": "keep-alive",
+                   "Cookie": "FSSBBIl1UgzbN7N80S=e5mvUsiv.nzR.LhlBEKMX8ZcD3VNxHgwEiJu0gqLfhupoSxgzo31PfvCY6y7utLh; NSC_BQQMF=ffffffffaf121a2745525d5f4f58455e445a4a423660; FSSBBIl1UgzbN7N80T=1IGcEqj7a.MrdIju8AnAMwuP1_pr2WMqsOdQHX0bMA4H.Zk9gJLHf.AMA84YhWyueDemKeb8BPeUbRM1nSMZL_RBoR0YH7FEvzWaQ1K6oHUbkD3Gb0RE.eYBesAhcx1MYI9FtA.NduoRt94qKKMkD5kWfi9vM41EnakYwBFZ8CCDzBEW.XMeXWaUgwZihFURFgO5_wX1ff6_klSRt6XA_I3GMNnzFFchAqdftdjtHopH2",
                    "Host": "railway.hinet.net",
                    "Referer": "http://railway.hinet.net/ccancel_rt.jsp?personId={}&orderCode={}".format(person_id.upper(), ticket_number),
                    "Upgrade-Insecure-Requests": "1",
                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36"}
-        print headers
 
+        '''
         request = urllib2.Request(url, headers=headers)
         f = urllib2.urlopen(request)
         content = unicode(f.read(), f.headers.getparam('charset'))
-        print content
+        '''
 
-        '''
         opener.get(url)
-        content = opener.find_element_by_xpath("//p[@class=\"orange02\"]").text
-        '''
+        try:
+            content = opener.find_element_by_xpath("//p[@class=\"orange02\"]").text
+        except NoSuchElementException as e:
+            log("Fail in cancelling the TRA ticket(Error={})".format(e))
 
         is_passing = False
         if content == u"您的車票取消成功":

@@ -134,7 +134,7 @@ def read_cfg(filepath):
 def log(message):
     global logging
 
-    logging.info("{}\t{}\t{}".format(inspect.getmodule(inspect.stack()[1][0]), inspect.stack()[1][3], message))
+    logging.info("{}\t{}\t{}".format(str(inspect.getmodule(inspect.stack()[1][0])).split(" ")[1], inspect.stack()[1][3], message))
 
 if __name__ == "__main__":
     g = get_location(24.58610, 120.82952)
