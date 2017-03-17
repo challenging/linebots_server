@@ -288,7 +288,7 @@ def thsr_cancel_dir():
 
 opener = None
 if opener is None:
-    opener = get_phantom_driver()
+    opener = get_chrome_driver()
 
 class TRAUtils(object):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
@@ -299,7 +299,6 @@ class TRAUtils(object):
         global opener
 
         url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id.upper(), ticket_number)
-        print url
 
         '''
         request = urllib2.Request(url, headers=headers)
@@ -308,7 +307,7 @@ class TRAUtils(object):
         '''
 
         opener.get(url)
-        content = opener.find_element_by_xpath("//p[@class='orange02']").text
+        content = opener.find_element_by_xpath("//p[@class=\"orange02\"]").text
 
         is_passing = False
         if content == u"您的車票取消成功":
@@ -344,4 +343,4 @@ if __name__ == "__main__":
         print k["Train"]
     '''
 
-    print TRAUtils.is_canceled("l122760167", "467818")
+    print TRAUtils.is_canceled("l122760167", "151846")
