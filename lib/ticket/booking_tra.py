@@ -16,7 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 web_opener = None
 if web_opener is None:
-    web_opener = get_phantom_driver()
+    web_opener = get_chrome_driver()
 
 init_model("tra")
 def book_ticket(param, cropped=1, driver="phantom"):
@@ -127,9 +127,6 @@ def book_ticket(param, cropped=1, driver="phantom"):
         retry -= 1
 
     return ticket_number, ticket_filepath, (train_number, train_type, param["order_qty_str"], start_date, start_time, start_station, end_station, end_date, end_time)
-
-if web_opener is not None:
-    web_opener.quit()
 
 if __name__ == "__main__":
     param = {'to_station': '185', 'tra_mode': 'time', 'getin_end_dtime': '23:00', 'getin_date': '2017/03/15-00', 'order_qty_str': '1', 'getin_start_dtime': '18:00', 'train_type': '*4', 'from_station': '175', 'person_id': 'L122760167'}

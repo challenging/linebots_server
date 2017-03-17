@@ -333,9 +333,6 @@ class TRAUtils(object):
 
         return status
 
-if opener is None:
-    opener.quit()
-
 if __name__ == "__main__":
     #print TRAUtils.get_status("l122760167", "977287")
     #print TRAUtils.get_status("l122760167", "208433")
