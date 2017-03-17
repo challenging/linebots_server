@@ -292,7 +292,7 @@ class TRAUtils(object):
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
-        url = "{}?personId={}&orderCode={}".format(person_id.upper(), ticket_number)
+        url = "{}?personId={}&orderCode={}".format(self.TRA_CANCELED_URL, person_id.upper(), ticket_number)
 
         '''
         request = urllib2.Request(url, headers=headers)
@@ -304,10 +304,13 @@ class TRAUtils(object):
         opener.get(url)
         content = opener.find_element_by_xpath("//p[@class='orange02']").text
 
+        is_passing = False
         if content == u"您的車票取消成功":
-            return True
-        else:
-            return False
+            is_passing = True
+
+        opener.quit()
+
+        return is_passing
 
     @staticmethod
     def get_status(person_id, ticket_number):
