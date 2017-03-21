@@ -46,6 +46,7 @@ class TRACancelThread(threading.Thread):
 
 @click.command()
 def run():
+    global CONN
     driver = "chrome"
 
     t = TRACancelThread()
