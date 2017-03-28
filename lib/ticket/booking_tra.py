@@ -15,7 +15,7 @@ from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_f
 from selenium.common.exceptions import NoSuchElementException
 
 init_model("tra")
-def book_ticket(param, cropped=1, driver="phantom"):
+def book_ticket(param, driver="phantom"):
     web_opener = None
     if driver == "chrome":
         web_opener = get_chrome_driver()
@@ -66,7 +66,7 @@ def book_ticket(param, cropped=1, driver="phantom"):
         im.save(im_filepath)
         log("save the cropped image in {}".format(im_filepath))
 
-        answer = crack_tra(im_filepath, cropped, basefolder=os.path.join(tra_img_dir(), ".."))
+        answer = crack_tra(im_filepath, basefolder=os.path.join(tra_img_dir(), ".."))
         web_opener.find_element_by_id("randInput").send_keys(answer)
         log("for {}, the predicted input is {}".format(im_filepath, answer))
 

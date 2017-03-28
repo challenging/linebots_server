@@ -21,7 +21,7 @@ from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, th
 
 init_model("thsr")
 
-def book_ticket(param, cropped=2, driver="phantom"):
+def book_ticket(param, driver="phantom"):
     opener = None
     if driver == "chrome":
         opener = get_chrome_driver()
@@ -103,7 +103,7 @@ def book_ticket(param, cropped=2, driver="phantom"):
                 im.save(im_filepath)
                 log("save cropped image in {}".format(im_filepath))
 
-                answer = crack_thsr(im_filepath, cropped=2)
+                answer = crack_thsr(im_filepath)
 
                 submit = opener.find_element_by_name("homeCaptcha:securityCode")
                 submit.clear()
