@@ -8,7 +8,7 @@ import threading
 
 import psycopg2
 
-from lib.common.utils import log, channel_access_token, get_db_connect, CONN
+from lib.common.utils import log, channel_access_token, get_db_connection, CONN
 from lib.common.message import txt_ticket_cancel
 
 from lib.mode.ticket import CTRA, TRA, THSR, mode_tra_ticket
@@ -61,7 +61,7 @@ def run():
                 CONN.close()
                 CONN = None
 
-            CONN = get_db_connect()
+            CONN = get_db_connection()
 
         time.sleep(random.randint(10, 20))
 
