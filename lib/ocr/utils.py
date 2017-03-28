@@ -79,6 +79,7 @@ def latest_model(model, company="tra"):
     model_h5 = os.path.join(model_dir(company), "model.h5")
 
     if os.path.exists(model_json) and os.path.exists(model_h5):
+        print "load_model from {}, {}".format(model_json, model_h5)
         return load(model_json, model_h5, model)
     else:
         print "Not found {}({}), {}({})".format(\
@@ -95,13 +96,17 @@ def latest_Y(company):
 
     return y
 
-def get_connected_components(g, results, dropped_threshold=10):
+def get_connected_components(g, dropped_threshold=10):
+    results = [[]]
+    width, height = len(g), len(g[0])
+
     def DFS(x, y):
         g[x, y] = 0
+
         for dx in range(-1, 2, 1):
             for dy in range(-1, 2, 1):
                 pos_x, pos_y = x+dx, y+dy
-                if g[pos_x, pos_y]:
+                if pos_x > -1 and pos_y > -1 and pos_x < width and pos_y < height and g[pos_x, pos_y]:
                     DFS(pos_x, pos_y)
 
                     results[-1].append((pos_x, pos_y))
@@ -116,3 +121,58 @@ def get_connected_components(g, results, dropped_threshold=10):
                         del results[-1]
 
                     results.append([])
+
+    del results[-1]
+
+    return results
+
+def calculate_rect_gap(rects):
+    gaps = []
+
+    for idx in range(len(rects)-1):
+        gap = rects[idx+1][0] - rects[idx][2]
+        gaps.append(gap)
+
+    return gaps
+
+def downgrade_image(img, pix_filter):
+    width, height = img.size
+
+    g = []
+    pixdata = img.load()
+    for y in xrange(height):
+        lines = []
+        for x in xrange(width):
+            if pixdata[x, y][0] < pix_filter or pixdata[x, y][1] < pix_filter or pixdata[x, y][2] < pix_filter:
+                lines.append(1)
+            else:
+                lines.append(0)
+        g.append(lines)
+
+    return np.array(g)
+
+def downgrade_image_l(img, pix_filter):
+    width, height = img.size
+
+    pixdata = img.load()
+    for y in xrange(height):
+        for x in xrange(width):
+            if pixdata[x, y][0] < pix_filter or pixdata[x, y][1] < pix_filter or pixdata[x, y][2] < pix_filter:
+                pixdata[x, y] = (0, 0, 0)
+            else:
+                pixdata[x, y] = (255, 255, 255)
+
+def get_cropped_rects(rects, width, height, bold, threshold=(34, 96)):
+    cropped_rects = []
+    for poss in rects:
+        top, left = min([x[0] for x in poss]), min([x[1] for x in poss])
+        bottom, right = max([x[0] for x in poss]), max([x[1] for x in poss])
+
+        left, top = max(0, left-bold), max(0, top-bold)
+        right, bottom = min(width, right+bold), min(height, bottom+bold*2)
+
+        #print bottom, height
+        if right-left < threshold[0] and bottom != height:
+            cropped_rects.append((left, top, right, bottom))
+
+    return sorted(cropped_rects, key=lambda x: x[0])

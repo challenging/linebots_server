@@ -9,7 +9,7 @@ import numpy as np
 from lib.common.utils import check_folder
 
 from lib.ocr.thsr.convert import crop
-from lib.ocr.convert import convert_wb_1, convert_wb_2, crop_component, detect_connected_component
+from lib.ocr.tra.convert import get_number_rects, crop_image
 from lib.ocr.model import cnn_preprocess
 from lib.ocr.utils import latest_Y, latest_model, image_l, data_dir, cracker_dir
 
@@ -28,24 +28,19 @@ def init_model(company):
         model_thsr = latest_model(model_thsr, company)
         model_thsr_y = latest_Y(company)
 
-def crack_tra(input, cropped, basefolder=cracker_dir("tra")):
+def crack_tra(input, basefolder=cracker_dir("tra"), pix_filter=128):
     global model_tra
 
     filename = os.path.basename(input)
+    area = get_number_rects(input)
 
-    filepath_wb_1, _ = convert_wb_1(input)
-    filepath_wb_2, graph = convert_wb_2(filepath_wb_1)
-    area = detect_connected_component(graph)
+    folder = os.path.join(basefolder, "cropped", filename)
+    check_folder(folder, is_folder=True)
 
-    f = filepath_wb_1
-    if cropped == "2":
-        f = filepath_wb_2
-
-    folder = os.path.basename(os.path.dirname(f))
-    crop_component(f, area, folder="cropped_{}".format(folder))
+    crop_image(input, area, folder, pix_filter)
 
     answer = ""
-    scanned_files = os.path.join(basefolder, "cropped_{}".format(folder), filename, "*.jpg")
+    scanned_files = os.path.join(folder, "*.jpg")
     for filepath in sorted(glob.glob(scanned_files), key=os.path.getctime):
         _, csgraph = image_l(filepath)
         dataset, _, _ = cnn_preprocess(np.array([csgraph]))
@@ -56,22 +51,20 @@ def crack_tra(input, cropped, basefolder=cracker_dir("tra")):
 
     return answer
 
-def crack_thsr(input, cropped, basefolder=cracker_dir("thsr")):
+def crack_thsr(input, basefolder=cracker_dir("thsr")):
     global model_thsr, model_thsr_y
 
     init_model("thsr")
 
     filename = os.path.basename(input)
 
-    folder_cropped_1 = os.path.join(basefolder, "cropped_1")
-    folder_cropped_2 = os.path.join(basefolder, "cropped_2")
-    for f in [folder_cropped_1, folder_cropped_2]:
-        check_folder(f, is_folder=True)
+    folder_cropped = os.path.join(basefolder, "cropped")
+    check_folder(folder_cropped, is_folder=True)
 
-    crop(input, folder_cropped_1, folder_cropped_2)
+    crop(input, folder_cropped)
 
     answer = ""
-    scanned_files = os.path.join(basefolder, "cropped_{}".format(cropped), filename, "*.jpg")
+    scanned_files = os.path.join(basefolder, "cropped", filename, "*.jpg")
     for filepath in sorted(glob.glob(scanned_files), key=os.path.getctime):
         _, csgraph = image_l(filepath)
         dataset, _, _ = cnn_preprocess(np.array([csgraph]))
@@ -83,8 +76,7 @@ def crack_thsr(input, cropped, basefolder=cracker_dir("thsr")):
 @click.command()
 @click.option("-i", "--input")
 @click.option("-c", "--company", type=click.Choice(["tra", "thsr"]))
-@click.option("-t", "--type", type=click.Choice(["1", "2"]))
-def process(input, company, type):
+def process(input, company):
     if input is None:
         print "Not found --input parameter"
 
@@ -97,9 +89,9 @@ def process(input, company, type):
         number = os.path.basename(input).split(".")[0]
 
         if company == "tra":
-            answer = crack_tra(input, type)
+            answer = crack_tra(input)
         elif company == "thsr":
-            answer = crack_thsr(input, type)
+            answer = crack_thsr(input)
 
         mark_len = "x"
         if len(answer) == len(number):
@@ -111,7 +103,7 @@ def process(input, company, type):
             mark_correct = "+"
             count_right += 1
 
-        print "[{}]. {}{} The prediction/real answer is {}/{}".format(type, mark_len, mark_correct, answer, number)
+        print "{}{} The prediction/real answer is {}/{}".format(mark_len, mark_correct, answer, number)
 
         count_all += 1
 

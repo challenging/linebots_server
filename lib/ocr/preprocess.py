@@ -2,31 +2,28 @@
 
 import os
 import sys
-import time
 import glob
 import click
 import shutil
 import numpy as np
 
 from lib.common.utils import check_folder
-from utils import image_l, data_dir
+from lib.ocr.utils import image_l, data_dir, get_digest
 
 def copy_image_to_number_folder(data_input, data_output):
-    timestamp = int(time.time())
-    for idx, filepath in enumerate(glob.iglob(os.path.join(data_input, "*", "*.jpg"))):
+    for idx, filepath in enumerate(glob.iglob(os.path.join(data_input, "*", "*", "*.jpg"))):
         filename = os.path.basename(filepath)
         _, n, _ = filename.split(".")
-
-        key = "{}_{}".format(timestamp, idx)
 
         destination_folder = os.path.join(data_output, str(n))
         check_folder(destination_folder, is_folder=True)
 
-        _, csgraph = image_l(filepath)
-        with open(os.path.join(destination_folder, "{}.npy".format(key)), "wb") as out_file:
+        im, csgraph = image_l(filepath)
+        digest = get_digest(im)
+        with open(os.path.join(destination_folder, "{}.npy".format(digest)), "wb") as out_file:
             np.save(out_file, csgraph)
 
-        shutil.copy(filepath, os.path.join(destination_folder, "{}.jpg".format(key)))
+        shutil.copy(filepath, os.path.join(destination_folder, "{}.jpg".format(digest)))
 
 @click.command()
 @click.option("-i", "--input")
