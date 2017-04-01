@@ -19,7 +19,7 @@ from linebot.models import MessageTemplateAction, ButtonsTemplate, ConfirmTempla
 line_bot_api = LineBotApi(channel_access_token)
 
 def booking_tra_ticket(driver="phantom", type=TRA):
-    batch_time = 7
+    batch_time = 8
 
     requests = mode_tra_ticket.db.non_booking(type)
     for user_id, creation_datetime, param, retry, tid in requests:

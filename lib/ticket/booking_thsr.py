@@ -15,7 +15,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from lib.ocr.cracker import init_model, crack_thsr
 from lib.common.utils import UTF8
-from lib.common.utils import check_folder, get_chrome_driver, get_phantom_driver, log
+from lib.common.utils import check_folder, get_driver, log
 from lib.ocr.utils import get_digest
 from lib.ticket.utils import get_thsr_url
 from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, thsr_fail_dir, thsr_ticket_dir, thsr_cancel_dir
@@ -23,11 +23,7 @@ from lib.ticket.utils import thsr_img_dir, thsr_screen_dir, thsr_success_dir, th
 init_model("thsr")
 
 def book_ticket(param, driver="phantom"):
-    opener = None
-    if driver == "chrome":
-        opener = get_chrome_driver()
-    else:
-        opener = get_phantom_driver()
+    opener = get_driver(driver)
 
     retry, ticket_number = 2, None
     train_type, train_count, train_number, start_station, end_station, date, stime, etime, money = None, None, None, None, None, None, None, None, None

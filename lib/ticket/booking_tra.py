@@ -8,7 +8,7 @@ from PIL import Image
 
 from lib.ocr.cracker import init_model, crack_tra
 from lib.ocr.utils import get_digest
-from lib.common.utils import get_chrome_driver, get_phantom_driver, log
+from lib.common.utils import get_driver, log
 from lib.ticket.utils import URL_TRA, URL_TRAINNO_TRA
 from lib.ticket.utils import tra_img_dir, tra_screen_dir, tra_success_dir, tra_fail_dir, tra_ticket_dir
 
@@ -16,12 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 init_model("tra")
 def book_ticket(param, driver="phantom"):
-    web_opener = None
-    if driver == "chrome":
-        web_opener = get_chrome_driver()
-    else:
-        web_opener = get_phantom_driver()
-
+    web_opener = get_driver(driver)
     is_time = param.get("train_no", None) is None
 
     retry = 2

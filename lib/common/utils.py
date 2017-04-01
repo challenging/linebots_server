@@ -36,7 +36,6 @@ channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
 channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
 
 def get_chrome_driver():
-    '''
     # Set chrome driver path
     chromedriver = os.path.join(data_dir("driver"), "chromedriver_{}".format("mac64" if sys.platform == "darwin" else "linux64"))
     if not os.path.exists(chromedriver):
@@ -49,12 +48,14 @@ def get_chrome_driver():
     chrome_options.add_argument("--incognito")
 
     opener = webdriver.Chrome(chromedriver, chrome_options=chrome_options)
-    '''
 
     # Safari Driver
     #from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
     #opener = webdriver.Remote(command_executor='http://127.0.0.1:4444/wd/hub', desired_capabilities=DesiredCapabilities.SAFARI)
 
+    return opener
+
+def get_firefox_driver()
     opener = webdriver.Firefox(executable_path=os.path.join(data_dir("driver"), "geckodriver"))
 
     return opener
@@ -66,6 +67,14 @@ def get_phantom_driver():
         log("Not found the driver of PhantomJS from {}".format(driver))
 
     return webdriver.PhantomJS(driver)
+
+def get_driver(driver):
+    if driver.lower() == "chrome":
+        return get_chrome_driver()
+    elif driver.lower() == "firefox":
+        return get_firefox_driver()
+    else:
+        return get_phantom_driver()
 
 def get_db_connection():
     global CONN

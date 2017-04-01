@@ -46,14 +46,12 @@ class TRACancelThread(threading.Thread):
 
 @click.command()
 def run():
-    driver = "chrome"
-
     t = TRACancelThread()
     t.start()
 
     while True:
-        booking_tra_ticket(driver)
-        booking_thsr_ticket(driver)
+        booking_tra_ticket("chrome")
+        booking_thsr_ticket("firefox")
 
         time.sleep(random.randint(10, 20))
 
