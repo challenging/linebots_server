@@ -4,6 +4,7 @@
 from lib.common.utils import get_db_connection, log
 
 class DB(object):
+    count_reconnect = 2**13
     table_name = NotImplementedError
 
     def __init__(self):
@@ -43,6 +44,11 @@ class DB(object):
 
         for row in self.select(sql):
             yield row
+
+        if self.count_reconnect < 0:
+            self.conn = db_reconnect()
+
+        self.count_reconnect -= 1
 
     def delete(self):
         sql = "DELETE FROM {}".format(self.table_name)

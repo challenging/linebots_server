@@ -87,6 +87,14 @@ def get_db_connection():
 
     return CONN
 
+def db_reconnect():
+    global CONN
+
+    if CONN is not None:
+        CONN.close()
+
+    return get_db_connection()
+
 def check_folder(filepath, is_folder=False):
     folder = filepath
     if not is_folder:
