@@ -10,6 +10,7 @@ import datetime
 from PIL import Image
 
 from selenium import webdriver
+from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 
 from lib.ocr.cracker import init_model, crack_thsr
@@ -38,7 +39,10 @@ def book_ticket(param, driver="phantom"):
         if isinstance(station, str):
             station = unicode(param["selectStartStation"], UTF8)
 
-        opener.find_element_by_name("selectStartStation").send_keys(station)
+        try:
+            opener.find_element_by_name("selectStartStation").send_keys(station)
+        except NoSuchElementException as e:
+            continue
 
         # choose destination station
         station = param["selectDestinationStation"]
@@ -56,10 +60,12 @@ def book_ticket(param, driver="phantom"):
         opener.find_element_by_id(param["booking"])
         # preferred date
         input_field = opener.find_element_by_id('toTimeInputField')
-        opener.execute_script("arguments[0].value = ''", input_field)
+        input_field.clear()
         input_field.send_keys(param["booking_date"])
         # preferred time
-        opener.find_element_by_name("toTimeTable").send_keys(param["booking_stime"])
+        #opener.find_element_by_name("toTimeTable").send_keys(param["booking_stime"])
+        select = Select(opener.find_element_by_name("toTimeTable"))
+        select.select_by_visible_text(param["booking_stime"])
         # ticket amount
         if param["ticketPanel:rows:0:ticketAmount"] != 1:
             opener.find_element_by_name("ticketPanel:rows:0:ticketAmount").send_keys(param["ticketPanel:rows:0:ticketAmount"])
@@ -74,13 +80,13 @@ def book_ticket(param, driver="phantom"):
             if tc != 1:
                 opener.find_element_by_name("ticketPanel:rows:1:ticketAmount").send_keys(param["ticketPanel:rows:1:ticketAmount"])
 
-        retry_crack = 5
+        retry_crack = 4
         while retry_crack > 0:
             try:
                 img = opener.find_element_by_id("BookingS1Form_homeCaptcha_passCode")
                 location, size = img.location, img.size
 
-                if isinstance(opener, webdriver.Chrome):
+                if not isinstance(opener, webdriver.PhantomJS):
                     location["x"] *= 2
                     location["y"] *= 2
                     size["width"] *= 2
@@ -95,7 +101,7 @@ def book_ticket(param, driver="phantom"):
                 im = Image.open(filepath_screenshot)
                 im = im.crop((location["x"], location["y"], location["x"]+size["width"], location["y"] + size["height"]))
 
-                if isinstance(opener, webdriver.Chrome):
+                if not isinstance(opener, webdriver.PhantomJS):
                     im = im.resize((im.size[0]/2, im.size[1]/2), Image.ANTIALIAS)
 
                 im_filepath = os.path.join(thsr_img_dir(), "{}.jpg".format(get_digest(im)))
@@ -109,21 +115,23 @@ def book_ticket(param, driver="phantom"):
                 submit.clear()
                 submit.send_keys(answer)
 
-                opener.find_element_by_id("SubmitButton").click()
+                opener.find_element_by_id("BookingS1Form").submit()
 
                 try:
                     # go to the next step
+                    time.sleep(random.randint(1, 4))
+
                     opener.find_element_by_id("BookingS2Form")
                     retry_crack = -1
 
                     break
                 except NoSuchElementException as nee:
                     opener.find_element_by_id("BookingS1Form_homeCaptcha_reCodeLink").click()
+                    time.sleep(random.randint(2, 4))
             except NoSuchElementException as nee:
                 pass
 
-            retry -= 1
-            time.sleep(random.randint(1, 5))
+            retry_crack -= 1
 
         trains = []
         for field in opener.find_elements_by_xpath("//tr"):
@@ -148,7 +156,8 @@ def book_ticket(param, driver="phantom"):
                 break
         button.click()
 
-        opener.find_element_by_name("SubmitButton").click()
+        form = opener.find_element_by_id("BookingS2Form")
+        form.submit()
         time.sleep(random.randint(1, 3))
 
         ticket_info = opener.find_element_by_xpath("//table[@class='table_simple']")
@@ -175,8 +184,9 @@ def book_ticket(param, driver="phantom"):
         opener.find_element_by_id("mobilePhone").send_keys(param["cellphone"])
         opener.find_element_by_name("agree").click()
         opener.find_element_by_id("isSubmit").click()
+        time.sleep(random.randint(2, 4))
 
-        ticket_number = opener.find_element_by_xpath("//td[@class='content_key']")
+        ticket_number = opener.find_element_by_xpath("//table[@class='table_details']//td[@class='content_key']")
         if ticket_number:
             ticket_number = ticket_number.text
 

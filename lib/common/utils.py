@@ -36,6 +36,7 @@ channel_secret = os.environ["LINEBOT_CHANNEL_SECRET"]
 channel_access_token = os.environ["LINEBOT_CHANNEL_TOKEN"]
 
 def get_chrome_driver():
+    '''
     # Set chrome driver path
     chromedriver = os.path.join(data_dir("driver"), "chromedriver_{}".format("mac64" if sys.platform == "darwin" else "linux64"))
     if not os.path.exists(chromedriver):
@@ -44,7 +45,19 @@ def get_chrome_driver():
         os.environ["webdriver.chrome.driver"] = chromedriver
         log("export webdriver.chrome.driver={}".format(chromedriver))
 
-    return webdriver.Chrome(chromedriver)
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--incognito")
+
+    opener = webdriver.Chrome(chromedriver, chrome_options=chrome_options)
+    '''
+
+    # Safari Driver
+    #from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+    #opener = webdriver.Remote(command_executor='http://127.0.0.1:4444/wd/hub', desired_capabilities=DesiredCapabilities.SAFARI)
+
+    opener = webdriver.Firefox(executable_path=os.path.join(data_dir("driver"), "geckodriver"))
+
+    return opener
 
 def get_phantom_driver():
     driver = os.path.join(data_dir("driver"), "phantomjs-2.1.1-{}".format("mac64" if sys.platform == "darwin" else "linux64"), "bin", "phantomjs")
@@ -52,7 +65,6 @@ def get_phantom_driver():
     if not os.path.exists(driver):
         log("Not found the driver of PhantomJS from {}".format(driver))
 
-    log(driver)
     return webdriver.PhantomJS(driver)
 
 def get_db_connection():

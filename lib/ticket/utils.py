@@ -253,10 +253,10 @@ get_train_type = lambda train_name: tra_train_type.get(train_name, None)
 thsr_stations = set(["南港", "台北", "板橋", "桃園", "新竹", "苗栗", "台中", "彰化", "雲林", "嘉義", "台南", "左營"])
 
 def get_thsr_url(booking_type):
-    url = "https://irs.thsrc.com.tw/IMINT/"
+    url = "https://irs.thsrc.com.tw/"
 
     if booking_type == "general":
-        url = "https://irs.thsrc.com.tw/IMINT/"
+        url = "https://irs.thsrc.com.tw"
     elif booking_type == "student":
         url = "https://irs.thsrc.com.tw/IMINT/?student=university"
     elif booking_type == "credit":
