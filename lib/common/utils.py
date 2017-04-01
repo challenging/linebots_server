@@ -55,7 +55,7 @@ def get_chrome_driver():
 
     return opener
 
-def get_firefox_driver()
+def get_firefox_driver():
     opener = webdriver.Firefox(executable_path=os.path.join(data_dir("driver"), "geckodriver"))
 
     return opener
