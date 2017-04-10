@@ -36,7 +36,8 @@ def book_ticket(param, driver="phantom"):
             station = unicode(param["selectStartStation"], UTF8)
 
         try:
-            opener.find_element_by_name("selectStartStation").send_keys(station)
+            select = Select(opener.find_element_by_name("selectStartStation"))
+            select.select_by_visible_text(station)
         except NoSuchElementException as e:
             continue
 
@@ -44,7 +45,9 @@ def book_ticket(param, driver="phantom"):
         station = param["selectDestinationStation"]
         if isinstance(station, str):
             station = unicode(param["selectDestinationStation"], UTF8)
-        opener.find_element_by_name("selectDestinationStation").send_keys(station)
+
+        select = Select(opener.find_element_by_name("selectDestinationStation"))
+        select.select_by_visible_text(station)
 
         # only show the early bird tickets
         if param["onlyQueryOffPeakCheckBox"]:
