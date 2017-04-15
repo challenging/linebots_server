@@ -18,7 +18,8 @@ from lib.ticket import booking_thsr
 from lib.common.utils import channel_access_token, log, UTF8
 
 from lib.common.message import (
-    txt_ticket_memory, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_paid, txt_not_support, txt_ticket_retry
+    txt_ticket_memory, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_paid, txt_not_support, txt_ticket_retry,
+    txt_ticket_split,
 )
 
 from lib.ticket.utils import (
@@ -492,6 +493,8 @@ class TicketMode(Mode):
 
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
+                if ticket_type == "tra":
+                    messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:

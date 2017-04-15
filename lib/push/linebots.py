@@ -31,7 +31,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
             number, body, _ = mode_tra_ticket.get_ticket_body((tid, param), type, TICKET_STATUS_SCHEDULED, TICKET_HEADERS_BOOKED_TRA)
             messages = [MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, number)),
-                        MessageTimeplatAction(label=txt_ticket_split(), text="ticket_{}={}+{}".format(type, TICKET_STATUS_SPLIT, number)),
+                        MessageTemplateAction(label=txt_ticket_split(), text="ticket_{}={}+{}".format(type, TICKET_STATUS_SPLIT, number)),
                         MessageTemplateAction(label=txt_ticket_cancel(None, None, True), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_UNSCHEDULED, tid))]
 
             line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages)))
