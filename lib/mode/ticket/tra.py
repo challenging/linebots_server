@@ -8,20 +8,24 @@ import datetime
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
 
 from lib.db.profile import db_profile
-
-from lib.common.utils import log, UTF8, MODE_TRA_TICKET
-from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone, txt_ticket_retry, txt_ticket_trainno
-from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget, txt_ticket_tra_qty
-from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror, txt_ticket_memory
-from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_train_type
-
 from lib.common.check_taiwan_id import check_taiwan_id_number
-
-from lib.ticket.utils import load_tra_trainno, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type
-from lib.ticket.utils import TICKET_STATUS_AGAIN, TICKET_STATUS_CONFIRM, TRAUtils, TICKET_COUNT
+from lib.common.utils import log, UTF8, MODE_TRA_TICKET
 
 from ticket import TicketMode, TicketDB
 from ticket import TRA
+
+from lib.common.message import (
+    txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_retry, txt_ticket_trainno,
+    txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget, txt_ticket_tra_qty,
+    txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror,
+    txt_ticket_confirm, txt_ticket_cancel, txt_ticket_continued, txt_ticket_failed, txt_ticket_train_type,
+    txt_ticket_tra_booking_method, txt_ticket_tra_booking_time, txt_ticket_tra_booking_trainno
+)
+
+from lib.ticket.utils import (
+    load_tra_trainno, get_station_number, get_station_name, get_train_type, get_train_name, tra_train_type,
+    TICKET_STATUS_AGAIN, TICKET_STATUS_CONFIRM, TRAUtils, TICKET_COUNT
+)
 
 
 class TRATicketMode(TicketMode):
@@ -99,9 +103,9 @@ class TRATicketMode(TicketMode):
         elif self.memory[user_id].get("getin_date", None) is None:
             reply_txt = txt_ticket_getindate()
         elif self.memory[user_id].get("tra_mode", None) is None:
-            template = ConfirmTemplate(text="請選擇訂票方式", actions=[
-                    MessageTemplateAction(label="時間區間訂票", text='ticket_tra_mode=time'),
-                    MessageTemplateAction(label="車次訂票", text='ticket_tra_mode=train_no')])
+            template = ConfirmTemplate(text=txt_ticket_tra_booking_method(), actions=[
+                    MessageTemplateAction(label=txt_ticket_tra_booking_time(), text='ticket_tra_mode=time'),
+                    MessageTemplateAction(label=txt_ticket_tra_booking_trainno(), text='ticket_tra_mode=train_no')])
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
         elif self.memory[user_id].get("tra_mode", None) == "time" and self.memory[user_id].get("getin_start_dtime", None) is None:

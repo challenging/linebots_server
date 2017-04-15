@@ -154,3 +154,35 @@ def txt_ticket_tra_qty():
 
 def txt_ticket_train_type():
     return "請輸入車種"
+
+def txt_ticket_tra_booking_method():
+    return "請選擇訂票方式"
+
+def txt_ticket_tra_booking_time():
+    return "時間區間訂票"
+
+def txt_ticket_tra_booking_trainno():
+    return "車次訂票"
+
+def txt_ticket_thsr_booking_identification():
+    return "請選擇訂票身份"
+
+def txt_ticket_thsr_booking_job(job):
+    job = job.lower()
+    if job == "general":
+        job = "一般"
+    elif job == "student":
+        job = "學生"
+
+    return "{}訂票".format(job)
+
+def txt_ticket_thsr_booking_amount(kind):
+    kind = kind.lower()
+    if kind == "student":
+        kind = "學生"
+    elif kind == "adult":
+        kind = "成人"
+    elif kind == "child":
+        kind = "小孩"
+
+    return "請輸入{}張數(1-10)".format(kind)

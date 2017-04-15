@@ -9,21 +9,23 @@ from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendM
 from linebot.models import CarouselTemplate, CarouselColumn
 
 from lib.db.profile import db_profile
-
+from lib.ticket import booking_thsr
 from lib.common.utils import log, UTF8, MODE_THSR_TICKET
-from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone, txt_ticket_retry, txt_ticket_trainno
-from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget, txt_ticket_tra_qty
-from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror, txt_ticket_memory
-from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_train_type
-
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
-from lib.ticket.utils import TICKET_COUNT, thsr_stations
-from lib.ticket.utils import TICKET_HEADERS_BOOKED_THSR, TICKET_STATUS_AGAIN, TICKET_STATUS_CONFIRM
-
-from lib.ticket import booking_thsr
-
 from ticket import TicketMode, TicketDB, THSR
+
+from lib.common.message import (
+    txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone, txt_ticket_retry, txt_ticket_trainno,
+    txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget, txt_ticket_tra_qty,
+    txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror, txt_ticket_memory,
+    txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_train_type,
+    txt_ticket_thsr_booking_identification, txt_ticket_thsr_booking_job, txt_ticket_thsr_booking_amount
+)
+
+from lib.ticket.utils import (
+    TICKET_COUNT, TICKET_HEADERS_BOOKED_THSR, TICKET_STATUS_AGAIN, TICKET_STATUS_CONFIRM, thsr_stations
+)
 
 
 class THSRTicketMode(TicketMode):
@@ -102,9 +104,9 @@ class THSRTicketMode(TicketMode):
         elif self.memory[user_id].get("cellphone", None) is None:
             reply_txt = txt_ticket_phone()
         elif self.memory[user_id].get("booking_type", None) is None:
-            template = ConfirmTemplate(text="請選擇訂票身份", actions=[
-                MessageTemplateAction(label="一般訂票", text='booking_type=general'),
-                MessageTemplateAction(label="學生訂票", text='booking_type=student'),
+            template = ConfirmTemplate(text=txt_ticket_thsr_booking_identification(), actions=[
+                MessageTemplateAction(label=txt_ticket_thsr_booking_job("general"), text='booking_type=general'),
+                MessageTemplateAction(label=txt_ticket_thsr_booking_job("student"), text='booking_type=student'),
             ])
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=template)
@@ -119,11 +121,11 @@ class THSRTicketMode(TicketMode):
         elif self.memory[user_id].get("selectDestinationStation", None) is None:
             reply_txt = txt_ticket_estation()
         elif self.memory[user_id]["booking_type"] == "student" and self.memory[user_id].get("ticketPanel:rows:4:ticketAmount", None) is None:
-            reply_txt = "請輸入學生張數(1-10)"
+            reply_txt = txt_ticket_thsr_booking_amount("student")
         elif self.memory[user_id]["booking_type"] != "student" and self.memory[user_id].get("ticketPanel:rows:0:ticketAmount", None) is None:
-            reply_txt = "請輸入成人張數(0-10)"
+            reply_txt = txt_ticket_thsr_booking_amount("adult")
         elif self.memory[user_id]["booking_type"] != "student" and self.memory[user_id].get("ticketPanel:rows:1:ticketAmount", None) is None:
-            reply_txt = "請輸入小孩張數(0-10)"
+            reply_txt = txt_ticket_thsr_booking_amount("child")
         elif self.is_filled(user_id):
             message = self.translate_ticket(self.ticket_type, self.memory[user_id])
 
