@@ -25,7 +25,7 @@ from lib.ticket.utils import (
     get_station_name, get_train_name,
     TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
     TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
-    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY,
+    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
 )
 
 TRA = "tra"
@@ -397,7 +397,7 @@ class TicketMode(Mode):
     def is_split_command(self, user_id, question):
         reply_txt = None
 
-        p = re.compile()
+        p = re.compile("^ticket_({})={}\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_SPLIT))
         m = p.match(question)
         if m:
             ticket_type, tid = m.group(1), m.group(2)
