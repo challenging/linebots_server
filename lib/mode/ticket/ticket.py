@@ -6,26 +6,27 @@ import json
 import time
 import datetime
 
-from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
-from linebot.models import CarouselTemplate, CarouselColumn
+from linebot.models import (
+    ConfirmTemplate, MessageTemplateAction, TemplateSendMessage, ButtonsTemplate, CarouselTemplate, CarouselColumn
+)
 
 from lib.common.mode import Mode
 from lib.common.db import DB
 from lib.db.profile import db_profile
-
-from lib.common.utils import channel_access_token, log
-from lib.common.utils import UTF8
-from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone, txt_ticket_retry, txt_ticket_trainno
-from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget, txt_ticket_tra_qty
-from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror, txt_ticket_memory
-from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_train_type
-
-from lib.ticket.utils import get_station_name, get_train_name
-from lib.ticket.utils import TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY
-from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL
-from lib.ticket.utils import TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY
-
 from lib.ticket import booking_thsr
+
+from lib.common.utils import channel_access_token, log, UTF8
+
+from lib.common.message import (
+    txt_ticket_memory, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_paid
+)
+
+from lib.ticket.utils import (
+    get_station_name, get_train_name,
+    TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
+    TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
+    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY,
+)
 
 TRA = "tra"
 THSR = "thsr"
@@ -167,6 +168,11 @@ class TicketDB(DB):
             self.table_name, TICKET_STATUS_SCHEDULED, user_id, ticket_type, tid)
 
         return self.cmd(sql)
+
+    def split(self, user_id, ticket_type, tid):
+        sql = ""
+
+        return 1
 
     def modify_status(self, user_id, tid, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
@@ -388,6 +394,22 @@ class TicketMode(Mode):
 
         return reply_txt
 
+    def is_split_command(self, user_id, question):
+        reply_txt = None
+
+        p = re.compile()
+        m = p.match(question)
+        if m:
+            ticket_type, tid = m.group(1), m.group(2)
+
+            c = self.db.split(user_id, ticket_type, tid)
+            if c > 0:
+                reply_txt = "開始拆票購買，請設定您的中間車站"
+            else:
+                reply_txt = "找不到此張預訂車票，請嘗試再訂購一張"
+
+        return reply_txt
+
     def translate_ticket(self, ticket_type, ticket, id=None):
         message = None
 
@@ -486,7 +508,7 @@ class TicketMode(Mode):
                     body.append(v.encode(UTF8))
 
             if s == TICKET_STATUS_PAY:
-                body[-1] = "備註：已付款成功"
+                body[-1] = txt_ticket_paid()
             body = "\n".join(body)
 
             number = ticket[u"票號"]
@@ -500,7 +522,7 @@ class TicketMode(Mode):
         text_cancel_label, text_cancel_text, tickets = None, None, []
         if status == TICKET_STATUS_SCHEDULED:
             tickets = self.db.list_scheduled_tickets(user_id, ticket_type, [TICKET_STATUS_SCHEDULED, TICKET_STATUS_RETRY])
-            text_cancel_label = "取消預訂票"
+            text_cancel_label = txt_ticket_cancel(None, None, True)
             text_cancel_text = TICKET_STATUS_UNSCHEDULED
         elif status == TICKET_STATUS_BOOKED:
             tickets = self.db.list_booked_tickets(user_id, ticket_type, [TICKET_STATUS_BOOKED, TICKET_STATUS_PAY])
@@ -569,6 +591,10 @@ class TicketMode(Mode):
             return reply_txt
 
         reply_txt = self.is_cancel_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
+
+        reply_txt = self.is_split_command(user_id, question):
         if reply_txt is not None:
             return reply_txt
 

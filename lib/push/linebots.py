@@ -7,8 +7,10 @@ from lib.mode.ticket import TRA, THSR
 from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket
 
 from lib.ticket import booking_tra, booking_thsr
-from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCELED, TICKET_RETRY, TICKET_STATUS_SCHEDULED, TICKET_STATUS_SPLIT, TICKET_STATUS_RETRY, TICKET_STATUS_UNSCHEDULED
-from lib.ticket.utils import TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
+from lib.ticket.utils import (
+    TICKET_STATUS_BOOKED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCELED, TICKET_RETRY, TICKET_STATUS_SCHEDULED, TICKET_STATUS_SPLIT,
+    TICKET_STATUS_RETRY, TICKET_STATUS_UNSCHEDULED, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR
+)
 
 from lib.common.utils import UTF8, channel_access_token, log
 from lib.common.message import txt_not_support, txt_ticket_cancel, txt_ticket_memory, txt_ticket_retry, txt_ticket_split
@@ -28,7 +30,8 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
             number, body, _ = mode_tra_ticket.get_ticket_body((tid, param), type, TICKET_STATUS_SCHEDULED, TICKET_HEADERS_BOOKED_TRA)
             messages = [MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, number)),
-                        MessageTemplateAction(label="取消預訂票", text='ticket_{}={}+{}'.format(type, TICKET_STATUS_UNSCHEDULED, tid))]
+                        MessageTimeplatAction(label=txt_ticket_split(), text="ticket_{}={}+{}".format(type, TICKET_STATUS_SPLIT, number)),
+                        MessageTemplateAction(label=txt_ticket_cancel(None, None, True), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_UNSCHEDULED, tid))]
 
             line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages)))
         else:
@@ -85,7 +88,7 @@ def booking_thsr_ticket(driver="phantom", type=THSR):
 
             number, body, _ = mode_thsr_ticket.get_ticket_body((tid, param), type, TICKET_STATUS_SCHEDULED, TICKET_HEADERS_BOOKED_THSR)
             messages = [MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, number)),
-                        MessageTemplateAction(label="取消預訂票", text='ticket_{}={}+{}'.format(type, TICKET_STATUS_UNSCHEDULED, tid))]
+                        MessageTemplateAction(label=txt_ticket_cancel(None, None, True), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_UNSCHEDULED, tid))]
 
             line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages)))
         else:
