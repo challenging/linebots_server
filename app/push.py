@@ -11,7 +11,8 @@ import psycopg2
 from lib.common.utils import log, channel_access_token
 from lib.common.message import txt_ticket_cancel
 
-from lib.mode.ticket import CTRA, TRA, THSR, mode_tra_ticket
+from lib.mode.ticket.ticket import CTRA, TRA, THSR
+from lib.mode.ticket.tra import mode_tra_ticket
 from lib.ticket.utils import TICKET_STATUS_CANCEL, TICKET_STATUS_PAY, TICKET_STATUS_CANCELED, TRAUtils
 from lib.push.linebots import booking_tra_ticket, booking_thsr_ticket
 
