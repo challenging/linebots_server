@@ -18,7 +18,7 @@ from lib.ticket import booking_thsr
 from lib.common.utils import channel_access_token, log, UTF8
 
 from lib.common.message import (
-    txt_ticket_memory, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_paid
+    txt_ticket_memory, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_paid, txt_not_support
 )
 
 from lib.ticket.utils import (
