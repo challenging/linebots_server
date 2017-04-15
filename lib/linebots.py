@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-import threading
-import requests
 
 from flask import Blueprint
 from flask import Flask, request, abort
@@ -27,7 +25,8 @@ from db.mode import db_mode
 from db.lotto import db_lotto
 
 from mode.lotto import mode_lotto
-from mode.ticket import mode_tra_ticket, mode_thsr_ticket
+from mode.ticket.tra import mode_tra_ticket
+from mode.ticket.thsr import mode_thsr_ticket
 
 from lib.common.utils import get_location, is_admin, log
 from lib.common.utils import MODES, UTF8, LINEBOTS, channel_secret, channel_access_token
