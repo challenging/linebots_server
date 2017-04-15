@@ -3,7 +3,6 @@
 
 import re
 import json
-import time
 import datetime
 
 from linebot.models import ConfirmTemplate, MessageTemplateAction, TemplateSendMessage, ButtonsTemplate
@@ -11,8 +10,7 @@ from linebot.models import CarouselTemplate, CarouselColumn
 
 from lib.db.profile import db_profile
 
-from lib.common.utils import channel_access_token, log
-from lib.common.utils import UTF8, MODE_THSR_TICKET
+from lib.common.utils import log, UTF8, MODE_THSR_TICKET
 from lib.common.message import txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_phone, txt_ticket_retry, txt_ticket_trainno
 from lib.common.message import txt_ticket_taiwanid, txt_ticket_getindate, txt_ticket_stime, txt_ticket_etime, txt_ticket_forget, txt_ticket_tra_qty
 from lib.common.message import txt_ticket_scheduled, txt_ticket_error, txt_ticket_thankletter, txt_ticket_inputerror, txt_ticket_memory
@@ -21,9 +19,7 @@ from lib.common.message import txt_ticket_confirm, txt_ticket_cancel, txt_ticket
 from lib.common.check_taiwan_id import check_taiwan_id_number
 
 from lib.ticket.utils import TICKET_COUNT, thsr_stations
-from lib.ticket.utils import TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY
-from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL
-from lib.ticket.utils import TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
+from lib.ticket.utils import TICKET_HEADERS_BOOKED_THSR, TICKET_STATUS_AGAIN, TICKET_STATUS_CONFIRM
 
 from lib.ticket import booking_thsr
 
