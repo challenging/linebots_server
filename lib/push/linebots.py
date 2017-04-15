@@ -3,8 +3,9 @@
 
 import json
 
-from lib.mode.ticket import TRA, THSR
-from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket
+from lib.mode.ticket.ticket import TRA, THSR
+from lib.mode.ticket.tra import mode_tra_ticket
+from lib.mode.ticket.thsr import mode_thsr_ticket
 
 from lib.ticket import booking_tra, booking_thsr
 from lib.ticket.utils import (
