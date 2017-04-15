@@ -594,7 +594,7 @@ class TicketMode(Mode):
         if reply_txt is not None:
             return reply_txt
 
-        reply_txt = self.is_split_command(user_id, question):
+        reply_txt = self.is_split_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
 
