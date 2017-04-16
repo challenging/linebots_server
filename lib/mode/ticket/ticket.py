@@ -582,7 +582,7 @@ class TicketMode(Mode):
 
         headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == TRA else TICKET_HEADERS_BOOKED_THSR
 
-        reply_txt = "目前並無預定車票"
+        reply_txt = None
         if len(tickets) == 1:
             ticket = tickets[0]
 
@@ -596,7 +596,7 @@ class TicketMode(Mode):
             messages.extend(m)
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages))
-        else:
+        elif len(tickets) > 1:
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
