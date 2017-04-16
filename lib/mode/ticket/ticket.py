@@ -44,12 +44,17 @@ class TicketDB(DB):
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), ticket_info VARCHAR(1024), retry INTEGER, status VARCHAR(16), parent_id INTEGER, next_id INTEGER);".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), ticket_info VARCHAR(1024), retry INTEGER, status VARCHAR(16), parent_id INTEGER, note VARCHAR(512));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_1 ON {table_name} (token, ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_2 ON {table_name} (token, user_id, ticket_type, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_3 ON {table_name} (id);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_4 ON {table_name} (ticket_type, status);".format(table_name=self.table_name))
         cursor.close()
+
+    def get_ticket(self, tid):
+        sql = "SELECT ticket FROM {} WHERE id = '{}'".format(self.table_name, tid)
+
+        return [json.loads(row[0]) for row in self.select(sql)]
 
     def ask(self, user_id, ticket, ticket_type):
         cursor = self.conn.cursor()
@@ -171,9 +176,15 @@ class TicketDB(DB):
         return self.cmd(sql)
 
     def split(self, user_id, ticket_type, tid):
-        sql = ""
+        ticket = json.loads(self.get_ticket(tid)[0])
 
-        return 1
+        '''
+        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
+            self.table_name, TICKET_STATUS_SPLIT, user_id, ticket_type, tid)
+        self.cmd(sql)
+        '''
+
+        return 1, ticket["from_station"], ticket["to_station"]
 
     def modify_status(self, user_id, tid, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
@@ -402,18 +413,15 @@ class TicketMode(Mode):
         m = p.match(question)
         if m:
             ticket_type, tid = m.group(1), m.group(2)
+            ticket = self.db.get_ticket(tid)[0]
 
-            c, sstation, estation = self.db.split(user_id, ticket_type, tid)
-            if c > 0:
-                messages = []
-                transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
+            messages = []
+            transfer_stations = TRAUtils.get_transfer_stations(int(ticket["from_station"]), int(ticket["to_station"]))
 
-                for station in transfer_stations[:5]:
-                    messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, station, tid)))
+            for station in transfer_stations[:5]:
+                messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, station, tid)))
 
-                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=txt_ticket_split_body(), actions=messages))
-            else:
-                reply_txt = "找不到此張預訂車票，請嘗試再訂購一張"
+            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=txt_ticket_split_body(), actions=messages))
 
         return reply_txt
 
