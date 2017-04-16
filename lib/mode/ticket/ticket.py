@@ -534,20 +534,17 @@ class TicketMode(Mode):
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
             number = ticket[0]
 
-            if ticket[1].get("parent_id", None) is None or ticket[1].get("status", "anything") != TICKET_STATUS_WAITTING:
-                retry = int(ticket[1].get("retry", 0))
-                if retry >= TICKET_RETRY:
-                    messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
-                    if ticket_type == TRA and ticket[1].get("parent_id", None) is None:
-                        sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
+            retry = int(ticket[1].get("retry", 0))
+            if retry >= TICKET_RETRY:
+                messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
+                if ticket_type == TRA and ticket[1].get("parent_id", None) is None:
+                    sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
 
-                        transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
-                        if len(transfer_stations) > 0:
-                            messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
-                else:
-                    messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
+                    transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
+                    if len(transfer_stations) > 0:
+                        messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
             else:
-                pass
+                messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
             s = ticket["status"]
 
