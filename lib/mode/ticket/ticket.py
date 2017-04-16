@@ -26,7 +26,8 @@ from lib.ticket.utils import (
     tra_stations, get_station_name, get_train_name, TRAUtils,
     TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
     TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
-    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT, TICKET_STATUS_TRANSFER
+    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT, TICKET_STATUS_TRANSFER,
+    TICKET_STATUS_WAITTING,
 )
 
 TRA = "tra"
@@ -175,6 +176,27 @@ class TicketDB(DB):
             self.table_name, TICKET_STATUS_SCHEDULED, user_id, ticket_type, tid)
 
         return self.cmd(sql)
+
+    def transfer(self, user_id, ticket_type, tid, transfer_station_id):
+        ticket = self.get_ticket(user_id, ticket_type, tid)[0]
+        to_station = ticket["to_station"]
+        ticket["to_station"] = transfer_station_id
+
+        c = self.modify_status(user_id, tid, TICKET_STATUS_SPLIT)
+
+        if c > 0:
+            sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status, parent_id, note) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}', '{}', '{}');".\
+                    format(self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, json.dumps(ticket), TICKET_STATUS_SCHEDULED, tid, to_station)
+            c = self.cmd(sql)
+
+            if c > 0:
+                ticket["from_station"] = transfer_station_id
+                ticket["to_station"] = to_station
+                sql = "INSERT INTO {}(token, user_id, creation_datetime, ticket_type, ticket, ticket_number, retry, status, parent_id, note) VALUES('{}', '{}', '{}', '{}', '{}', '-1', 0, '{}', '{}', '{}');".\
+                    format(self.table_name, channel_access_token, user_id, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), ticket_type, json.dumps(ticket), TICKET_STATUS_WAITTING, tid, to_station)
+                c = self.cmd(sql)
+
+        return c
 
     def modify_status(self, user_id, tid, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
@@ -421,16 +443,12 @@ class TicketMode(Mode):
         p = re.compile("^ticket_({})={}\+([\d]+)\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_TRANSFER))
         m = p.match(question)
         if m:
-            ticket_type, station_id, tid = m.group(1), m.group(2), m.group(3)
-            ticket = self.db.get_ticket(tid)[0]
-
-            messages = []
-            transfer_stations = TRAUtils.get_transfer_stations(int(ticket["from_station"]), int(ticket["to_station"]))
-
-            for station in transfer_stations[:5]:
-                messages.append(MessageTemplateAction(label=station, text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, station, tid)))
-
-            reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=txt_ticket_split_body(), actions=messages))
+            ticket_type, transfer_station_id, tid = m.group(1), m.group(2), m.group(3)
+            c = self.db.transfer(user_id, ticket_type, tid, transfer_station_id)
+            if c > 0:
+                reply_txt = "這張票(懶人ID: {})將會被拆為兩張票，並以{}為中間站".format(tid, get_station_name(transfer_station_id))
+            else:
+                reply_txt = "拆票作業失敗，請稍後再試"
 
         return reply_txt
 
@@ -607,40 +625,6 @@ class TicketMode(Mode):
             reply_txt = func(user_id, question)
             if reply_txt is not None:
                 return reply_txt
-
-        '''
-        reply_txt = self.is_list_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_memory_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_failed_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_unscheduled_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_retry_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_cancel_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_split_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-
-        reply_txt = self.is_transfer_command(user_id, question)
-        if reply_txt is not None:
-            return reply_txt
-        '''
 
         return self.conversion_process(question, user_id, user_name)
 

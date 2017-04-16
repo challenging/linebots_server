@@ -26,6 +26,7 @@ TICKET_STATUS_CONFIRM = "confirm"
 TICKET_STATUS_RETRY = "retry"
 TICKET_STATUS_SPLIT = "split"
 TICKET_STATUS_TRANSFER = "transfer"
+TICKET_STATUS_WAITTING = "waitting"
 TICKET_STATUS_PAY = "pay"
 
 TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])
@@ -233,6 +234,8 @@ for station_name in tra_transfer_stations.keys():
     tra_transfer_stations[station_name] = int(tra_stations[station_name])
 
 def get_station_name(station_number):
+    global tra_stations
+
     station_name = None
     for k, v in tra_stations.items():
         if v == station_number:
