@@ -497,7 +497,9 @@ class TicketMode(Mode):
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
                 if ticket_type == TRA:
                     # TODO: Get the station name from ticket object
-                    sstation, estation = 
+                    sstation, estation = "桃園", "花蓮"
+                    for k, v in ticket[1].items():
+                        print k, v
 
                     transfer_stations = get_transfer_stations(sstation, estation)
                     if len(transfer_stations) > 0:
