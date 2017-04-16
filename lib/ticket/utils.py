@@ -25,6 +25,7 @@ TICKET_STATUS_AGAIN = "again"
 TICKET_STATUS_CONFIRM = "confirm"
 TICKET_STATUS_RETRY = "retry"
 TICKET_STATUS_SPLIT = "split"
+TICKET_STATUS_TRANSFER = "transfer"
 TICKET_STATUS_PAY = "pay"
 
 TICKET_CMD_QUERY = set(["query", "查詢", "記錄", "list"])

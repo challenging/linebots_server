@@ -26,7 +26,7 @@ from lib.ticket.utils import (
     get_station_name, get_train_name, TRAUtils,
     TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
     TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
-    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
+    TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT, TICKET_STATUS_TRANSFER
 )
 
 TRA = "tra"
@@ -35,6 +35,7 @@ CTRA = "台鐵"
 CTHSR = "高鐵"
 
 TYPE = [TRA, THSR]
+
 
 class TicketDB(DB):
     table_name = "ticket"
@@ -51,8 +52,8 @@ class TicketDB(DB):
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_4 ON {table_name} (ticket_type, status);".format(table_name=self.table_name))
         cursor.close()
 
-    def get_ticket(self, tid):
-        sql = "SELECT ticket FROM {} WHERE id = '{}'".format(self.table_name, tid)
+    def get_ticket(self, user_id, ticket_type, tid):
+        sql = "SELECT ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and id = '{}'".format(self.table_name, tid)
 
         return [json.loads(row[0]) for row in self.select(sql)]
 
@@ -174,17 +175,6 @@ class TicketDB(DB):
             self.table_name, TICKET_STATUS_SCHEDULED, user_id, ticket_type, tid)
 
         return self.cmd(sql)
-
-    def split(self, user_id, ticket_type, tid):
-        ticket = json.loads(self.get_ticket(tid)[0])
-
-        '''
-        sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND ticket_type = '{}' AND id = {}".format(\
-            self.table_name, TICKET_STATUS_SPLIT, user_id, ticket_type, tid)
-        self.cmd(sql)
-        '''
-
-        return 1, ticket["from_station"], ticket["to_station"]
 
     def modify_status(self, user_id, tid, status):
         sql = "UPDATE {} SET status = '{}' WHERE user_id = '{}' AND id = {}".format(self.table_name, status, user_id, tid)
@@ -413,6 +403,25 @@ class TicketMode(Mode):
         m = p.match(question)
         if m:
             ticket_type, tid = m.group(1), m.group(2)
+            ticket = self.db.get_ticket(user_id, ticket_type, tid)[0]
+            transfer_stations = TRAUtils.get_transfer_stations(int(ticket["from_station"]), int(ticket["to_station"]))
+
+            messages = []
+            for station in transfer_stations[:5]:
+                messages.append(MessageTemplateAction(label=station, text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_TRANSFER, tra_stations[station], tid)))
+
+            if messages:
+                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=txt_ticket_split_body(), actions=messages))
+
+        return reply_txt
+
+    def is_transfer_command(self, user_id, question):
+        reply_txt = None
+
+        p = re.compile("^ticket_({})={}\+([\d]+)\+([\d]+)$".format("|".join(TYPE), TICKET_STATUS_TRANSFER))
+        m = p.match(question)
+        if m:
+            ticket_type, station_id, tid = m.group(1), m.group(2), m.group(3)
             ticket = self.db.get_ticket(tid)[0]
 
             messages = []
@@ -593,6 +602,13 @@ class TicketMode(Mode):
 
         self.reset_memory(user_id, question)
 
+        for func in [self.is_list_command, self.is_memory_command, self.is_failed_command, self.is_unscheduled_command, self.is_retry_command,
+                     self.is_cancel_command, self.is_split_command, self.is_transfer_command]:
+            reply_txt = func(user_id, question)
+            if reply_txt is not None:
+                return reply_txt
+
+        '''
         reply_txt = self.is_list_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
@@ -620,6 +636,11 @@ class TicketMode(Mode):
         reply_txt = self.is_split_command(user_id, question)
         if reply_txt is not None:
             return reply_txt
+
+        reply_txt = self.is_transfer_command(user_id, question)
+        if reply_txt is not None:
+            return reply_txt
+        '''
 
         return self.conversion_process(question, user_id, user_name)
 
