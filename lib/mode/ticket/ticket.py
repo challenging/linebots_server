@@ -19,7 +19,7 @@ from lib.common.utils import channel_access_token, log, UTF8
 
 from lib.common.message import (
     txt_ticket_memory, txt_ticket_cancel, txt_ticket_zero, txt_ticket_continued, txt_ticket_failed, txt_ticket_paid, txt_not_support, txt_ticket_retry,
-    txt_ticket_split,
+    txt_ticket_split, txt_ticket_split_body,
 )
 
 from lib.ticket.utils import (
@@ -403,9 +403,15 @@ class TicketMode(Mode):
         if m:
             ticket_type, tid = m.group(1), m.group(2)
 
-            c = self.db.split(user_id, ticket_type, tid)
+            c, sstation, estation = self.db.split(user_id, ticket_type, tid)
             if c > 0:
-                reply_txt = "開始拆票購買，請選擇中間轉運車站"
+                messages = []
+                transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
+
+                for station in transfer_stations[:5]:
+                    messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, station, tid)))
+
+                reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=txt_ticket_split_body(), actions=messages))
             else:
                 reply_txt = "找不到此張預訂車票，請嘗試再訂購一張"
 

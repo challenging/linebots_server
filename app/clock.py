@@ -5,11 +5,16 @@ import click
 import threading
 import datetime
 
-from lib.mode.ticket import mode_tra_ticket, mode_thsr_ticket, TRA, THSR
-from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_PAY, TICKET_STATUS_CANCELED, TICKET_STATUS_RETRY, TRAUtils
+from lib.mode.ticket.ticket import TRA, THSR
+from lib.mode.ticket.tra import TRA
+from lib.mode.ticket.thsr import THSR
 
+from lib.ticket.utils import TICKET_STATUS_BOOKED, TICKET_STATUS_PAY, TICKET_STATUS_CANCELED, TICKET_STATUS_RETRY, TRAUtils
 from lib.common.utils import log
+
+from lib.crawler.tra_crawler import TRACrawler
 from lib.bot import fxrate, weather, lucky, bus
+
 
 class BotThread(threading.Thread):
     def init_bot(self, bot):
@@ -51,6 +56,25 @@ class BotThread(threading.Thread):
 
             time.sleep(self.sleeping)
 
+class CrawlerThread(threading.Thread):
+    def init_bot(self, mode):
+        if mode == TRA:
+            self.crawler = TRACrawler()
+        else:
+            raise NotImplementedError
+
+    def set_sleeping(self, sleeping):
+        self.sleeping = sleeping
+
+    def run(self):
+        while True:
+            try:
+                self.crawler.run()
+            except Exception as e:
+                log(e)
+
+            time.sleep(self.sleeping)
+
 class TicketThread(threading.Thread):
     def init_bot(self, mode):
         if mode == TRA:
@@ -66,7 +90,6 @@ class TicketThread(threading.Thread):
     def run(self):
         while True:
             try:
-                '''
                 now = datetime.datetime.now()
                 if (now.hour == 22 and now.minute >= 30 and now.minute <= 55) or (now.hour == 23 and now.minute >= 0 and now.minute <= 5):
                     for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_RETRY):
@@ -74,7 +97,6 @@ class TicketThread(threading.Thread):
 
                         self.ticket.db.reset(user_id, self.ticket.ticket_type, tid)
                         log("reset the ticket({}) of {} for {}".format(tid, self.ticket.ticket_type, user_id))
-                '''
 
                 for row in self.ticket.db.check_booking(self.ticket.ticket_type, TICKET_STATUS_BOOKED):
                     user_id, ticket_number, person_id, tid = row
@@ -109,6 +131,14 @@ def main():
     for mode, sleeping in zip([TRA], [60]):
         thread = TicketThread()
         thread.init_bot(mode)
+        thread.set_sleeping(sleeping)
+
+        thread.start()
+        threads.append(thread)
+
+    for crawler_name, sleeping in zip([TRA], [60*60*12]):
+        thread = CrawlerThread()
+        thread.init_bot(crawler_name)
         thread.set_sleeping(sleeping)
 
         thread.start()

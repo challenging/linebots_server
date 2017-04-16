@@ -367,7 +367,7 @@ class TRAUtils(object):
             min_value, max_value = eid, sid
 
         transfer_stations = []
-        for station_name, station_id in tra_transfer_stations.items():
+        for station_name, station_id in sorted(tra_transfer_stations.items(), key=lambda x: x[1]):
             if station_id < max_value and station_id > min_value:
                 transfer_stations.append(station_name)
 
