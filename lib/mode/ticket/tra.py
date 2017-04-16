@@ -212,7 +212,8 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    question = "ticket_tra=transfer+070+300"
+    #question = "ticket_tra=transfer+070+300"
+    question = "list"
     print mode_tra_ticket.conversion(question, user_id)
 
     '''

@@ -218,8 +218,8 @@ class TicketDB(DB):
 
         return person_id
 
-    def list_scheduled_tickets(self, user_id, ticket_type, status=TICKET_STATUS_SCHEDULED):
-        sql = "SELECT id, ticket, retry FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' ORDER BY id DESC".format(\
+    def list_scheduled_tickets(self, user_id, ticket_type, status=[TICKET_STATUS_SCHEDULED]):
+        sql = "SELECT id, ticket, retry, parent_id FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' ORDER BY id DESC".format(\
             self.table_name, user_id, "','".join(status), ticket_type)
 
         results = []
@@ -227,6 +227,7 @@ class TicketDB(DB):
             tid = row[0]
             ticket = json.loads(row[1])
             ticket["retry"] = str(row[2])
+            ticket["parent_id"] = row[3]
 
             results.append((tid, ticket))
 
@@ -536,7 +537,7 @@ class TicketMode(Mode):
 
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
-                if ticket_type == TRA:
+                if ticket_type == TRA and ticket[1].get("parent_id", None) is None:
                     sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
 
                     transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
@@ -563,6 +564,9 @@ class TicketMode(Mode):
 
             number = ticket[u"票號"]
             messages.append(MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_MEMORY, number)))
+        elif status == TICKET_STATUS_WAITTING:
+            body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
+            number = ticket[0]
         else:
             log("Not found this ticket type - {}".format(ticket_type))
 
@@ -571,7 +575,7 @@ class TicketMode(Mode):
     def list_tickets(self, user_id, ticket_type, status):
         text_cancel_label, text_cancel_text, tickets = None, None, []
         if status == TICKET_STATUS_SCHEDULED:
-            tickets = self.db.list_scheduled_tickets(user_id, ticket_type, [TICKET_STATUS_SCHEDULED, TICKET_STATUS_RETRY])
+            tickets = self.db.list_scheduled_tickets(user_id, ticket_type, [TICKET_STATUS_SCHEDULED, TICKET_STATUS_RETRY, TICKET_STATUS_WAITTING])
             text_cancel_label = txt_ticket_cancel(None, None, True)
             text_cancel_text = TICKET_STATUS_UNSCHEDULED
         elif status == TICKET_STATUS_BOOKED:
