@@ -496,7 +496,7 @@ class TicketMode(Mode):
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
                 if ticket_type == TRA:
-                    sstation, estation = ticket[1]["from_station"], ticket[1]["to_station"]
+                    sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
 
                     transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
                     for s in transfer_stations:
