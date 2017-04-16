@@ -23,7 +23,7 @@ from lib.common.message import (
 )
 
 from lib.ticket.utils import (
-    get_station_name, get_train_name, TRAUtils,
+    tra_stations, get_station_name, get_train_name, TRAUtils,
     TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
     TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
     TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT, TICKET_STATUS_TRANSFER
@@ -53,7 +53,7 @@ class TicketDB(DB):
         cursor.close()
 
     def get_ticket(self, user_id, ticket_type, tid):
-        sql = "SELECT ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and id = '{}'".format(self.table_name, tid)
+        sql = "SELECT ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' and id = '{}'".format(self.table_name, user_id, ticket_type, tid)
 
         return [json.loads(row[0]) for row in self.select(sql)]
 

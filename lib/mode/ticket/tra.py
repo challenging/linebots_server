@@ -11,8 +11,7 @@ from lib.db.profile import db_profile
 from lib.common.check_taiwan_id import check_taiwan_id_number
 from lib.common.utils import log, UTF8, MODE_TRA_TICKET
 
-from ticket import TicketMode, TicketDB
-from ticket import TRA
+from lib.mode.ticket.ticket import TicketMode, TicketDB, TRA
 
 from lib.common.message import (
     txt_not_support, txt_ticket_sstation, txt_ticket_estation, txt_ticket_retry, txt_ticket_trainno,
