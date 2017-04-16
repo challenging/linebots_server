@@ -227,6 +227,10 @@ tra_stations = {
     "新左營": "288"
 }
 
+tra_transfer_stations = {"台南": None, "嘉義": None, "彰化": None, "台中": None, "竹南": None, "新竹": None, "桃園": None, "台北": None, "宜蘭": None, "羅東": None, "花蓮": None}
+for station_name in tra_transfer_stations.keys():
+    tra_transfer_stations[station_name] = int(tra_stations[station_name])
+
 def get_station_name(station_number):
     station_name = None
     for k, v in tra_stations.items():
@@ -348,14 +352,24 @@ class TRAUtils(object):
 
         return status
 
+    @staticmethod
+    def get_transfer_stations(sstation, estation):
+        global tra_stations, tra_transfer_stations
+
+        sid, eid = int(tra_stations[sstation]), int(tra_stations[estation])
+        min_value, max_value = -1, -1
+        if sid < eid:
+            min_value, max_value = sid, eid
+        else:
+            min_value, max_value = eid, sid
+
+        transfer_stations = []
+        for station_name, station_id in tra_transfer_stations.items():
+            if station_id < max_value and station_id > min_value:
+                transfer_stations.append(station_name)
+
+        return transfer_stations
+
 if __name__ == "__main__":
-    #print TRAUtils.get_status("l122760167", "977287")
-    #print TRAUtils.get_status("l122760167", "208433")
-
-    '''
-    timesheet_tra = load_tra_timesheep()
-    for k in timesheet_tra["TrainInfos"]:
-        print k["Train"]
-    '''
-
-    print TRAUtils.is_canceled("l122760167", "537391")
+    for station in TRAUtils.get_transfer_stations("桃園", "台東"):
+        print station

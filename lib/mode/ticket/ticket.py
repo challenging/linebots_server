@@ -23,7 +23,7 @@ from lib.common.message import (
 )
 
 from lib.ticket.utils import (
-    get_station_name, get_train_name,
+    get_station_name, get_train_name, get_transfer_stations,
     TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
     TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
     TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
@@ -44,7 +44,7 @@ class TicketDB(DB):
 
     def create_table(self):
         cursor = self.conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), ticket_info VARCHAR(1024), retry INTEGER, status VARCHAR(16));".format(self.table_name))
+        cursor.execute("CREATE TABLE IF NOT EXISTS {} (id SERIAL, token VARCHAR(256), user_id VARCHAR(128), creation_datetime TIMESTAMP, ticket_type VARCHAR(32), ticket VARCHAR(1024), ticket_number VARCHAR(32), ticket_info VARCHAR(1024), retry INTEGER, status VARCHAR(16), parent_id(INT), next_id(INT));".format(self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_1 ON {table_name} (token, ticket_type, creation_datetime, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_2 ON {table_name} (token, user_id, ticket_type, ticket_number);".format(table_name=self.table_name))
         cursor.execute("CREATE INDEX IF NOT EXISTS {table_name}_idx_3 ON {table_name} (id);".format(table_name=self.table_name))
@@ -405,7 +405,7 @@ class TicketMode(Mode):
 
             c = self.db.split(user_id, ticket_type, tid)
             if c > 0:
-                reply_txt = "開始拆票購買，請設定您的中間車站"
+                reply_txt = "開始拆票購買，請選擇中間轉運車站"
             else:
                 reply_txt = "找不到此張預訂車票，請嘗試再訂購一張"
 
@@ -484,6 +484,8 @@ class TicketMode(Mode):
         return message
 
     def get_ticket_body(self, ticket, ticket_type, status, headers):
+        global TRA
+
         body, number, messages = [], None, []
         if status == TICKET_STATUS_SCHEDULED:
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
@@ -493,8 +495,13 @@ class TicketMode(Mode):
 
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
-                if ticket_type == "tra":
-                    messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
+                if ticket_type == TRA:
+                    # TODO: Get the station name from ticket object
+                    sstation, estation = 
+
+                    transfer_stations = get_transfer_stations(sstation, estation)
+                    if len(transfer_stations) > 0:
+                        messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
