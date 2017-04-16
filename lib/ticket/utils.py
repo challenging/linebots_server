@@ -356,7 +356,10 @@ class TRAUtils(object):
     def get_transfer_stations(sstation, estation):
         global tra_stations, tra_transfer_stations
 
-        sid, eid = int(tra_stations[sstation]), int(tra_stations[estation])
+        sid, eid = sstation, estation
+        if not isinstance(sstation, int) and not isinstance(estation, int):
+            sid, eid = int(tra_stations[sstation]), int(tra_stations[estation])
+
         min_value, max_value = -1, -1
         if sid < eid:
             min_value, max_value = sid, eid

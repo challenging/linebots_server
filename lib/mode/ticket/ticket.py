@@ -496,14 +496,14 @@ class TicketMode(Mode):
             if retry >= TICKET_RETRY:
                 messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
                 if ticket_type == TRA:
-                    # TODO: Get the station name from ticket object
-                    sstation, estation = "桃園", "花蓮"
-                    for k, v in ticket[1].items():
-                        print k, v
+                    sstation, estation = ticket[1]["from_station"], ticket[1]["to_station"]
 
                     transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
-                    if len(transfer_stations) > 0:
-                        messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
+                    for s in transfer_stations:
+                        print 1111, s
+
+                    #if len(transfer_stations) > 0:
+                    #    messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
