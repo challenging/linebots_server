@@ -541,7 +541,7 @@ class TicketMode(Mode):
         headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == TRA else TICKET_HEADERS_BOOKED_THSR
 
         reply_txt = None
-        if len(tickets) == 0:
+        if len(tickets) == 1:
             ticket = tickets[0]
 
             messages = []
