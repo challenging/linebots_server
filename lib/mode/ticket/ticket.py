@@ -419,7 +419,7 @@ class TicketMode(Mode):
             transfer_stations = TRAUtils.get_transfer_stations(int(ticket["from_station"]), int(ticket["to_station"]))
 
             for station in transfer_stations[:5]:
-                messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, station, tid)))
+                messages.append(MessageTemplateAction(label=station, text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, station, tid)))
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=txt_ticket_split_body(), actions=messages))
 
