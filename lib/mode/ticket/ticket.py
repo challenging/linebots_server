@@ -23,7 +23,7 @@ from lib.common.message import (
 )
 
 from lib.ticket.utils import (
-    get_station_name, get_train_name, get_transfer_stations,
+    get_station_name, get_train_name, TRAUtils,
     TICKET_COUNT, TICKET_CMD_QUERY, TICKET_CMD_RESET, TICKET_HEADERS_BOOKED_TRA, TICKET_HEADERS_BOOKED_THSR, TICKET_RETRY, TICKET_STATUS_PAY,
     TICKET_STATUS_BOOKED, TICKET_STATUS_CANCELED, TICKET_STATUS_SCHEDULED, TICKET_STATUS_UNSCHEDULED, TICKET_STATUS_MEMORY, TICKET_STATUS_CANCEL,
     TICKET_STATUS_FORGET, TICKET_STATUS_AGAIN, TICKET_STATUS_FAILED, TICKET_STATUS_CONFIRM, TICKET_STATUS_RETRY, TICKET_STATUS_SPLIT
@@ -501,7 +501,7 @@ class TicketMode(Mode):
                     for k, v in ticket[1].items():
                         print k, v
 
-                    transfer_stations = get_transfer_stations(sstation, estation)
+                    transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
                     if len(transfer_stations) > 0:
                         messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
             else:
