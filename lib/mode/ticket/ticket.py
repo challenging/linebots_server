@@ -582,7 +582,7 @@ class TicketMode(Mode):
 
         headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == TRA else TICKET_HEADERS_BOOKED_THSR
 
-        reply_txt = None
+        reply_txt = "目前並無預定車票"
         if len(tickets) == 1:
             ticket = tickets[0]
 
