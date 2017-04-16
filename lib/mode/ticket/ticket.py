@@ -499,11 +499,8 @@ class TicketMode(Mode):
                     sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
 
                     transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
-                    for s in transfer_stations:
-                        print 1111, s
-
-                    #if len(transfer_stations) > 0:
-                    #    messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
+                    if len(transfer_stations) > 0:
+                        messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
             else:
                 messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
         elif status == TICKET_STATUS_BOOKED:
@@ -544,7 +541,7 @@ class TicketMode(Mode):
         headers = TICKET_HEADERS_BOOKED_TRA if ticket_type == TRA else TICKET_HEADERS_BOOKED_THSR
 
         reply_txt = None
-        if len(tickets) == 1:
+        if len(tickets) == 0:
             ticket = tickets[0]
 
             messages = []
@@ -557,7 +554,7 @@ class TicketMode(Mode):
             messages.extend(m)
 
             reply_txt = TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages))
-        elif len(tickets) > 1:
+        else:
             messages = []
             for ticket in tickets:
                 number, body, m = self.get_ticket_body(ticket, ticket_type, status, headers)
