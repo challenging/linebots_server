@@ -219,7 +219,7 @@ class TicketDB(DB):
         return person_id
 
     def list_scheduled_tickets(self, user_id, ticket_type, status=[TICKET_STATUS_SCHEDULED]):
-        sql = "SELECT id, ticket, retry, parent_id FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' ORDER BY id DESC".format(\
+        sql = "SELECT id, ticket, retry, parent_id, status FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' ORDER BY id ASC".format(\
             self.table_name, user_id, "','".join(status), ticket_type)
 
         results = []
@@ -228,6 +228,7 @@ class TicketDB(DB):
             ticket = json.loads(row[1])
             ticket["retry"] = str(row[2])
             ticket["parent_id"] = row[3]
+            ticket["status"] = row[4]
 
             results.append((tid, ticket))
 
@@ -533,18 +534,20 @@ class TicketMode(Mode):
             body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
             number = ticket[0]
 
-            retry = int(ticket[1].get("retry", 0))
+            if ticket[1].get("parent_id", None) is None or ticket[1].get("status", "anything") != TICKET_STATUS_WAITTING:
+                retry = int(ticket[1].get("retry", 0))
+                if retry >= TICKET_RETRY:
+                    messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
+                    if ticket_type == TRA and ticket[1].get("parent_id", None) is None:
+                        sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
 
-            if retry >= TICKET_RETRY:
-                messages.append(MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_RETRY, number)))
-                if ticket_type == TRA and ticket[1].get("parent_id", None) is None:
-                    sstation, estation = int(ticket[1]["from_station"]), int(ticket[1]["to_station"])
-
-                    transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
-                    if len(transfer_stations) > 0:
-                        messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
+                        transfer_stations = TRAUtils.get_transfer_stations(sstation, estation)
+                        if len(transfer_stations) > 0:
+                            messages.append(MessageTemplateAction(label=txt_ticket_split(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_SPLIT, number)))
+                else:
+                    messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
             else:
-                messages.append(MessageTemplateAction(label=txt_ticket_continued(), text='ticket_{}={}'.format(ticket_type, TICKET_STATUS_AGAIN)))
+                pass
         elif status == TICKET_STATUS_BOOKED:
             s = ticket["status"]
 
@@ -564,9 +567,6 @@ class TicketMode(Mode):
 
             number = ticket[u"票號"]
             messages.append(MessageTemplateAction(label=txt_ticket_memory(), text='ticket_{}={}+{}'.format(ticket_type, TICKET_STATUS_MEMORY, number)))
-        elif status == TICKET_STATUS_WAITTING:
-            body = self.translate_ticket(ticket_type, ticket[1], ticket[0])
-            number = ticket[0]
         else:
             log("Not found this ticket type - {}".format(ticket_type))
 
