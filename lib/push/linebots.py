@@ -25,7 +25,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
     batch_time = 8
 
     requests = mode_tra_ticket.db.non_booking(type)
-    for user_id, creation_datetime, param, retry, tid in requests:
+    for user_id, param, retry, tid in requests:
         if retry >= TICKET_RETRY:
             mode_tra_ticket.db.set_status(user_id, type, TICKET_STATUS_RETRY, tid=tid)
 
@@ -60,7 +60,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
                             "起迄站": "{} - {}, {}張".format(start_station.encode(UTF8), end_station.encode(UTF8), train_count),
                             "搭乘時間": "{} {} - {}".format(start_date, start_time, end_time)}
 
-                    mode_tra_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
+                    mode_tra_ticket.db.book(tid, ticket_number, TICKET_STATUS_BOOKED, json.dumps(info))
 
                     txt = "電腦代號: {}\n".format(ticket_number)
                     txt += "{}\n".format("="*20)
@@ -78,12 +78,12 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
                     break
                 else:
-                    mode_tra_ticket.db.retry(user_id, creation_datetime, type)
+                    mode_tra_ticket.db.retry(tid)
                     log("fail in retrying to crack the {} ticket for {}".format(type.upper(), user_id))
 
 def booking_thsr_ticket(driver="phantom", type=THSR):
     requests = mode_tra_ticket.db.non_booking(type)
-    for user_id, creation_datetime, param, retry, tid in requests:
+    for user_id, param, retry, tid in requests:
         if retry >= TICKET_RETRY:
             mode_tra_ticket.db.set_status(user_id, type, TICKET_STATUS_RETRY, tid=tid)
 
@@ -109,7 +109,7 @@ def booking_thsr_ticket(driver="phantom", type=THSR):
                         "搭乘時間": "{}/{} {} - {}".format(param["booking_date"][:4], date, stime, etime),
                         "付款金額": "{} 元".format(money)}
 
-                mode_thsr_ticket.db.book(user_id, creation_datetime, ticket_number, TICKET_STATUS_BOOKED, type, json.dumps(info))
+                mode_thsr_ticket.db.book(tid, ticket_number, TICKET_STATUS_BOOKED, json.dumps(info))
 
                 txt = "電腦代號: {}\n".format(ticket_number)
                 txt += "{}\n".format("="*20)
@@ -128,7 +128,7 @@ def booking_thsr_ticket(driver="phantom", type=THSR):
 
                 line_bot_api.push_message(user_id, message)
             else:
-                mode_thsr_ticket.db.retry(user_id, creation_datetime, type)
+                mode_thsr_ticket.db.retry(tid)
                 log("fail in retrying to crack the {} ticket for {}".format(type.upper(), user_id))
 
 if __name__ == "__main__":

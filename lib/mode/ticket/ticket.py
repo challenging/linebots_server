@@ -159,15 +159,14 @@ class TicketDB(DB):
 
         return c
 
-    def book(self, user_id, creation_datetime, ticket_number, status, ticket_type, ticket_info):
-        sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, ticket_number, status, ticket_info.replace("'", "\""), user_id, creation_datetime, ticket_type)
+    def book(self, tid, ticket_number, status, ticket_info):
+        sql = "UPDATE {} SET ticket_number = '{}', status = '{}', ticket_info = '{}' WHERE id = {}".format(\
+            self.table_name, ticket_number, status, ticket_info.replace("'", "\""), tid)
 
         return self.cmd(sql)
 
-    def retry(self, user_id, creation_datetime, ticket_type):
-        sql = "UPDATE {} SET retry = retry + 1 WHERE user_id = '{}' and creation_datetime = '{}' AND ticket_type = '{}'".format(\
-            self.table_name, user_id, creation_datetime, ticket_type)
+    def retry(self, tid):
+        sql = "UPDATE {} SET retry = retry + 1 WHERE tid = {}".format(self.table_name, tid)
 
         return self.cmd(sql)
 
@@ -238,6 +237,7 @@ class TicketDB(DB):
         now = datetime.datetime.now().strftime("%Y-%m-%d")
 
         sql = "SELECT id, ticket_info, retry, status FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, "','".join(status), ticket_type, now)
+        print sql
 
         results = []
         for row in self.select(sql):
