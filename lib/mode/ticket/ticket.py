@@ -58,6 +58,23 @@ class TicketDB(DB):
 
         return [json.loads(row[0]) for row in self.select(sql)]
 
+    def schedule_waitting_ticket(self, user_id, ticket_type, parent_id, getin_sdtime, getin_edtime):
+        global TRA
+
+        sql = "SELCT tid, ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' AND parent_id = '{}'".format(self.table_name, user_id, ticket_type, parent_id)
+
+        tid, ticket = None, None
+        for row in self.select(sql):
+            tid, ticket = row[0], json.loads(row[1])
+
+        if ticket_type == TRA:
+            ticket["getin_start_dtime"] = getin_sdtime
+            ticket["getin_end_dtime"] = getin_edtime
+
+        sql = "UPDATE {} set ticket = '{}', status = '{}' WHERE tid = {}".format(self.table_name, json.dumps(ticket), tid)
+
+        return self.cmd(sql)
+
     def ask(self, user_id, ticket, ticket_type):
         cursor = self.conn.cursor()
 
