@@ -431,7 +431,7 @@ class TicketMode(Mode):
             transfer_stations = TRAUtils.get_transfer_stations(int(ticket["from_station"]), int(ticket["to_station"]))
 
             messages = []
-            for station in transfer_stations[:5]:
+            for station in transfer_stations[:4]:
                 messages.append(MessageTemplateAction(label=station, text='ticket_{}={}+{}+{}'.format(ticket_type, TICKET_STATUS_TRANSFER, tra_stations[station], tid)))
 
             if messages:
