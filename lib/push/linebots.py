@@ -25,14 +25,15 @@ def booking_tra_ticket(driver="phantom", type=TRA):
     batch_time = 8
 
     requests = mode_tra_ticket.db.non_booking(type)
-    for user_id, param, retry, tid in requests:
+    for user_id, param, retry, tid, parent_tid in requests:
         if retry >= TICKET_RETRY:
             mode_tra_ticket.db.set_status(user_id, type, TICKET_STATUS_RETRY, tid=tid)
 
             number, body, _ = mode_tra_ticket.get_ticket_body((tid, param), type, TICKET_STATUS_SCHEDULED, TICKET_HEADERS_BOOKED_TRA)
             messages = [MessageTemplateAction(label=txt_ticket_retry(), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_RETRY, number)),
-                        MessageTemplateAction(label=txt_ticket_split(), text="ticket_{}={}+{}".format(type, TICKET_STATUS_SPLIT, number)),
                         MessageTemplateAction(label=txt_ticket_cancel(None, None, True), text='ticket_{}={}+{}'.format(type, TICKET_STATUS_UNSCHEDULED, tid))]
+            if parent_tid is None:
+                messages.append(MessageTemplateAction(label=txt_ticket_split(), text="ticket_{}={}+{}".format(type, TICKET_STATUS_SPLIT, number)))
 
             line_bot_api.push_message(user_id, TemplateSendMessage(alt_text=txt_not_support(), template=ButtonsTemplate(text=body, actions=messages)))
         else:
@@ -83,7 +84,7 @@ def booking_tra_ticket(driver="phantom", type=TRA):
 
 def booking_thsr_ticket(driver="phantom", type=THSR):
     requests = mode_tra_ticket.db.non_booking(type)
-    for user_id, param, retry, tid in requests:
+    for user_id, param, retry, tid, parent_tid in requests:
         if retry >= TICKET_RETRY:
             mode_tra_ticket.db.set_status(user_id, type, TICKET_STATUS_RETRY, tid=tid)
 
