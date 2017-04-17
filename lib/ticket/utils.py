@@ -296,17 +296,13 @@ def thsr_ticket_dir():
 def thsr_cancel_dir():
     return thsr_dir("cancel")
 
-opener = None
 class TRAUtils(object):
     TRA_CANCELED_URL = "http://railway.hinet.net/ccancel_rt.jsp"
     TRA_QUERY_URL = "http://railway.hinet.net/coquery.jsp"
 
     @staticmethod
     def is_canceled(person_id, ticket_number):
-        global opener
-
-        if opener is None:
-            opener = get_chrome_driver()
+        opener = get_chrome_driver()
 
         url = "{}?personId={}&orderCode={}".format(TRAUtils.TRA_CANCELED_URL, person_id.upper(), ticket_number)
 
@@ -335,6 +331,8 @@ class TRAUtils(object):
         is_passing = False
         if content == u"您的車票取消成功":
             is_passing = True
+
+        opener.quit()
 
         return is_passing
 

@@ -94,10 +94,10 @@ class TicketDB(DB):
             diff_days = self.DIFF_THSR
             booking_date = "cast(cast(ticket::json->'booking_date' as varchar) as date)"
 
-        sql = "SELECT user_id, creation_datetime, ticket, retry, id FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
+        sql = "SELECT user_id, ticket, retry, id FROM {} WHERE token = '{}' AND ticket_number = '-1' AND {} BETWEEN '{}' AND '{}' AND status = '{}' AND ticket_type = '{}'".format(\
             self.table_name, channel_access_token, booking_date, now.strftime("%Y-%m-%dT00:00:00"), (now + datetime.timedelta(days=diff_days)).strftime("%Y-%m-%dT23:59:59"), status, ticket_type)
 
-        return [(row[0], row[1], json.loads(row[2]), row[3], row[4]) for row in self.select(sql)]
+        return [(row[0], json.loads(row[1]), row[2], row[3]) for row in self.select(sql)]
 
     def check_booking(self, ticket_type, status=TICKET_STATUS_BOOKED):
         now = datetime.datetime.now()
@@ -166,7 +166,7 @@ class TicketDB(DB):
         return self.cmd(sql)
 
     def retry(self, tid):
-        sql = "UPDATE {} SET retry = retry + 1 WHERE tid = {}".format(self.table_name, tid)
+        sql = "UPDATE {} SET retry = retry + 1 WHERE id = {}".format(self.table_name, tid)
 
         return self.cmd(sql)
 
