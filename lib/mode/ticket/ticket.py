@@ -61,7 +61,7 @@ class TicketDB(DB):
     def schedule_waitting_ticket(self, user_id, ticket_type, parent_id, trainno):
         global TRA
 
-        sql = "SELCT tid, ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' AND parent_id = '{}'".format(self.table_name, user_id, ticket_type, parent_id)
+        sql = "SELECT tid, ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' AND parent_id = '{}'".format(self.table_name, user_id, ticket_type, parent_id)
 
         tid, ticket = None, None
         for row in self.select(sql):
