@@ -73,7 +73,7 @@ class TicketDB(DB):
 
             ticket["train_no"] = trainno
 
-        sql = "UPDATE {} set ticket = '{}', status = '{}' WHERE tid = {}".format(self.table_name, json.dumps(ticket), tid)
+        sql = "UPDATE {} set ticket = '{}', status = '{}' WHERE id = {}".format(self.table_name, json.dumps(ticket), TICKET_STATUS_SCHEDULED, tid)
 
         return self.cmd(sql)
 
