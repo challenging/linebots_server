@@ -59,13 +59,8 @@ def booking_tra_ticket(driver="phantom", type=TRA):
                     mode_tra_ticket.db.book(tid, ticket_number, TICKET_STATUS_BOOKED, json.dumps(info))
 
                     if parent_tid is not None:
-                        start_dtime = datetime.datetime.strptime(end_time, "%H:%M")
-
-                        scheduled_end_dtime = datetime.datetime.strptime(etime, "%H:%M")
-                        end_dtime = max(scheduled_end_dtime, start_dtime + datetime.timedelta(hours=1))
-
-                        mode_tra_ticket.db.schedule_waitting_ticket(user_id, type, parent_tid, start_dtime.strftime("%H:00"), end_dtime.strftime("%H:00"))
-                        log("set the status of waitting ticket({}, {}) from waitting to scheduled".format(parent_tid, tid))
+                        mode_tra_ticket.db.schedule_waitting_ticket(user_id, type, parent_tid, train_number)
+                        log("set the status of waitting ticket(train_no={}, parent_id={}, id={}) from waitting to scheduled".format(train_number, parent_tid, tid))
 
                     txt = "電腦代號: {}\n".format(ticket_number)
                     txt += "{}\n".format("="*20)
