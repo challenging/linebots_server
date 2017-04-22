@@ -61,7 +61,7 @@ class TicketDB(DB):
     def schedule_waitting_ticket(self, user_id, ticket_type, parent_id, trainno):
         global TRA
 
-        sql = "SELCT tid, ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' AND parent_id = '{}'".format(self.table_name, user_id, ticket_type, parent_id)
+        sql = "SELECT id, ticket FROM {} WHERE user_id = '{}' AND ticket_type = '{}' AND parent_id = '{}'".format(self.table_name, user_id, ticket_type, parent_id)
 
         tid, ticket = None, None
         for row in self.select(sql):
@@ -73,7 +73,7 @@ class TicketDB(DB):
 
             ticket["train_no"] = trainno
 
-        sql = "UPDATE {} set ticket = '{}', status = '{}' WHERE tid = {}".format(self.table_name, json.dumps(ticket), tid)
+        sql = "UPDATE {} set ticket = '{}', status = '{}' WHERE id = {}".format(self.table_name, json.dumps(ticket), TICKET_STATUS_SCHEDULED, tid)
 
         return self.cmd(sql)
 
