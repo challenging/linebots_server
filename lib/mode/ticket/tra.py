@@ -66,7 +66,7 @@ class TRATicketMode(TicketMode):
                 if re.search("^([\d]{1,2})$", question):
                     question = int(question)
 
-                    if question > -1 and question < 23:
+                    if question > -1 and question < 24:
                         booking_datetime = datetime.datetime.strptime("{} {:02d}".format(self.memory[user_id]["getin_date"].split("-")[0], question), "%Y/%m/%d %H")
                         if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
                             is_setting = self.set_memory(user_id, "getin_start_dtime", "{:02d}:00".format(question))
@@ -74,7 +74,7 @@ class TRATicketMode(TicketMode):
                     m = re.match("([\d]{1,2})-([\d]{1,2})", question)
 
                     stime, etime = int(m.group(1)), int(m.group(2))
-                    if stime > -1 and etime > 0 and stime < 23 and etime < 24 and etime > stime:
+                    if stime > -1 and etime > 0 and stime < 24 and etime < 25 and etime > stime:
                         booking_datetime = datetime.datetime.strptime("{} {}".format(self.memory[user_id]["getin_date"].split("-")[0], stime), "%Y/%m/%d %H")
                         if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
                             is_setting = self.set_memory(user_id, "getin_start_dtime", "{:02d}:00".format(stime))
@@ -82,7 +82,7 @@ class TRATicketMode(TicketMode):
             elif re.search("([\d]{1,2})", question) and self.memory[user_id].get("getin_end_dtime", None) is None:
                 question = int(question)
 
-                if question > 0 and question < 24 and question > int(self.memory[user_id]["getin_start_dtime"].split(":")[0]):
+                if question > 0 and question < 25 and question > int(self.memory[user_id]["getin_start_dtime"].split(":")[0]):
                     is_setting = self.set_memory(user_id, "getin_end_dtime", "{:02d}:00".format(question))
         elif self.memory[user_id]["tra_mode"].lower() == "train_no":
             if re.search("^[\d]{3,4}$", question) and self.memory[user_id].get("train_no", None) is None and question in self.tra_trains:
@@ -150,6 +150,9 @@ class TRATicketMode(TicketMode):
                         del self.memory[user_id]["train_type"]
                     else:
                         pass
+
+                    if self.memory[user_id]["getin_end_dtime"] == "24:00":
+                        self.memory[user_id]["getin_end_dtime"] = "23:59"
 
                     cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
                     if ci > 0:

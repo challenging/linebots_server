@@ -93,10 +93,10 @@ def txt_ticket_getindate():
     return "請輸入欲搭車日期(例：{})".format((datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%Y%m%d"))
 
 def txt_ticket_stime():
-    return "請輸入起始時間(0-22)"
+    return "請輸入起始時間(0-24)"
 
 def txt_ticket_etime():
-    return "請輸入終止時間(1-23)"
+    return "請輸入終止時間(1-24)"
 
 def txt_ticket_sstation():
     return "請輸入上車車站"
