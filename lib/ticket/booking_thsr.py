@@ -163,6 +163,8 @@ def book_ticket(param, driver="phantom"):
         for idx, info in enumerate(ticket_info.text.split("\n")[1:]):
             if param["booking_type"] != "student":
                 if idx == 0:
+                    print re.split("[\s]+", info)
+                    print len(re.split("[\s]+", info))
                     _, date, train_number, start_station, end_station, stime, etime, _, _, _, money = re.split("[\s]+", info)
                 elif idx == 1:
                     t = re.split("[\s]+", info)
@@ -207,12 +209,7 @@ def book_ticket(param, driver="phantom"):
 
 def cancel_ticket(person_id, ticket_number, driver="phantom"):
     is_cancelled = False
-
-    opener = None
-    if driver == "chrome":
-        opener = get_chrome_driver()
-    else:
-        opener = get_phantom_driver()
+    opener = get_driver(driver)
 
     retry = 3
     while retry > 0 and not is_cancelled:
