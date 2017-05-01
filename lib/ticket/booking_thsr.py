@@ -153,55 +153,57 @@ def book_ticket(param, driver="phantom"):
 
             if button:
                 break
-        button.click()
 
-        form = opener.find_element_by_id("BookingS2Form")
-        form.submit()
-        time.sleep(random.randint(1, 3))
+        if button:
+            button.click()
 
-        ticket_info = opener.find_element_by_xpath("//table[@class='table_simple']")
-        for idx, info in enumerate(ticket_info.text.split("\n")[1:]):
-            if param["booking_type"] != "student":
-                if idx == 0:
-                    print re.split("[\s]+", info)
-                    print len(re.split("[\s]+", info))
-                    _, date, train_number, start_station, end_station, stime, etime, _, _, _, money = re.split("[\s]+", info)
-                elif idx == 1:
-                    t = re.split("[\s]+", info)
-                    train_type = t[0]
-                    train_count = " ".join(t[1:-3])
-            else:
-                if idx == 0:
-                    _, date, train_number, start_station, end_station, stime, etime, _, _ = re.split("[\s]+", info)
-                elif idx == 1:
-                    _, _, money = re.split("[\s]+", info)
-                elif idx == 2:
-                    t = re.split("[\s]+", info)
-                    train_type = t[0]
-                    train_count = " ".join(t[1:-3])
+            form = opener.find_element_by_id("BookingS2Form")
+            form.submit()
+            time.sleep(random.randint(1, 3))
 
-        opener.find_element_by_id("idNumber").send_keys(param["person_id"])
-        opener.find_element_by_id("mobileInputRadio").click()
-        opener.find_element_by_id("mobilePhone").send_keys(param["cellphone"])
-        opener.find_element_by_name("agree").click()
-        opener.find_element_by_id("isSubmit").click()
-        time.sleep(random.randint(2, 4))
+            ticket_info = opener.find_element_by_xpath("//table[@class='table_simple']")
+            for idx, info in enumerate(ticket_info.text.split("\n")[1:]):
+                if param["booking_type"] != "student":
+                    if idx == 0:
+                        _, date, train_number, start_station, end_station, stime, etime, _, _, _, money = re.split("[\s]+", info)
+                    elif idx == 1:
+                        t = re.split("[\s]+", info)
+                        train_type = t[0]
+                        train_count = " ".join(t[1:-3])
+                else:
+                    if idx == 0:
+                        _, date, train_number, start_station, end_station, stime, etime, _, _ = re.split("[\s]+", info)
+                    elif idx == 1:
+                        _, _, money = re.split("[\s]+", info)
+                    elif idx == 2:
+                        t = re.split("[\s]+", info)
+                        train_type = t[0]
+                        train_count = " ".join(t[1:-3])
 
-        ticket_number = opener.find_element_by_xpath("//table[@class='table_details']//td[@class='content_key']")
-        if ticket_number:
-            ticket_number = ticket_number.text
+            opener.find_element_by_id("idNumber").send_keys(param["person_id"])
+            opener.find_element_by_id("mobileInputRadio").click()
+            opener.find_element_by_id("mobilePhone").send_keys(param["cellphone"])
+            opener.find_element_by_name("agree").click()
+            opener.find_element_by_id("isSubmit").click()
+            time.sleep(random.randint(2, 4))
 
-            filepath_ticket = os.path.join(thsr_ticket_dir(), "{}.jpg".format(ticket_number))
-            opener.save_screenshot(filepath_ticket)
-            log("save ticket image in {}".format(filepath_ticket))
+            ticket_number = opener.find_element_by_xpath("//table[@class='table_details']//td[@class='content_key']")
+            if ticket_number:
+                ticket_number = ticket_number.text
 
-            filepath_success = os.path.join(thsr_success_dir(), "{}.jpg".format(answer))
-            os.rename(im_filepath, filepath_success)
-            log("book the ticket number - {}".format(ticket_number))
+                filepath_ticket = os.path.join(thsr_ticket_dir(), "{}.jpg".format(ticket_number))
+                opener.save_screenshot(filepath_ticket)
+                log("save ticket image in {}".format(filepath_ticket))
 
-            break
+                filepath_success = os.path.join(thsr_success_dir(), "{}.jpg".format(answer))
+                os.rename(im_filepath, filepath_success)
+                log("book the ticket number - {}".format(ticket_number))
+
+                retry = -1
         else:
-            retry -= 1
+            log("Not found the suitable THRS ticket from {} to {}".format(param["booking_stime"], param["booking_etime"]))
+
+        retry -= 1
 
     opener.quit()
 
