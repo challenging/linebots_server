@@ -61,7 +61,7 @@ def get_firefox_driver():
     return opener
 
 def get_phantom_driver():
-    driver = os.path.join(data_dir("driver"), "phantomjs-2.1.1-{}".format("mac64" if sys.platform == "darwin" else "linux64"), "bin", "phantomjs")
+    driver = os.path.join(data_dir("driver"), "phantomjs-2.1.1-{}".format("mac64" if sys.platform == "darwin" else "linux-x86_64"), "bin", "phantomjs")
 
     if not os.path.exists(driver):
         log("Not found the driver of PhantomJS from {}".format(driver))
