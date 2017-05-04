@@ -92,7 +92,7 @@ class TRATicketMode(TicketMode):
                     m = re.match("([\d]{1,2})-([\d]{1,2})", question)
 
                     stime, etime = int(m.group(1)), int(m.group(2))
-                    if stime >= HOUR_START and etime > HOUR_START and stime < HOUR_START and etime <= HOUR_END and etime > stime:
+                    if stime >= HOUR_START and etime > HOUR_START and etime <= HOUR_END and etime > stime:
                         booking_datetime = datetime.datetime.strptime("{} {}".format(self.memory[user_id][GETIN_DATE].split("-")[0], stime), "%Y/%m/%d %H")
                         if booking_datetime > datetime.datetime.now() + datetime.timedelta(hours=self.DELAY_HOUR):
                             is_setting = self.set_memory(user_id, GETIN_START_DTIME, "{:02d}:00".format(stime))
@@ -233,10 +233,8 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    question = "list"
-    print mode_tra_ticket.conversion(question, user_id)
-
-    questions = [person_id, "ticket_tra_mode=time", (datetime.datetime.now()+datetime.timedelta(days=7)).strftime("%Y/%m/%d"), "18-23", "台南", "高雄", "1", "全部車種"]#, "ticket_tra=confirm"]
+    questions = [person_id, "ticket_tra_mode=time", "20170616", "23-24"]
+    #questions = [person_id, "ticket_tra_mode=time", (datetime.datetime.now()+datetime.timedelta(days=7)).strftime("%Y/%m/%d"), "18-23", "台南", "高雄", "1", "全部車種"]#, "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
         if isinstance(message, str):
