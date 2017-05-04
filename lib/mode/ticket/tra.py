@@ -38,7 +38,7 @@ PERSON_ID = "person_id"
 GETIN_DATE = "getin_date"
 TRAIN_NO = "train_no"
 TRAIN_TIME = "time"
-TRAIN_TYPE = "trian_type"
+TRAIN_TYPE = "train_type"
 FROM_STATION = "from_station"
 TO_STATION = "to_station"
 ORDER_QTY_STR = "order_qty_str"
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = [person_id, "ticket_tra_mode=time", "20170616", "23-24"]
+    questions = [person_id, "ticket_tra_mode=time", "20170616", "23-24", "台北", "台東", "6", "自強號"]
     #questions = [person_id, "ticket_tra_mode=time", (datetime.datetime.now()+datetime.timedelta(days=7)).strftime("%Y/%m/%d"), "18-23", "台南", "高雄", "1", "全部車種"]#, "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
