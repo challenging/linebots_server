@@ -110,7 +110,7 @@ class TRATicketMode(TicketMode):
             is_setting = self.set_memory(user_id, FROM_STATION, get_station_number(question))
         elif not is_setting and get_station_number(question) and self.memory[user_id].get(TO_STATION, None) is None:
             is_setting = self.set_memory(user_id, TO_STATION, get_station_number(question))
-        elif not is_setting and question.isdigit() and int(question) >= TICKET_AMOUNT_UPPER_LIMIT and int(question) <= TICKET_AMOUNT_LOWER_LIMIT and self.memory[user_id].get(ORDER_QTY_STR, None) is None:
+        elif not is_setting and question.isdigit() and int(question) <= TICKET_AMOUNT_UPPER_LIMIT and int(question) >= TICKET_AMOUNT_LOWER_LIMIT and self.memory[user_id].get(ORDER_QTY_STR, None) is None:
             is_setting = self.set_memory(user_id, ORDER_QTY_STR, question)
         elif not is_setting and self.memory[user_id][TRA_MODE] == TRAIN_TIME and get_train_type(question) and self.memory[user_id].get(TRAIN_TYPE, None) is None:
             is_setting = self.set_memory(user_id, TRAIN_TYPE, get_train_type(question))
