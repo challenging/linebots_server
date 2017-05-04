@@ -43,10 +43,16 @@ def booking_tra_ticket(driver="phantom", type=TRA):
             if is_time:
                 stime, etime = param["getin_start_dtime"], param["getin_end_dtime"]
                 stime, etime = int(stime.split(":")[0]), int(etime.split(":")[0])
+                if stime == 23 and etime == 23:
+                    etime = 24
 
             for sdtime in range(stime, etime, batch_time):
                 if is_time:
-                    param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+batch_time))
+                    if etime != 24:
+                        param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "{:02d}:00".format(min(etime, sdtime+batch_time))
+                    else:
+                        param["getin_start_dtime"], param["getin_end_dtime"] = "{:02d}:00".format(sdtime), "23:59"
+                print param
 
                 ticket_number, ticket_filepath, ticket_info = booking_tra.book_ticket(param, driver=driver)
                 if ticket_number is not None:
