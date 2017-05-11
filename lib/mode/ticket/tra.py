@@ -161,15 +161,15 @@ class TRATicketMode(TicketMode):
                     del self.memory[user_id][TRA_MODE]
                     if tra_mode == TRAIN_TIME:
                         del self.memory[user_id][TRAIN_NO]
+
+                        if self.memory[user_id][GETIN_END_DTIME] == "24:00":
+                            self.memory[user_id][GETIN_END_DTIME] = "23:59"
                     elif tra_mode == TRAIN_NO:
                         del self.memory[user_id][GETIN_START_DTIME]
                         del self.memory[user_id][GETIN_END_DTIME]
                         del self.memory[user_id][TRAIN_TYPE]
                     else:
                         pass
-
-                    if self.memory[user_id][GETIN_END_DTIME] == "24:00":
-                        self.memory[user_id][GETIN_END_DTIME] = "23:59"
 
                     cs, ci = self.db.ask(user_id, json.dumps(self.memory[user_id]), self.ticket_type)
                     if ci > 0:
