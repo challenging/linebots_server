@@ -75,7 +75,7 @@ class TRATicketMode(TicketMode):
             if question.lower() == "ticket_tra_mode={}".format(TRAIN_TIME):
                 is_setting = self.set_memory(user_id, TRA_MODE, TRAIN_TIME)
             elif question.lower() == "ticket_tra_mode={}".format(TRAIN_NO):
-                self.memory[user_id][TRA_MODE] = TRAIN_NO
+                #self.memory[user_id][TRA_MODE] = TRAIN_NO
                 is_setting = self.set_memory(user_id, TRA_MODE, TRAIN_NO)
             else:
                 pass
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     person_id = "L122760167"
     user_id = "Ua5f08ec211716ba22bef87a8ac2ca6ee"
 
-    questions = [person_id, "ticket_tra_mode=time", "20170616", "23-24", "台北", "台東", "6", "自強號"]
+    questions = [person_id, "ticket_tra_mode=train_no", "20170616", "23-24", "台北", "台東", "6", "自強號"]
     #questions = [person_id, "ticket_tra_mode=time", (datetime.datetime.now()+datetime.timedelta(days=7)).strftime("%Y/%m/%d"), "18-23", "台南", "高雄", "1", "全部車種"]#, "ticket_tra=confirm"]
     for question in questions:
         message = mode_tra_ticket.conversion(question, user_id)
