@@ -256,7 +256,6 @@ class TicketDB(DB):
         now = datetime.datetime.now().strftime("%Y-%m-%d")
 
         sql = "SELECT id, ticket_info, retry, status FROM {} WHERE user_id = '{}' AND status IN ('{}') AND ticket_type = '{}' AND cast(substring(cast(ticket_info::json->'搭乘時間' as varchar) from 2 for 16) as date) > '{}' ORDER BY id DESC".format(self.table_name, user_id, "','".join(status), ticket_type, now)
-        print sql
 
         results = []
         for row in self.select(sql):

@@ -72,7 +72,6 @@ class TRATicketMode(TicketMode):
             except ValueError as e:
                log("Error: {}".format(e))
         elif self.memory[user_id].get(TRA_MODE, None) is None:
-            print 1111111111
             if question.lower() == "ticket_tra_mode={}".format(TRAIN_TIME):
                 is_setting = self.set_memory(user_id, TRA_MODE, TRAIN_TIME)
             elif question.lower() == "ticket_tra_mode={}".format(TRAIN_NO):
@@ -80,7 +79,6 @@ class TRATicketMode(TicketMode):
             else:
                 pass
         elif self.memory[user_id][TRA_MODE] == TRAIN_TIME:
-            print 222222222
             if self.memory[user_id].get(GETIN_START_DTIME, None) is None:
                 if re.search("^([\d]{1,2})$", question):
                     question = int(question)
@@ -104,7 +102,6 @@ class TRATicketMode(TicketMode):
                 if question > HOUR_START and question <= HOUR_END and question > int(self.memory[user_id][GETIN_START_DTIME].split(":")[0]):
                     is_setting = self.set_memory(user_id, GETIN_END_DTIME, "{:02d}:00".format(question))
         elif self.memory[user_id][TRA_MODE].lower() == TRAIN_NO:
-            print 3333333333
             if re.search("^[\d]{3,4}$", question) and self.memory[user_id].get(TRAIN_NO, None) is None and question in self.tra_trains:
                 is_setting = self.set_memory(user_id, TRAIN_NO, question)
 
@@ -118,13 +115,10 @@ class TRATicketMode(TicketMode):
             is_setting = self.set_memory(user_id, TRAIN_TYPE, get_train_type(question))
 
         if self.memory[user_id].get(PERSON_ID, None) is None:
-            print 555555555
             reply_txt = txt_ticket_taiwanid()
         elif self.memory[user_id].get(GETIN_DATE, None) is None:
-            print 666666666
             reply_txt = txt_ticket_getindate()
         elif self.memory[user_id].get(TRA_MODE, None) is None:
-            print 777777777
             template = ConfirmTemplate(text=txt_ticket_tra_booking_method(), actions=[
                     MessageTemplateAction(label=txt_ticket_tra_booking_time(), text='ticket_tra_mode={}'.format(TRAIN_TIME)),
                     MessageTemplateAction(label=txt_ticket_tra_booking_trainno(), text='ticket_tra_mode={}'.format(TRAIN_NO))])
