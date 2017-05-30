@@ -119,7 +119,8 @@ def main():
     bus.bot.init()
     bus.bot.hourly_job()
 
-    for bot_name, sleeping in zip(["weather", "fxrate", "lucky", "bus"], [900, 60, 3600, 40]):
+    #for bot_name, sleeping in zip(["weather", "fxrate", "lucky", "bus"], [900, 60, 3600, 40]):
+    for bot_name, sleeping in zip(["weather", "fxrate", "lucky"], [900, 60, 3600]):
         thread = BotThread()
         thread.init_bot(bot_name)
         thread.set_sleeping(sleeping)
